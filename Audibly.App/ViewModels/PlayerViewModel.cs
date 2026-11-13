@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using Windows.Media;
 using Windows.Media.Playback;
+using Windows.Storage;
+using Audibly.ReadAlong;
 using Audibly.App.Extensions;
 using Audibly.App.Helpers;
 using Audibly.App.Services;
@@ -52,6 +54,8 @@ public class PlayerViewModel : BindableBase, IDisposable
     private AudiobookViewModel? _nowPlaying;
 
     private bool _pendingAutoPlay;
+    private bool _readAlongEnabled = ApplicationData.Current.LocalSettings.Values["ReadAlongEnabled"] is true;
+    private AlignmentMap? _readAlongDocument;
 
     private double _playbackSpeed = 1.0;
 
@@ -81,6 +85,24 @@ public class PlayerViewModel : BindableBase, IDisposable
     /// </summary>
     public bool IsUserSeeking { get; set; }
 
+    public bool ReadAlongEnabled
+    {
+        get => _readAlongEnabled;
+        set
+        {
+            Set(ref _readAlongEnabled, value);
+            ApplicationData.Current.LocalSettings.Values["ReadAlongEnabled"] = value;
+        }
+    }
+
+    // Validated text/timings are shared by the full and mini views; audio state
+    // continues to belong exclusively to the existing MediaPlayer.
+    public AlignmentMap? ReadAlongDocument
+    {
+        get => _readAlongDocument;
+        set => Set(ref _readAlongDocument, value);
+    }
+
     /// <summary>
     ///     Gets or sets the currently playing audiobook.
     /// </summary>
@@ -92,6 +114,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             if (ReferenceEquals(_nowPlaying, value)) return;
             if (_chapterSleepTimer != null) SetTimer(0);
             if (_nowPlaying != null) _nowPlaying.PropertyChanged -= NowPlaying_PropertyChanged;
+            if (_nowPlaying?.Id != value?.Id) ReadAlongDocument = null;
             Set(ref _nowPlaying, value);
             if (_nowPlaying != null) _nowPlaying.PropertyChanged += NowPlaying_PropertyChanged;
             NotifyRemainingTimesChanged();
@@ -540,9 +563,13 @@ public class PlayerViewModel : BindableBase, IDisposable
         OpenAudioSource(TimeSpan.FromMilliseconds(audiobook.CurrentTimeMs), false);
     }
 
-    public async Task OpenSourceFile(int index, int chapterIndex)
+    public Task OpenSourceFile(int index, int chapterIndex) => OpenSourceFileAsync(index, chapterIndex, null);
+
+    /// <param name="startMs">Position in the new file to start at; defaults to the chapter's start.</param>
+    private async Task OpenSourceFileAsync(int index, int chapterIndex, double? startMs)
     {
-        if (NowPlaying == null || NowPlaying.CurrentSourceFileIndex == index)
+        var book = NowPlaying;
+        if (book == null || book.CurrentSourceFileIndex == index)
             return;
 
         var autoPlay = _pendingAutoPlay || MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing;
@@ -550,22 +577,24 @@ public class PlayerViewModel : BindableBase, IDisposable
         AudioPlayer.Close();
 
         Debug.WriteLine(
-            $"[PlayerVM] OpenSourceFile: {NowPlaying.CurrentSourceFileIndex} -> {index}, chapter {chapterIndex}");
+            $"[PlayerVM] OpenSourceFile: {book.CurrentSourceFileIndex} -> {index}, chapter {chapterIndex}");
 
         // CurrentTimeMs is stored per source file, so switch the index first and then set the start
         // position of the *new* file (setting it first would overwrite the old file and keep the new file's stale value)
-        NowPlaying.CurrentSourceFileIndex = index;
-        NowPlaying.CurrentChapterIndex = chapterIndex;
-        NowPlaying.CurrentTimeMs = (int)NowPlaying.Chapters[chapterIndex].StartTime;
+        book.CurrentSourceFileIndex = index;
+        book.CurrentChapterIndex = chapterIndex;
+        book.CurrentTimeMs = (int)(startMs ?? book.Chapters[chapterIndex].StartTime);
 
         await _dispatcherQueue.EnqueueAsync(() =>
         {
-            NowPlaying.CurrentChapterTitle = NowPlaying.Chapters[chapterIndex].Title;
+            book.CurrentChapterTitle = book.Chapters[chapterIndex].Title;
         });
 
-        await NowPlaying.SaveAsync();
+        await book.SaveAsync();
 
-        OpenAudioSource(TimeSpan.FromMilliseconds(NowPlaying.CurrentTimeMs), autoPlay);
+        // another audiobook may have been opened while saving
+        if (NowPlaying == book)
+            OpenAudioSource(TimeSpan.FromMilliseconds(book.CurrentTimeMs), autoPlay);
     }
 
     private void OpenAudioSource(TimeSpan position, bool autoPlay)
@@ -582,6 +611,25 @@ public class PlayerViewModel : BindableBase, IDisposable
         {
             ReportMediaFailure();
         }
+    }
+
+    /// <summary>
+    ///     Seeks to a Read Along word. Positions are in the source file's own (original-speed) timeline.
+    /// </summary>
+    public async Task SeekReadAlongAsync(int sourceIndex, double seconds)
+    {
+        if (NowPlaying is not { } book || sourceIndex < 0 || sourceIndex >= book.SourcePaths.Count ||
+            !double.IsFinite(seconds) || seconds < 0) return;
+        if (sourceIndex == book.CurrentSourceFileIndex)
+        {
+            CurrentPosition = TimeSpan.FromSeconds(seconds);
+            return;
+        }
+        var chapter = book.Chapters.FirstOrDefault(c => c.ParentSourceFileIndex == sourceIndex && c.InRange(seconds * 1000))
+            ?? book.Chapters.FirstOrDefault(c => c.ParentSourceFileIndex == sourceIndex);
+        if (chapter is null) return;
+        // the pitch-preserving player seeks to the requested start position itself once the file has opened
+        await OpenSourceFileAsync(sourceIndex, chapter.Index, seconds * 1000);
     }
 
     /// <summary>

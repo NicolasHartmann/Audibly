@@ -35,25 +35,51 @@
     </Page.Resources>
 
     <Grid Padding="0,6,0,0">
+        <!--  Read Along captions (rows 0-1) sit above the compact player (rows 2-3).
+              With Read Along hidden, the window shrinks back to the compact height.  -->
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="15" />
         </Grid.RowDefinitions>
 
 
         <!--  TODO: remove this  -->
         <developerTools:AlignmentGrid
-            Grid.RowSpan="2"
+            Grid.RowSpan="4"
             HorizontalAlignment="Stretch"
             HorizontalStep="4"
             VerticalAlignment="Stretch"
             VerticalStep="4"
             Visibility="{x:Bind ViewModel.ShowAlignmentGrids, Mode=OneWay}" />
 
+        <!--  Read Along captions  -->
+        <Border Grid.Row="0" x:Name="MiniReadingPane" Margin="8,0,8,8" Padding="4" CornerRadius="8"
+            Background="#DD181818" RequestedTheme="Dark">
+            <Grid>
+                <ScrollViewer x:Name="MiniCaptionScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <userControls:ReadAlongPassage x:Name="MiniPassage" MiniMode="True"/>
+                </ScrollViewer>
+                <StackPanel x:Name="MiniReadingHint" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                    <TextBlock x:Name="MiniHintText" Text="Prepare this book for Read Along in the main player." TextWrapping="Wrap" MaxWidth="440" TextAlignment="Center"/>
+                    <Button x:Name="MiniSetupButton" Content="Open Read Along" Click="OpenReadAlong_Click" HorizontalAlignment="Center" Width="Auto" Padding="8,4"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" x:Name="MiniCaptionTools" Margin="12,0,12,4" ColumnSpacing="8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <TextBlock x:Name="MiniReadAlongStatus" Grid.Column="0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <Button Grid.Column="1" Content="A−" Click="SmallerText_Click" ToolTipService.ToolTip="Smaller reading text" AutomationProperties.Name="Smaller reading text" Width="Auto" Padding="6,2"/>
+            <Button Grid.Column="2" Content="A+" Click="LargerText_Click" ToolTipService.ToolTip="Larger reading text" AutomationProperties.Name="Larger reading text" Width="Auto" Padding="6,2"/>
+            <userControls:ReadAlongAppearance Grid.Column="3" MiniMode="True"/>
+        </Grid>
+
         <Grid
             Canvas.ZIndex="10"
             ColumnSpacing="8"
-            Grid.Row="0"
+            Grid.Row="2"
             HorizontalAlignment="Stretch"
             Padding="8,0,0,0"
             RowSpacing="4"
@@ -69,8 +95,13 @@
                 <RowDefinition Height="28" />
             </Grid.RowDefinitions>
 
-            <!--  drag icon  -->
+            <!--  drag icon (the only drag area, so word links and controls keep working)  -->
             <FontIcon
+                x:Name="MiniDragHandle"
+                PointerPressed="DragHandle_Pressed"
+                PointerMoved="DragHandle_Moved"
+                PointerReleased="DragHandle_Released"
+                PointerCanceled="DragHandle_Released"
                 FontFamily="{StaticResource AudiblyCustomFont}"
                 FontSize="16"
                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -155,6 +186,13 @@
                     Orientation="Horizontal"
                     Spacing="4"
                     VerticalAlignment="Center">
+
+                    <ToggleButton x:Name="MiniReadAlongToggle" IsChecked="True" Click="MiniReadAlong_Click"
+                        Background="Transparent" BorderThickness="0" Width="28" Height="28" MinWidth="28" Padding="0"
+                        ToolTipService.ToolTip="Show or hide Read Along"
+                        AutomationProperties.Name="Show or hide Read Along captions">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8F1;" FontSize="14"/>
+                    </ToggleButton>
 
                     <!--  Volume Button  -->
                     <Button
@@ -463,7 +501,7 @@
             BorderThickness="0"
             Canvas.ZIndex="20"
             Click="ExitButton_Click"
-            Grid.Row="0"
+            Grid.Row="2"
             Height="21"
             HorizontalAlignment="Right"
             Margin="0,0,4,0"
@@ -483,7 +521,7 @@
         <Slider
             AutomationProperties.Name="Chapter progress"
             Canvas.ZIndex="0"
-            Grid.Row="1"
+            Grid.Row="3"
             Height="15"
             HorizontalAlignment="Stretch"
             Maximum="{x:Bind PlayerViewModel.ChapterDurationMs, Mode=OneWay}"
@@ -517,7 +555,7 @@
         <!--  Let pointer input pass through the labels so the entire bar remains seekable.  -->
         <Grid
             Canvas.ZIndex="1"
-            Grid.Row="1"
+            Grid.Row="3"
             IsHitTestVisible="False"
             Margin="8,0,8,0"
             VerticalAlignment="Center">
