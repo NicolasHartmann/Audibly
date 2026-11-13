@@ -34,7 +34,6 @@ namespace Audibly.App.Views;
 public sealed partial class NewMiniPlayerPage : Page
 {
     private readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-    private CancellationTokenSource? _playbackSpeedFlyoutCts;
     private CancellationTokenSource? _readingLoad;
     private readonly DispatcherTimer _readingTimer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private readonly ReadAlongStore _readingStore = new(ApplicationData.Current.LocalFolder.Path);
@@ -57,9 +56,6 @@ public sealed partial class NewMiniPlayerPage : Page
         Loaded += ReadingLoaded;
         Unloaded += ReadingUnloaded;
         KeyDown += NewMiniPlayerPage_KeyDown;
-
-        // need this to show the slider when the user increases or decreases the speed with the keyboard shortcuts
-        PlaybackSpeedSliderFlyout.Opened += (s, e) => { PlaybackSpeedSlider.Focus(FocusState.Programmatic); };
 
         ProgressSlider.AddHandler(PointerPressedEvent,
             new PointerEventHandler(Slider_OnPointerPressed), true);
@@ -94,11 +90,6 @@ public sealed partial class NewMiniPlayerPage : Page
     /// </summary>
     public PlayerViewModel PlayerViewModel => App.PlayerViewModel;
 
-    public Visibility NormalSpeedVisibility(double speed) => speed == 1 ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility AdjustedSpeedVisibility(double speed) => speed != 1 ? Visibility.Visible : Visibility.Collapsed;
-
-    public string FormatPlaybackSpeed(double speed) => speed.ToString("0.##");
     public void ConfigureWindow(Window window)
     {
         _miniWindow = window;
@@ -304,64 +295,21 @@ public sealed partial class NewMiniPlayerPage : Page
     private void NewMiniPlayerPage_KeyDown(object sender, KeyRoutedEventArgs args)
     {
         var key = args.Key;
-        if (key == (VirtualKey)219) // Open bracket '['
+        if (key == (VirtualKey)219) // Open bracket '[': 0.05x slower
         {
-            HandleSpeedDecrease();
-            ClosePlaybackSpeedFlyout();
+            SpeedControl.Nudge(-1);
             args.Handled = true;
         }
-        else if (key == (VirtualKey)221) // Close bracket ']'
+        else if (key == (VirtualKey)221) // Close bracket ']': 0.05x faster
         {
-            HandleSpeedIncrease();
-            ClosePlaybackSpeedFlyout();
+            SpeedControl.Nudge(1);
             args.Handled = true;
         }
-        else if (key == (VirtualKey)0xDC) // Backslash '\'
+        else if (key == (VirtualKey)0xDC) // Backslash '\': normal speed
         {
-            ResetPlaybackSpeed();
-            ClosePlaybackSpeedFlyout();
+            SpeedControl.ResetToNormal();
             args.Handled = true;
         }
-    }
-
-    private void ClosePlaybackSpeedFlyout()
-    {
-        // Cancel any previous close operation
-        _playbackSpeedFlyoutCts?.Cancel();
-        _playbackSpeedFlyoutCts = new CancellationTokenSource();
-        var token = _playbackSpeedFlyoutCts.Token;
-
-        _dispatcherQueue.TryEnqueue(async () =>
-        {
-            try
-            {
-                await Task.Delay(2000, token);
-                if (PlaybackSpeedSliderFlyout.IsOpen)
-                    PlaybackSpeedSliderFlyout.Hide();
-            }
-            catch (TaskCanceledException)
-            {
-                // Ignore cancellation
-            }
-        });
-    }
-
-    private void ResetPlaybackSpeed()
-    {
-        PlaybackSpeedSliderFlyout.ShowAt(PlaybackSpeedButton);
-        PlaybackSpeedSlider.Value = PlaybackSpeedPresets.ToIndex(Constants.PlaybackSpeedDefault);
-    }
-
-    private void HandleSpeedIncrease()
-    {
-        PlaybackSpeedSliderFlyout.ShowAt(PlaybackSpeedButton);
-        PlaybackSpeedSlider.Value = Math.Min(PlaybackSpeedSlider.Value + 1, PlaybackSpeedSlider.Maximum);
-    }
-
-    private void HandleSpeedDecrease()
-    {
-        PlaybackSpeedSliderFlyout.ShowAt(PlaybackSpeedButton);
-        PlaybackSpeedSlider.Value = Math.Max(PlaybackSpeedSlider.Value - 1, PlaybackSpeedSlider.Minimum);
     }
 
     private bool _isPointerInteracting;
@@ -398,14 +346,6 @@ public sealed partial class NewMiniPlayerPage : Page
         if (slider == null || !IsLoaded) return;
 
         PlayerViewModel.UpdateVolume(slider.Value);
-    }
-
-    private void PlaybackSpeedSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-        var slider = sender as Slider;
-        if (slider == null || !IsLoaded) return;
-
-        PlayerViewModel.UpdatePlaybackSpeed(PlaybackSpeedPresets.FromIndex(slider.Value));
     }
 
     private void PinButton_Click(object sender, RoutedEventArgs e)

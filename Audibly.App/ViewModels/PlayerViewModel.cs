@@ -477,6 +477,7 @@ public class PlayerViewModel : BindableBase, IDisposable
     public async void UpdatePlaybackSpeed(double speed)
     {
         speed = PlaybackSpeedPresets.Snap(speed);
+        Debug.WriteLine($"[PlayerVM] UpdatePlaybackSpeed: {PlaybackSpeed} -> {speed}");
         try
         {
             AudioPlayer.Speed = speed;
@@ -654,6 +655,7 @@ public class PlayerViewModel : BindableBase, IDisposable
     {
         args.Handled = true;
         var speed = args.PlaybackRate;
+        Debug.WriteLine($"[PlayerVM] RateReceived: {speed} (current {PlaybackSpeed})");
         _dispatcherQueue.TryEnqueue(() => { if (!_disposed) UpdatePlaybackSpeed(speed); });
     }
 
