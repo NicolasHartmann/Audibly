@@ -250,6 +250,8 @@ public sealed partial class NewMiniPlayerPage : Page
         var enabled = MiniReadAlongToggle.IsChecked == true;
         MiniReadingPane.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
         MiniCaptionTools.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+        CaptionRow.Height = enabled ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        ControlsRow.Height = enabled ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
         if (_miniWindow is not { } window) return;
         var scale = Win32.GetDpiForWindow(WindowNative.GetWindowHandle(window)) / 96.0;
         // Resize without moving the window, including when pinned on top.

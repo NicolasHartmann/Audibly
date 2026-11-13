@@ -37,10 +37,12 @@
     <Grid Padding="0,6,0,0">
         <!--  Read Along captions (rows 0-1) sit above the compact player (rows 2-3).
               With Read Along hidden, the window shrinks back to the compact height.  -->
+        <!--  CaptionRow/ControlsRow heights are swapped in code: with captions hidden the controls row
+              takes the remaining space (as in the compact-only layout), so the progress row is never pushed out.  -->
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" x:Name="CaptionRow" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" x:Name="ControlsRow" />
             <RowDefinition Height="15" />
         </Grid.RowDefinitions>
 
