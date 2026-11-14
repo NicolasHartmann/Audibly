@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Audibly.Mobile.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Audibly.Mobile;
 
@@ -14,6 +15,9 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
+
+		builder.Services.AddSingleton(_ => new AppData(FileSystem.AppDataDirectory));
+		builder.Services.AddTransient<MainPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

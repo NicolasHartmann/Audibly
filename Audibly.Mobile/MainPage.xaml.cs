@@ -1,14 +1,28 @@
-﻿using Audibly.Core;
+﻿using Audibly.Mobile.Services;
 
 namespace Audibly.Mobile;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage()
+    private readonly AppData _data;
+
+    public MainPage(AppData data)
     {
         InitializeComponent();
+        _data = data;
+    }
 
-        // skeleton check: the shared library is reachable from the Android app
-        StatusLabel.Text = "Shared library ready: " + PlayerProgress.Elapsed(3_723_000);
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        try
+        {
+            var books = (await _data.Repository.Audiobooks.GetAsync()).ToList();
+            StatusLabel.Text = books.Count == 1 ? "1 audiobook" : $"{books.Count} audiobooks";
+        }
+        catch (Exception e)
+        {
+            StatusLabel.Text = "The library could not be opened: " + e.Message;
+        }
     }
 }
