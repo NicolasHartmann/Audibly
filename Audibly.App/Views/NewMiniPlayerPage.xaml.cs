@@ -178,6 +178,7 @@ public sealed partial class NewMiniPlayerPage : Page
     }
     // Follow the narration once per rendered frame: a 50 ms timer falls behind at high
     // playback speeds and the marker then skips words.
+    private readonly NarrationFollower _readingFollower = new();
     private void ReadingFrame(object? sender, object e) => UpdateCaption();
     private void UpdateCaption()
     {
@@ -186,7 +187,7 @@ public sealed partial class NewMiniPlayerPage : Page
         if ((_miniWindow?.AppWindow.Presenter as OverlappedPresenter)?.State == OverlappedPresenterState.Minimized) return;
         var source = book.CurrentSourceFileIndex;
         var position = PlayerViewModel.CurrentPosition.TotalSeconds;
-        var active = _readingMap.Find(source, position);
+        var active = _readingFollower.Next(_readingMap, source, position);
         if (active is null)
         {
             if (_lastCaptionCue is not null) MiniPassage.Highlight(null);

@@ -102,6 +102,23 @@ public sealed class AlignmentMap
         return null;
     }
 
+    /// <summary>Index of the last cue of this source that has started at <paramref name="seconds"/>, or -1.</summary>
+    public int IndexAt(int sourceIndex, double seconds)
+    {
+        if (!double.IsFinite(seconds) || !_tracks.TryGetValue(sourceIndex, out var track)) return -1;
+        int low = 0, high = track.Length;
+        while (low < high)
+        {
+            var mid = low + (high - low) / 2;
+            if (track[mid].Cue.StartSeconds <= seconds) low = mid + 1; else high = mid;
+        }
+        return low - 1;
+    }
+
+    /// <summary>The cue at a position returned by <see cref="IndexAt"/>, in spoken order.</summary>
+    public (Cue Cue, Passage Passage)? At(int sourceIndex, int index) =>
+        _tracks.TryGetValue(sourceIndex, out var track) && index >= 0 && index < track.Length ? track[index] : null;
+
     // Nearby text remains readable through pauses; callers must not highlight
     // this contextual cue unless Find confirms it is actually being spoken.
     public (Cue Cue, Passage Passage)? FindContext(int sourceIndex, double seconds, double maxDistance = 12)

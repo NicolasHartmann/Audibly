@@ -127,6 +127,36 @@ Check(map.Find(0, 1.5)?.Cue.Id == "a", "seek backwards uses source position");
 Check(map.Find(5, 1) is null && map.Find(0, double.NaN) is null, "unknown position");
 // At any speed the lookup takes MediaPlayer source position, never wall-clock elapsed time.
 foreach (var speed in new[] { 0.5, 1.0, 2.0 }) Check(map.Find(0, 1.5)?.Cue.Id == "a", $"position independent of speed {speed}");
+// Short words ("des", "in", "er": 100-200 ms) fall between two rendered frames. The follower
+// shows a missed word on the next frame instead of jumping over it.
+AlignmentMap Sentence()
+{
+    string[] words = ["Trotz", "des", "Protokollbruchs", "behielt", "Victor", "in", "den", "Manteltaschen"];
+    double[] starts = [1.00, 1.34, 1.56, 2.54, 3.00, 3.38, 3.50, 3.66], ends = [1.32, 1.54, 2.52, 2.98, 3.36, 3.48, 3.64, 4.36];
+    var text = string.Join(' ', words); var cues = new List<Cue>(); var offset = 0;
+    for (var i = 0; i < words.Length; i++)
+    {
+        cues.Add(new Cue { Id = words[i], SourceIndex = 0, StartSeconds = starts[i], EndSeconds = ends[i], Offset = offset, Length = words[i].Length, Quality = 99 });
+        offset += words[i].Length + 1;
+    }
+    var sentence = new AlignmentMap { SchemaVersion = 1, AudiobookId = id, Status = "ready", Epub = new("book.epub", 1, "hash"),
+        Sources = [new("a.mp3", 1, "a"), new("b.mp3", 1, "b")], Passages = [new() { Id = "s", Text = text, Cues = cues }] };
+    sentence.Validate(id, 2); return sentence;
+}
+var spoken = Sentence();
+string?[] Shown(NarrationFollower f, AlignmentMap m, params double[] positions) => positions.Select(p => f.Next(m, 0, p)?.Cue.Id).ToArray();
+Check(Shown(new(), spoken, 1.10, 1.20, 1.40, 1.60).SequenceEqual(new[] { "Trotz", "Trotz", "des", "Protokollbruchs" }), "follower matches the spoken word when frames keep up");
+Check(Shown(new(), spoken, 1.30, 1.60, 1.70).SequenceEqual(new[] { "Trotz", "des", "Protokollbruchs" }), "a short word missed between two frames is still shown");
+Check(Shown(new(), spoken, 3.30, 3.70, 3.75, 3.80, 3.85).SequenceEqual(new[] { "Victor", "in", "den", "Manteltaschen", "Manteltaschen" }), "two missed short words are caught up one frame at a time");
+Check(Shown(new(), spoken, 1.10, 4.00).SequenceEqual(new[] { "Trotz", "Manteltaschen" }), "a seek forward jumps instead of replaying skipped words");
+Check(Shown(new(), spoken, 3.70, 1.10).SequenceEqual(new[] { "Manteltaschen", "Trotz" }), "a seek backward jumps immediately");
+Check(Shown(new(), spoken, 4.30, 4.50, 9.00).SequenceEqual(new string?[] { "Manteltaschen", null, null }), "silence after a word stays unhighlighted");
+Check(Shown(new(), spoken, 0.50, 1.10).SequenceEqual(new string?[] { null, "Trotz" }), "nothing is highlighted before the first word");
+Check(Shown(new(), spoken, 3.60, 4.40, 4.45).SequenceEqual(new string?[] { "den", "Manteltaschen", null }), "a missed word before a pause is shown for one frame");
+var paused = new NarrationFollower();
+Check(Shown(paused, spoken, 1.30, 1.60, 1.60, 1.60).SequenceEqual(new[] { "Trotz", "des", "Protokollbruchs", "Protokollbruchs" }), "pausing settles on the word at the playback position");
+var switching = new NarrationFollower(); switching.Next(spoken, 0, 3.70);
+Check(switching.Next(spoken, 1, 3.70) is null && switching.Next(map, 0, 1.5)?.Cue.Id == "a", "changing source or book never shows a word from the previous one");
 Reject(() => map.Validate(Guid.NewGuid(), 2), "wrong book rejected");
 var invalid = Fixture(); invalid.SchemaVersion = 2; Reject(() => invalid.Validate(id, 2), "unsupported schema");
 invalid = Fixture(); invalid.Passages[0].Cues[0].EndSeconds = double.NaN; Reject(() => invalid.Validate(id, 2), "nonfinite timing");

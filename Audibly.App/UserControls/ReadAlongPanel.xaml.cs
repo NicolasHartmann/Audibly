@@ -28,6 +28,7 @@ public sealed partial class ReadAlongPanel : UserControl
     private Guid? _book;
     private Passage? _lastPassage;
     private Cue? _lastCue;
+    private readonly NarrationFollower _follower = new();
     private bool _follow = true;
     private bool _busy;
     private readonly Stopwatch _processingClock = new();
@@ -263,7 +264,7 @@ public sealed partial class ReadAlongPanel : UserControl
     private void UpdatePosition()
     {
         if (Visibility != Visibility.Visible || _map is null || Book is not { } book || book.Id != _book) return;
-        var current = _map.Find(book.CurrentSourceFileIndex, App.PlayerViewModel.CurrentPosition.TotalSeconds);
+        var current = _follower.Next(_map, book.CurrentSourceFileIndex, App.PlayerViewModel.CurrentPosition.TotalSeconds);
         var cue = current?.Cue;
         if (_follow && current is { } active && active.Passage != _lastPassage)
         {
