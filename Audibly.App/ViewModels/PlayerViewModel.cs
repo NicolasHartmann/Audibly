@@ -808,7 +808,8 @@ public class PlayerViewModel : BindableBase, IDisposable
             }
 
             // statistics only count steady playback; a paused player that moves is a seek
-            if (MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
+            var isPlaying = MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing;
+            if (isPlaying)
                 App.ListeningStats.OnPosition(audiobook.Id, audiobook.CurrentSourceFileIndex, position.TotalSeconds,
                     PlaybackSpeed);
             else
@@ -823,7 +824,8 @@ public class PlayerViewModel : BindableBase, IDisposable
             audiobook.Progress = Math.Ceiling(elapsed / audiobook.Duration * 100);
             var wasCompleted = audiobook.IsCompleted;
             audiobook.IsCompleted = audiobook.Progress >= 99.9;
-            if (!wasCompleted && audiobook.IsCompleted) App.ListeningStats.OnCompleted(audiobook.Id);
+            // only reaching the end while playing counts as finishing the book, not seeking there
+            if (!wasCompleted && audiobook.IsCompleted && isPlaying) App.ListeningStats.OnCompleted(audiobook.Id);
             await audiobook.SaveAsync();
         });
     }

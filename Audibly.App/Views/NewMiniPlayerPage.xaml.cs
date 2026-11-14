@@ -392,6 +392,7 @@ public sealed partial class NewMiniPlayerPage : Page
             ViewModel.LoggingService.LogError(exception, false);
         }
 
+        App.ListeningStats.FlushBeforeExit();
         PlayerViewModel.Dispose();
         Application.Current.Exit();
     }
