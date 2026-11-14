@@ -99,3 +99,31 @@ Player page with all controls from the spec, progress bar and time display throu
 ### Task 10: Device check
 
 Emulator run of every goal in the spec; APK for the user's phone with install instructions.
+
+---
+
+## Status 2026-11-14
+
+Tasks 1 to 9 are implemented and checked on the virtual phone (Android 15) with two generated test books: folder import, playback, skipping across files in both directions, chapter navigation, speed, the three time displays, the full-title progress bar, background playback, pause by media key, resuming after the app was force-stopped, recording of listening time and a completion, restart of a finished book.
+
+Not checked on a device: books with embedded chapters (M4B), cover art, a lost folder permission or deleted files, a phone call or another player taking the audio, the sleep timer, dragging the slider, dark theme, a real phone with the screen off for a long time.
+
+### Final review
+
+A fresh reviewer read the branch. Fixed in `b9f7bac`: CPU wake lock while playing, playback errors shown on the player page and recoverable, play/pause follows the listener's intent, a finished book restarts, multi-file books are named after their album, a book the repository refused to save is not reported as added, saving when the app goes to the background, the notification opens the app, double-tap guards.
+
+### Rulings
+
+- Final: Ruling: after a phone call playback resumes by itself at normal volume (Media3's default for transient loss) — this is what listeners expect from an audiobook player and the button now shows the true state — if wrong, a listener is surprised by audio after a call.
+- Task 2: Ruling: the Windows importer stays untouched and does not use `AudiobookImporter` yet — avoids regressions in the Windows app before it is retested — the two importers can drift apart until they are unified.
+
+### Deferred minors
+
+- Final: minor (deferred): a file whose tags report a duration of 0 makes every skip jump to the start of the book (`PlaybackPosition.Skip`).
+- Final: minor (deferred): a chapter with an end time of 0 gets a 1 ms progress bar.
+- Final: minor (deferred): swiping the app away after a book ended or failed leaves the playback service running.
+- Final: minor (deferred): the media controller is never released and a disconnect is not handled.
+- Final: minor (deferred): seeking into the last 1 % and then listening to the end does not record a completion.
+- Final: minor (deferred): a revoked folder permission makes a rescan say "No new audiobooks found." instead of naming the problem.
+- Final: minor (deferred): the elapsed label does not follow the thumb while dragging; a chapter change during a drag seeks with a stale value.
+- Final: minor (deferred): a file descriptor leaks until garbage collection when opening its stream fails.
