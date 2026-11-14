@@ -2,6 +2,7 @@
 // Created: 04/15/2024
 // Updated: 10/17/2024
 
+using Audibly.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Audibly.App.Helpers;
+namespace Audibly.Core;
 
 public static class PlaybackTimeRemaining
 {

@@ -2,6 +2,7 @@
 // Created: 3/21/2024
 // Updated: 3/22/2024
 
+using Audibly.Core;
 using System;
 using Audibly.App.Helpers;
 using Audibly.App.ViewModels;

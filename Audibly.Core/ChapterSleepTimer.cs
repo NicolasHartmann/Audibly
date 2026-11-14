@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Audibly.App.Helpers;
+namespace Audibly.Core;
 
 /// <summary>Tracks a chapter boundary on the original audio timeline, independent of playback speed.</summary>
 public sealed class ChapterSleepTimer(IReadOnlyList<double> sourceDurationsSeconds, int sourceFileIndex, double endPositionMs)

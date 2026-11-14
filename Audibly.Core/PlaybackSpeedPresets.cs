@@ -1,6 +1,6 @@
 using System;
 
-namespace Audibly.App.Helpers;
+namespace Audibly.Core;
 
 public static class PlaybackSpeedPresets
 {

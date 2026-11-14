@@ -1,3 +1,4 @@
+using Audibly.Core;
 using System;
 using System.ComponentModel;
 using Audibly.App.Helpers;

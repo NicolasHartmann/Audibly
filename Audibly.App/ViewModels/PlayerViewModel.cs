@@ -1,6 +1,7 @@
 // Author: rstewa · https://github.com/rstewa
 // Updated: 08/02/2025
 
+using Audibly.Core;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;

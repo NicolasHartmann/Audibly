@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace Audibly.App.Helpers;
+namespace Audibly.Core;
 
 /// <summary>What the player's progress bar covers.</summary>
 public enum PlayerProgressScope

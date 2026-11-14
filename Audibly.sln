@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.Stats", "Audibly.St
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.Stats.Tests", "Audibly.Stats.Tests\Audibly.Stats.Tests.csproj", "{1EEE24BB-C58C-48C5-8153-68132FEEC019}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.Core", "Audibly.Core\Audibly.Core.csproj", "{692F1CB9-0553-4C09-A78B-F74C9E2853BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,22 @@ Global
 		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x64.Build.0 = Release|Any CPU
 		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x86.ActiveCfg = Release|Any CPU
 		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x86.Build.0 = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|arm64.Build.0 = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|x64.Build.0 = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Debug|x86.Build.0 = Debug|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|arm64.ActiveCfg = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|arm64.Build.0 = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|x64.ActiveCfg = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|x64.Build.0 = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|x86.ActiveCfg = Release|Any CPU
+		{692F1CB9-0553-4C09-A78B-F74C9E2853BD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

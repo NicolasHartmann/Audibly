@@ -1,6 +1,7 @@
 ﻿// Author: rstewa · https://github.com/rstewa
 // Updated: 02/14/2025
 
+using Audibly.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

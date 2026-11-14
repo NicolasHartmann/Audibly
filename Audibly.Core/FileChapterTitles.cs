@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Audibly.App.Helpers;
+namespace Audibly.Core;
 
 /// <summary>
 ///     Chapter titles for audiobooks made of several files. A file without chapter marks becomes one
