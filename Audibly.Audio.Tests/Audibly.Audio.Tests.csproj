@@ -21,5 +21,6 @@
     <Compile Include="..\Audibly.App\Helpers\ChapterSleepTimer.cs" Link="ChapterSleepTimer.cs" />
     <Compile Include="..\Audibly.App\Helpers\PlaybackSpeedPresets.cs" Link="PlaybackSpeedPresets.cs" />
     <Compile Include="..\Audibly.App\Helpers\FileChapterTitles.cs" Link="FileChapterTitles.cs" />
+    <Compile Include="..\Audibly.App\Helpers\PlayerProgress.cs" Link="PlayerProgress.cs" />
   </ItemGroup>
 </Project>
