@@ -292,7 +292,12 @@ public class PlayerViewModel : BindableBase, IDisposable
     public TimeSpan CurrentPosition
     {
         get => AudioPlayer.Position;
-        set => AudioPlayer.Position = value;
+        set
+        {
+            // every seek goes through here; the jump itself must not count as listening time
+            App.ListeningStats.OnInterrupted();
+            AudioPlayer.Position = value;
+        }
     }
 
     /// <summary>
