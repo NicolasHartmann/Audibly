@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Audibly.Core/Audibly.Core.csproj" />
+  <Project Path="Audibly.Mobile/Audibly.Mobile.csproj" />
+  <Project Path="Audibly.Models/Audibly.Models.csproj" />
+  <Project Path="Audibly.Repository/Audibly.Repository.csproj" />
+  <Project Path="Audibly.Stats/Audibly.Stats.csproj" />
+</Solution>
