@@ -194,8 +194,11 @@ public sealed class PlaybackCoordinator
         if (Book is not { } book) return;
         if (!_player.IsPlaying) return;
 
+        var wasCompleted = book.IsCompleted;
         ReadPosition();
         _stats.OnPosition(book.Id, book.CurrentSourceFileIndex, CurrentFileMs / 1000, book.PlaybackSpeed);
+        // only reaching the end while listening counts as finishing, not a jump to the end
+        if (!wasCompleted && book.IsCompleted) _ = _stats.OnCompletedAsync(book.Id);
 
         if (SleepTimerEnd is { } end && DateTime.Now >= end)
         {
@@ -232,6 +235,8 @@ public sealed class PlaybackCoordinator
             var bookMs = PlayerProgress.BookPositionMs(book.SourcePaths.Select(file => (double)file.Duration),
                 sourceIndex, positionMs);
             book.Progress = Math.Ceiling(bookMs / (book.Duration * 1000.0) * 100);
+            // same rule as on Windows; jumping back into a finished book makes it unfinished again
+            book.IsCompleted = book.Progress >= 99.9;
         }
     }
 
@@ -253,12 +258,11 @@ public sealed class PlaybackCoordinator
     private async void OnPlayerEnded()
     {
         if (Book is not { } book) return;
+        // the last tick before the end normally recorded the completion already
+        var wasCompleted = book.IsCompleted;
         book.Progress = 100;
-        if (!book.IsCompleted)
-        {
-            book.IsCompleted = true;
-            await _stats.OnCompletedAsync(book.Id);
-        }
+        book.IsCompleted = true;
+        if (!wasCompleted) await _stats.OnCompletedAsync(book.Id);
 
         await SaveAsync();
         await _stats.FlushAsync();
