@@ -9,6 +9,12 @@ public interface ILibraryImporter
     /// <summary>Name of the picked folder, or null when none was picked yet.</summary>
     string? FolderName { get; }
 
+    /// <summary>
+    ///     False when a folder was picked but Android no longer lets the app read it. Choosing the
+    ///     same folder again restores access to the books that are already in the library.
+    /// </summary>
+    bool HasFolderAccess { get; }
+
     /// <summary>Lets the listener pick the folder. False when they cancelled.</summary>
     Task<bool> PickFolderAsync();
 

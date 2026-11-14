@@ -52,6 +52,9 @@ public partial class LibraryPage : ContentPage
         base.OnDisappearing();
     }
 
+    private string NoAccessMessage =>
+        $"Audibly can no longer read the folder \"{_importer.FolderName}\". Tap Folder and choose it again; your audiobooks and positions are kept.";
+
     private async Task LoadAsync()
     {
         try
@@ -65,6 +68,7 @@ public partial class LibraryPage : ContentPage
                 .ToList());
             _books.Clear();
             foreach (var item in items) _books.Add(item);
+            if (!_importer.HasFolderAccess) ShowStatus(NoAccessMessage);
         }
         catch (Exception e)
         {
@@ -97,6 +101,12 @@ public partial class LibraryPage : ContentPage
         if (_importer.FolderName == null)
         {
             ShowStatus("Choose a folder first.");
+            return;
+        }
+
+        if (!_importer.HasFolderAccess)
+        {
+            ShowStatus(NoAccessMessage);
             return;
         }
 
@@ -144,7 +154,8 @@ public partial class LibraryPage : ContentPage
         {
             // Android 13 and later only show the playback notification with this permission
             await Permissions.RequestAsync<Permissions.PostNotifications>();
-            if (_playback.Book?.Id != item.Book.Id) await _playback.OpenAsync(item.Book, true);
+            // opening only loads the book; it starts when the listener presses Play
+            if (_playback.Book?.Id != item.Book.Id) await _playback.OpenAsync(item.Book, false);
             await Shell.Current.GoToAsync(nameof(PlayerPage));
         }
         catch (Exception exception)
@@ -169,7 +180,8 @@ public partial class LibraryPage : ContentPage
         if (book == null) return;
         MiniTitle.Text = book.Title;
         MiniChapter.Text = _playback.CurrentChapter?.Title ?? string.Empty;
-        MiniPlayPause.Text = _playback.WantsToPlay ? "Pause" : "Play";
+        MiniPlayPauseIcon.Data = _playback.WantsToPlay ? PlayerIcons.Pause : PlayerIcons.Play;
+        SemanticProperties.SetDescription(MiniPlayPause, _playback.WantsToPlay ? "Pause" : "Play");
     }
 
     private void ShowFailure(string message) => ShowStatus("Playback failed: " + message);

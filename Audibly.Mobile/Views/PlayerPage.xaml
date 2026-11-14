@@ -62,12 +62,35 @@
                     TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
             </Grid>
 
-            <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="6">
-                <Button AutomationId="PreviousChapterButton" Clicked="PreviousChapter_Clicked" SemanticProperties.Description="Previous chapter" Text="|◀" />
-                <Button AutomationId="BackButton" Clicked="Back_Clicked" Grid.Column="1" SemanticProperties.Description="Back 10 seconds" Text="−10" />
-                <Button x:Name="PlayPauseButton" AutomationId="PlayPauseButton" Clicked="PlayPause_Clicked" Grid.Column="2" Text="Play" />
-                <Button AutomationId="ForwardButton" Clicked="Forward_Clicked" Grid.Column="3" SemanticProperties.Description="Forward 30 seconds" Text="+30" />
-                <Button AutomationId="NextChapterButton" Clicked="NextChapter_Clicked" Grid.Column="4" SemanticProperties.Description="Next chapter" Text="▶|" />
+            <Grid ColumnDefinitions="*,*,Auto,*,*" ColumnSpacing="6">
+                <Button AutomationId="PreviousChapterButton" Clicked="PreviousChapter_Clicked" SemanticProperties.Description="Previous chapter" Text="|◀" VerticalOptions="Center" />
+                <Button AutomationId="BackButton" Clicked="Back_Clicked" Grid.Column="1" SemanticProperties.Description="Back 10 seconds" Text="−10" VerticalOptions="Center" />
+                <!--  the main control: a large round button with the play or pause symbol  -->
+                <Border
+                    x:Name="PlayPauseButton"
+                    AutomationId="PlayPauseButton"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    Grid.Column="2"
+                    HeightRequest="84"
+                    Margin="8,0"
+                    SemanticProperties.Description="Play"
+                    StrokeShape="Ellipse"
+                    StrokeThickness="0"
+                    WidthRequest="84">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="PlayPause_Clicked" />
+                    </Border.GestureRecognizers>
+                    <Path
+                        x:Name="PlayPauseIcon"
+                        Aspect="Uniform"
+                        Fill="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                        HeightRequest="34"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        WidthRequest="34" />
+                </Border>
+                <Button AutomationId="ForwardButton" Clicked="Forward_Clicked" Grid.Column="3" SemanticProperties.Description="Forward 30 seconds" Text="+30" VerticalOptions="Center" />
+                <Button AutomationId="NextChapterButton" Clicked="NextChapter_Clicked" Grid.Column="4" SemanticProperties.Description="Next chapter" Text="▶|" VerticalOptions="Center" />
             </Grid>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="6">

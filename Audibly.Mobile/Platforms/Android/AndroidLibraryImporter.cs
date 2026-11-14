@@ -23,6 +23,24 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
 
     public string? FolderName => Preferences.Default.Get<string?>(FolderNameKey, null);
 
+    public bool HasFolderAccess
+    {
+        get
+        {
+            var stored = Preferences.Default.Get<string?>(FolderKey, null);
+            if (stored == null) return true;
+            try
+            {
+                return _context.ContentResolver!.PersistedUriPermissions
+                    .Any(permission => permission.IsReadPermission && permission.Uri?.ToString() == stored);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+    }
+
     public async Task<bool> PickFolderAsync()
     {
         var activity = Platform.CurrentActivity;

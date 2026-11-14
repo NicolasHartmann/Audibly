@@ -106,13 +106,28 @@
                         LineBreakMode="TailTruncation"
                         TextColor="{StaticResource Gray500}" />
                 </VerticalStackLayout>
-                <Button
+                <Border
                     x:Name="MiniPlayPause"
                     AutomationId="MiniPlayPause"
-                    Clicked="MiniPlayPause_Clicked"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                     Grid.Column="1"
-                    Text="Play"
-                    WidthRequest="88" />
+                    HeightRequest="52"
+                    SemanticProperties.Description="Play"
+                    StrokeShape="Ellipse"
+                    StrokeThickness="0"
+                    WidthRequest="52">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="MiniPlayPause_Clicked" />
+                    </Border.GestureRecognizers>
+                    <Path
+                        x:Name="MiniPlayPauseIcon"
+                        Aspect="Uniform"
+                        Fill="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                        HeightRequest="22"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        WidthRequest="22" />
+                </Border>
             </Grid>
         </Border>
 

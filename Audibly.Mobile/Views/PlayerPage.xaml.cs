@@ -67,7 +67,8 @@ public partial class PlayerPage : ContentPage
         }
 
         ChapterButton.Text = _playback.CurrentChapter?.Title ?? string.Empty;
-        PlayPauseButton.Text = _playback.WantsToPlay ? "Pause" : "Play";
+        PlayPauseIcon.Data = _playback.WantsToPlay ? PlayerIcons.Pause : PlayerIcons.Play;
+        SemanticProperties.SetDescription(PlayPauseButton, _playback.WantsToPlay ? "Pause" : "Play");
         SpeedButton.Text = "Speed " + PlaybackSpeedPresets.Format(book.PlaybackSpeed);
         TimerButton.Text = _playback.SleepTimerEnd is { } end
             ? "Sleep in " + Math.Max(1, (int)Math.Ceiling((end - DateTime.Now).TotalMinutes)) + " min"
