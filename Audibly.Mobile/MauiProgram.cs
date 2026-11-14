@@ -17,6 +17,9 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddSingleton(_ => new AppData(FileSystem.AppDataDirectory));
+		builder.Services.AddSingleton<IPlaybackService, AndroidPlaybackService>();
+		builder.Services.AddSingleton<ILibraryImporter, AndroidLibraryImporter>();
+		builder.Services.AddSingleton<PlaybackCoordinator>();
 		builder.Services.AddTransient<MainPage>();
 
 #if DEBUG

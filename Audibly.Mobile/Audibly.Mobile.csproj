@@ -34,6 +34,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="Xamarin.AndroidX.DocumentFile" Version="1.1.0.4" />
 		<PackageReference Include="Xamarin.AndroidX.Media3.ExoPlayer" Version="1.11.1" />
 		<PackageReference Include="Xamarin.AndroidX.Media3.Session" Version="1.11.1" />
 		<!-- Media3 pulls AndroidX Core 1.19, which contains the classes of the older Core.Ktx that MAUI
