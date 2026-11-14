@@ -531,6 +531,7 @@ public class PlayerViewModel : BindableBase, IDisposable
         }
 
         AudioPlayer.Close();
+        App.ListeningStats.OnInterrupted();
         _pendingAutoPlay = false;
 
         await _dispatcherQueue.EnqueueAsync(async () =>
@@ -760,6 +761,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             case MediaPlaybackState.Paused:
                 _dispatcherQueue.TryEnqueue(() =>
                 {
+                    App.ListeningStats.OnInterrupted();
                     if (PlayPauseIcon == Symbol.Play) return;
                     PlayPauseIcon = Symbol.Play;
                 });
@@ -799,7 +801,18 @@ public class PlayerViewModel : BindableBase, IDisposable
                 }
             }
 
-            if (IsUserSeeking) return;
+            if (IsUserSeeking)
+            {
+                App.ListeningStats.OnInterrupted();
+                return;
+            }
+
+            // statistics only count steady playback; a paused player that moves is a seek
+            if (MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
+                App.ListeningStats.OnPosition(audiobook.Id, audiobook.CurrentSourceFileIndex, position.TotalSeconds,
+                    PlaybackSpeed);
+            else
+                App.ListeningStats.OnInterrupted();
 
             ChapterPositionMs = (int)Math.Max(0, position.TotalMilliseconds - audiobook.CurrentChapter.StartTime);
             audiobook.CurrentTimeMs = (int)position.TotalMilliseconds;
@@ -808,7 +821,9 @@ public class PlayerViewModel : BindableBase, IDisposable
             for (var i = 0; i < audiobook.CurrentSourceFileIndex; i++)
                 elapsed += audiobook.SourcePaths[i].Duration;
             audiobook.Progress = Math.Ceiling(elapsed / audiobook.Duration * 100);
+            var wasCompleted = audiobook.IsCompleted;
             audiobook.IsCompleted = audiobook.Progress >= 99.9;
+            if (!wasCompleted && audiobook.IsCompleted) App.ListeningStats.OnCompleted(audiobook.Id);
             await audiobook.SaveAsync();
         });
     }
