@@ -35,7 +35,6 @@ public sealed partial class NewMiniPlayerPage : Page
 {
     private readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
     private CancellationTokenSource? _readingLoad;
-    private readonly DispatcherTimer _readingTimer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private readonly ReadAlongStore _readingStore = new(ApplicationData.Current.LocalFolder.Path);
     private AlignmentMap? _readingMap;
     private Window? _miniWindow;
@@ -52,7 +51,6 @@ public sealed partial class NewMiniPlayerPage : Page
         MiniReadAlongToggle.IsChecked = ApplicationData.Current.LocalSettings.Values["MiniReadAlongEnabled"] is not false;
         _captionFontSize = ReadAlongAppearanceSettings.Current.MiniFontSize;
         MiniPassage.ReadingFontSize = _captionFontSize;
-        _readingTimer.Tick += (_, _) => UpdateCaption();
         Loaded += ReadingLoaded;
         Unloaded += ReadingUnloaded;
         KeyDown += NewMiniPlayerPage_KeyDown;
@@ -100,14 +98,14 @@ public sealed partial class NewMiniPlayerPage : Page
         PlayerViewModel.PropertyChanged += ReadingPlayerChanged;
         ReadAlongAppearanceSettings.Changed += ReadingAppearanceChanged;
         ApplyReadingAppearance();
-        _readingTimer.Start();
+        CompositionTarget.Rendering += ReadingFrame;
         await LoadReadingAsync();
     }
     private void ReadingUnloaded(object sender, RoutedEventArgs e)
     {
         PlayerViewModel.PropertyChanged -= ReadingPlayerChanged;
         ReadAlongAppearanceSettings.Changed -= ReadingAppearanceChanged;
-        _readingTimer.Stop(); _readingLoad?.Cancel();
+        CompositionTarget.Rendering -= ReadingFrame; _readingLoad?.Cancel();
     }
     private async void ReadingPlayerChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -178,6 +176,9 @@ public sealed partial class NewMiniPlayerPage : Page
             ShowReadingHint("Open Read Along in the main player to check this book's saved alignment.", true);
         }
     }
+    // Follow the narration once per rendered frame: a 50 ms timer falls behind at high
+    // playback speeds and the marker then skips words.
+    private void ReadingFrame(object? sender, object e) => UpdateCaption();
     private void UpdateCaption()
     {
         if (_miniWindow?.AppWindow.IsVisible == false) return;

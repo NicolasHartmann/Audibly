@@ -21,7 +21,7 @@ namespace Audibly.App.UserControls;
 public sealed partial class ReadAlongPanel : UserControl
 {
     private readonly ReadAlongStore _store = new(ApplicationData.Current.LocalFolder.Path);
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(50) };
+    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(250) }; // processing clock only
     private CancellationTokenSource? _operation;
     private AlignmentMap? _map;
     private BookAssociation? _association;
@@ -42,7 +42,7 @@ public sealed partial class ReadAlongPanel : UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded; Unloaded += OnUnloaded;
-        _timer.Tick += (_, _) => { UpdatePosition(); UpdateElapsed(); };
+        _timer.Tick += (_, _) => UpdateElapsed();
         Passages.AddHandler(PointerWheelChangedEvent, new PointerEventHandler((_, _) => StopFollowing()), true);
         Passages.AddHandler(PointerPressedEvent, new PointerEventHandler((_, _) => StopFollowing()), true);
         Passages.AddHandler(KeyDownEvent, new KeyEventHandler((_, _) => StopFollowing()), true);
@@ -53,12 +53,17 @@ public sealed partial class ReadAlongPanel : UserControl
         App.PlayerViewModel.PropertyChanged += PlayerChanged;
         _scroll = FindChild<ScrollViewer>(Passages);
         if (_scroll is not null) _scroll.DirectManipulationStarted += Scroll_ManipulationStarted;
+        CompositionTarget.Rendering += OnFrame;
         _timer.Start(); await LoadBookAsync();
     }
+    // Follow the narration once per rendered frame: a 50 ms timer falls behind at high
+    // playback speeds and the marker then skips words.
+    private void OnFrame(object? sender, object e) => UpdatePosition();
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         App.PlayerViewModel.PropertyChanged -= PlayerChanged;
         if (_scroll is not null) _scroll.DirectManipulationStarted -= Scroll_ManipulationStarted;
+        CompositionTarget.Rendering -= OnFrame;
         _timer.Stop(); _operation?.Cancel();
     }
     private void Scroll_ManipulationStarted(object? sender, object e) => StopFollowing();

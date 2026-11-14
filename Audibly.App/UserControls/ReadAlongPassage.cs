@@ -75,8 +75,14 @@ public sealed class ReadAlongPassage : UserControl
     public void Highlight(Cue? cue)
     {
         _active = cue;
+        // Called for every visible row on each spoken word: rows that neither had nor get the
+        // highlight must not be invalidated, or the text layout work makes the marker skip words.
+        if (cue is null || Data is null || !Data.Cues.Contains(cue))
+        {
+            if (_text.TextHighlighters.Count > 0) _text.TextHighlighters.Clear();
+            return;
+        }
         _text.TextHighlighters.Clear();
-        if (cue is null || Data is null || !Data.Cues.Contains(cue)) return;
         var highlighter = new TextHighlighter
         {
             Background = new SolidColorBrush(ReadAlongAppearanceSettings.Color(ReadAlongAppearanceSettings.Current.HighlightColor)),
