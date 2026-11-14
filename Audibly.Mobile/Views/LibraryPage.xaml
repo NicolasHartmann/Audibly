@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Audibly.Mobile.Views"
+             x:Class="Audibly.Mobile.Views.LibraryPage"
+             x:DataType="views:LibraryPage"
+             Title="Library">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem AutomationId="RescanButton" Clicked="Rescan_Clicked" Text="Rescan" />
+        <ToolbarItem AutomationId="FolderButton" Clicked="Folder_Clicked" Text="Folder" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Label
+            x:Name="StatusLabel"
+            AutomationId="StatusLabel"
+            FontSize="13"
+            IsVisible="False"
+            Margin="16,8"
+            TextColor="{StaticResource Gray500}" />
+
+        <CollectionView
+            x:Name="BookList"
+            AutomationId="BookList"
+            Grid.Row="1"
+            Margin="8,0"
+            SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout HorizontalItemSpacing="8" Orientation="Vertical" Span="2" VerticalItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+                    <Label
+                        FontSize="20"
+                        HorizontalTextAlignment="Center"
+                        Text="No audiobooks yet" />
+                    <Label
+                        HorizontalTextAlignment="Center"
+                        Text="Choose the folder on your phone that holds your audiobooks. A subfolder with several files is one book."
+                        TextColor="{StaticResource Gray500}" />
+                    <Button AutomationId="ChooseFolderButton" Clicked="Folder_Clicked" Text="Choose folder" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="views:BookItem">
+                    <VerticalStackLayout Padding="4" Spacing="4">
+                        <VerticalStackLayout.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="Book_Tapped" />
+                        </VerticalStackLayout.GestureRecognizers>
+                        <Border
+                            BackgroundColor="{StaticResource Gray100}"
+                            HeightRequest="170"
+                            StrokeShape="RoundRectangle 8"
+                            StrokeThickness="0">
+                            <Grid>
+                                <Label
+                                    FontSize="40"
+                                    HorizontalOptions="Center"
+                                    Text="{Binding Initial}"
+                                    TextColor="{StaticResource Gray400}"
+                                    VerticalOptions="Center" />
+                                <Image Aspect="AspectFill" Source="{Binding Cover}" />
+                            </Grid>
+                        </Border>
+                        <Label
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            LineBreakMode="TailTruncation"
+                            MaxLines="2"
+                            Text="{Binding Title}" />
+                        <Label
+                            FontSize="12"
+                            LineBreakMode="TailTruncation"
+                            Text="{Binding Subtitle}"
+                            TextColor="{StaticResource Gray500}" />
+                        <ProgressBar Progress="{Binding Progress}" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!--  the book that is playing; tap to open the player  -->
+        <Border
+            x:Name="MiniBar"
+            AutomationId="MiniBar"
+            Grid.Row="2"
+            IsVisible="False"
+            Padding="12,8"
+            StrokeThickness="0"
+            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="MiniBar_Tapped" />
+            </Border.GestureRecognizers>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                    <Label
+                        x:Name="MiniTitle"
+                        AutomationId="MiniTitle"
+                        FontAttributes="Bold"
+                        LineBreakMode="TailTruncation" />
+                    <Label
+                        x:Name="MiniChapter"
+                        FontSize="12"
+                        LineBreakMode="TailTruncation"
+                        TextColor="{StaticResource Gray500}" />
+                </VerticalStackLayout>
+                <Button
+                    x:Name="MiniPlayPause"
+                    AutomationId="MiniPlayPause"
+                    Clicked="MiniPlayPause_Clicked"
+                    Grid.Column="1"
+                    Text="Play"
+                    WidthRequest="88" />
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</ContentPage>

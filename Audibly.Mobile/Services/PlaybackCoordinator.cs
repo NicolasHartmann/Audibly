@@ -61,6 +61,22 @@ public sealed class PlaybackCoordinator
 
     public double BookDurationMs => (Book?.Duration ?? 0) * 1000.0;
 
+    /// <summary>Position inside the current chapter, in audio milliseconds.</summary>
+    public double ChapterPositionMs => CurrentChapter is { } chapter ? Math.Max(0, CurrentFileMs - chapter.StartTime) : 0;
+
+    public double ChapterDurationMs => CurrentChapter is { } chapter && chapter.EndTime > chapter.StartTime
+        ? chapter.EndTime - chapter.StartTime
+        : 0;
+
+    /// <summary>When the sleep timer pauses playback, or null when it is off.</summary>
+    public DateTime? SleepTimerEnd { get; private set; }
+
+    public void SetSleepTimer(TimeSpan? duration)
+    {
+        SleepTimerEnd = duration is { } time ? DateTime.Now + time : null;
+        Changed?.Invoke();
+    }
+
     public async Task OpenAsync(Audiobook book, bool play)
     {
         if (Book != null && Book.Id != book.Id)
@@ -180,6 +196,12 @@ public sealed class PlaybackCoordinator
 
         ReadPosition();
         _stats.OnPosition(book.Id, book.CurrentSourceFileIndex, CurrentFileMs / 1000, book.PlaybackSpeed);
+
+        if (SleepTimerEnd is { } end && DateTime.Now >= end)
+        {
+            SleepTimerEnd = null;
+            _player.Pause();
+        }
 
         var now = DateTime.UtcNow;
         if (now - _lastSave >= SaveInterval) _ = SaveAsync();

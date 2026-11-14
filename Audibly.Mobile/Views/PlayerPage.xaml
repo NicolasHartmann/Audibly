@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Audibly.Mobile.Views.PlayerPage"
+             Title="Now playing">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24,16" Spacing="14">
+
+            <Border
+                BackgroundColor="{StaticResource Gray100}"
+                HeightRequest="280"
+                HorizontalOptions="Center"
+                StrokeShape="RoundRectangle 12"
+                StrokeThickness="0"
+                WidthRequest="280">
+                <Image x:Name="CoverImage" Aspect="AspectFill" />
+            </Border>
+
+            <Label
+                x:Name="TitleLabel"
+                AutomationId="PlayerTitle"
+                FontAttributes="Bold"
+                FontSize="20"
+                HorizontalTextAlignment="Center"
+                LineBreakMode="TailTruncation"
+                MaxLines="2" />
+            <Label
+                x:Name="AuthorLabel"
+                HorizontalTextAlignment="Center"
+                TextColor="{StaticResource Gray500}" />
+
+            <Button
+                x:Name="ChapterButton"
+                AutomationId="ChapterButton"
+                BackgroundColor="Transparent"
+                Clicked="Chapter_Clicked"
+                LineBreakMode="TailTruncation"
+                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+
+            <Slider
+                x:Name="ProgressSlider"
+                AutomationId="ProgressSlider"
+                DragCompleted="Slider_DragCompleted"
+                DragStarted="Slider_DragStarted"
+                Maximum="1"
+                Minimum="0" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Label
+                    x:Name="ElapsedLabel"
+                    AutomationId="ElapsedLabel"
+                    VerticalOptions="Center" />
+                <!--  tapping the end time switches between total, time remaining and percent  -->
+                <Button
+                    x:Name="EndButton"
+                    AutomationId="EndButton"
+                    BackgroundColor="Transparent"
+                    Clicked="End_Clicked"
+                    Grid.Column="1"
+                    Padding="0"
+                    SemanticProperties.Description="Switch time display"
+                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="6">
+                <Button AutomationId="PreviousChapterButton" Clicked="PreviousChapter_Clicked" SemanticProperties.Description="Previous chapter" Text="|◀" />
+                <Button AutomationId="BackButton" Clicked="Back_Clicked" Grid.Column="1" SemanticProperties.Description="Back 10 seconds" Text="−10" />
+                <Button x:Name="PlayPauseButton" AutomationId="PlayPauseButton" Clicked="PlayPause_Clicked" Grid.Column="2" Text="Play" />
+                <Button AutomationId="ForwardButton" Clicked="Forward_Clicked" Grid.Column="3" SemanticProperties.Description="Forward 30 seconds" Text="+30" />
+                <Button AutomationId="NextChapterButton" Clicked="NextChapter_Clicked" Grid.Column="4" SemanticProperties.Description="Next chapter" Text="▶|" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                <Button x:Name="SpeedButton" AutomationId="SpeedButton" Clicked="Speed_Clicked" />
+                <Button x:Name="TimerButton" AutomationId="TimerButton" Clicked="Timer_Clicked" Grid.Column="1" Text="Sleep timer" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

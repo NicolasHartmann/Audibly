@@ -1,4 +1,4 @@
-﻿using Audibly.Mobile.Services;
+using Audibly.Mobile.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Audibly.Mobile;
@@ -20,7 +20,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IPlaybackService, AndroidPlaybackService>();
 		builder.Services.AddSingleton<ILibraryImporter, AndroidLibraryImporter>();
 		builder.Services.AddSingleton<PlaybackCoordinator>();
-		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<Views.LibraryPage>();
+		builder.Services.AddTransient<Views.PlayerPage>();
+		builder.Services.AddTransient<Views.SettingsPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

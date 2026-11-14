@@ -3,12 +3,18 @@
     x:Class="Audibly.Mobile.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Audibly.Mobile"
-    Title="Audibly.Mobile">
+    xmlns:views="clr-namespace:Audibly.Mobile.Views"
+    Title="Audibly">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent
+            Title="Library"
+            ContentTemplate="{DataTemplate views:LibraryPage}"
+            Route="LibraryPage" />
+        <ShellContent
+            Title="Settings"
+            ContentTemplate="{DataTemplate views:SettingsPage}"
+            Route="SettingsPage" />
+    </TabBar>
 
 </Shell>
