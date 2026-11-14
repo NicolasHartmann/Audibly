@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.ReadAlong", "Audibl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.ReadAlong.Tests", "Audibly.ReadAlong.Tests\Audibly.ReadAlong.Tests.csproj", "{C675DF15-D77E-47AE-B6EA-0631F8B695FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.Stats", "Audibly.Stats\Audibly.Stats.csproj", "{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audibly.Stats.Tests", "Audibly.Stats.Tests\Audibly.Stats.Tests.csproj", "{1EEE24BB-C58C-48C5-8153-68132FEEC019}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +135,38 @@ Global
 		{C675DF15-D77E-47AE-B6EA-0631F8B695FA}.Release|x64.Build.0 = Release|Any CPU
 		{C675DF15-D77E-47AE-B6EA-0631F8B695FA}.Release|x86.ActiveCfg = Release|Any CPU
 		{C675DF15-D77E-47AE-B6EA-0631F8B695FA}.Release|x86.Build.0 = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|arm64.Build.0 = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|x64.Build.0 = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Debug|x86.Build.0 = Debug|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|arm64.ActiveCfg = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|arm64.Build.0 = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|x64.ActiveCfg = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|x64.Build.0 = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|x86.ActiveCfg = Release|Any CPU
+		{3D308FD0-C226-4D47-9F8B-F23D9F392FD2}.Release|x86.Build.0 = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|arm64.Build.0 = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|x64.Build.0 = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Debug|x86.Build.0 = Debug|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|arm64.ActiveCfg = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|arm64.Build.0 = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x64.ActiveCfg = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x64.Build.0 = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x86.ActiveCfg = Release|Any CPU
+		{1EEE24BB-C58C-48C5-8153-68132FEEC019}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
