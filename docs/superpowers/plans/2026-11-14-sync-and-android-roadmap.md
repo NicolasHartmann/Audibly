@@ -124,10 +124,22 @@ Die Android-App ist deutlich mehr als ein Beitrag zu rstewa/Audibly. Vorschlag: 
 
 ---
 
-## Entscheidungen, die bei dir liegen
+## Entschieden am 14.11.2026
 
-1. **Hörbuchdateien auf dem Handy:** kopierst du sie aufs Handy (Vorschlag für den Anfang), oder sollen sie aus OneDrive geladen werden?
-2. **Technik für Android:** .NET MAUI wie empfohlen?
-3. **Abgleich auf dem Handy:** erst der Weg ohne Anmeldung, und nur wenn er sich als unzuverlässig erweist die Microsoft-Anmeldung?
-4. **Rückwärtssprung:** nachfragen, wenn das andere Gerät weiter vorn ist (Vorschlag), oder immer automatisch übernehmen?
-5. **Umfang der ersten Android-Version:** Stufen 1 bis 3, also Abspielen, Bibliothek und Abgleich?
+1. **Hörbuchdateien auf dem Handy:** Der Nutzer kopiert sie selbst aufs Handy. Laden aus OneDrive ist nicht Teil der ersten Version.
+2. **Technik für Android:** .NET MAUI.
+3. **Abgleich auf dem Handy:** zuerst der Weg ohne Anmeldung über die Android-Dateiauswahl; die Microsoft-Anmeldung nur, wenn sich das als unzuverlässig erweist.
+4. **Anderes Gerät ist weiter vorn:** erst einmal nachfragen, nicht automatisch springen.
+5. **Erste Android-Version:** nur Abspielen und Bibliothek (Stufen 1 und 2). Der Abgleich kommt danach.
+
+## Stand der Werkzeuge (geprüft am 14.11.2026)
+
+- .NET MAUI 10 wird laut Microsoft bis zum 11.05.2027 unterstützt. Die App startet auf .NET 10; der Wechsel auf .NET 11 ist vor diesem Datum einzuplanen.
+- Ab .NET 11 ist Android 7 (API 24) die älteste unterstützte Android-Version.
+- Wiedergabe im Hintergrund braucht auf Android einen eigenen Dienst mit Mediensitzung (Media3 `MediaSessionService`, Berechtigung `FOREGROUND_SERVICE_MEDIA_PLAYBACK`). Ob die fertige MAUI-Komponente `MediaElement` das abdeckt, ließ sich nicht belegen. Der Plan geht darum von einem eigenen Android-Dienst im MAUI-Projekt aus; das ist der erste Punkt, den Stufe 1 mit einem kleinen Versuch klärt.
+
+Quellen: https://dotnet.microsoft.com/en-us/platform/support/policy/maui, https://learn.microsoft.com/en-us/dotnet/maui/whats-new/dotnet-10, https://developer.android.com/media/media3/session/background-playback
+
+## Offen: Reihenfolge
+
+Mit Entscheidung 5 hat die erste Android-Version keinen Abgleich. Der Abgleich allein auf Windows nützt nur zwischen zwei Windows-Geräten. Darum ist neu zu entscheiden, was zuerst gebaut wird: die Android-App (Abspielen und Bibliothek) oder der Abgleich auf Windows.
