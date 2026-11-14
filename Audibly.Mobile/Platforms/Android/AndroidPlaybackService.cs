@@ -11,7 +11,8 @@ namespace Audibly.Mobile;
 /// <summary>Talks to <see cref="PlaybackService" /> through a Media3 controller.</summary>
 public sealed class AndroidPlaybackService : Java.Lang.Object, IPlaybackService, IPlayerListener
 {
-    // Player.STATE_ENDED in Media3; the binding does not expose the constant under a usable name
+    // Player.STATE_IDLE and STATE_ENDED in Media3; the binding does not expose them under usable names
+    private const int StateIdle = 1;
     private const int StateEnded = 4;
 
     private readonly Context _context = Android.App.Application.Context;
@@ -19,6 +20,8 @@ public sealed class AndroidPlaybackService : Java.Lang.Object, IPlaybackService,
     private Task<MediaController>? _connecting;
 
     public bool IsPlaying => _controller?.IsPlaying ?? false;
+    public bool PlayWhenReady => _controller?.PlayWhenReady ?? false;
+    public bool HasEnded => _controller?.PlaybackState == StateEnded;
     public int SourceIndex => _controller?.CurrentMediaItemIndex ?? 0;
     public double PositionMs => _controller?.CurrentPosition ?? 0;
 
@@ -53,7 +56,13 @@ public sealed class AndroidPlaybackService : Java.Lang.Object, IPlaybackService,
         if (play) controller.Play();
     }
 
-    public void Play() => _controller?.Play();
+    public void Play()
+    {
+        if (_controller is not { } controller) return;
+        // after a failed file the player is idle and ignores Play until it is prepared again
+        if (controller.PlaybackState == StateIdle) controller.Prepare();
+        controller.Play();
+    }
     public void Pause() => _controller?.Pause();
     public void Seek(int sourceIndex, double positionMs) =>
         _controller?.SeekTo(sourceIndex, (long)System.Math.Max(0, positionMs));

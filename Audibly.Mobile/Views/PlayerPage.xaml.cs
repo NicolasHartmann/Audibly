@@ -25,6 +25,7 @@ public partial class PlayerPage : ContentPage
     {
         base.OnAppearing();
         _playback.Changed += Update;
+        _playback.Failed += ShowFailure;
         _shownBook = null;
         Update();
     }
@@ -32,7 +33,22 @@ public partial class PlayerPage : ContentPage
     protected override void OnDisappearing()
     {
         _playback.Changed -= Update;
+        _playback.Failed -= ShowFailure;
         base.OnDisappearing();
+    }
+
+    private async void ShowFailure(string message)
+    {
+        try
+        {
+            await DisplayAlertAsync("Playback failed",
+                "This part of the audiobook could not be played. The file may have been moved or deleted.\n\n" +
+                message, "OK");
+        }
+        catch (Exception)
+        {
+            // the page went away while the message was on its way
+        }
     }
 
     private void Update()
@@ -51,7 +67,7 @@ public partial class PlayerPage : ContentPage
         }
 
         ChapterButton.Text = _playback.CurrentChapter?.Title ?? string.Empty;
-        PlayPauseButton.Text = _playback.IsPlaying ? "Pause" : "Play";
+        PlayPauseButton.Text = _playback.WantsToPlay ? "Pause" : "Play";
         SpeedButton.Text = "Speed " + PlaybackSpeedPresets.Format(book.PlaybackSpeed);
         TimerButton.Text = _playback.SleepTimerEnd is { } end
             ? "Sleep in " + Math.Max(1, (int)Math.Ceiling((end - DateTime.Now).TotalMinutes)) + " min"

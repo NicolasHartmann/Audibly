@@ -39,6 +39,12 @@ public sealed class PlaybackCoordinator
     public Audiobook? Book { get; private set; }
     public bool IsPlaying => _player.IsPlaying;
 
+    /// <summary>
+    ///     True when the listener asked for playback, also while a phone call or another app holds it
+    ///     up. The play and pause buttons show this, so a tap always does what its label says.
+    /// </summary>
+    public bool WantsToPlay => _player.PlayWhenReady && !_player.HasEnded;
+
     /// <summary>Raised on the main thread whenever position, chapter, state or book changed.</summary>
     public event Action? Changed;
 
@@ -106,8 +112,15 @@ public sealed class PlaybackCoordinator
     public void PlayPause()
     {
         if (Book == null) return;
-        if (_player.IsPlaying) _player.Pause();
-        else _player.Play();
+        if (WantsToPlay)
+        {
+            _player.Pause();
+            return;
+        }
+
+        // Play on a finished book starts it over instead of doing nothing
+        if (_player.HasEnded) SeekTo(0, 0);
+        _player.Play();
     }
 
     public void Pause() => _player.Pause();

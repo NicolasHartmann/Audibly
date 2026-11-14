@@ -79,7 +79,9 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
                 }
 
                 book.CoverImagePath = book.ThumbnailPath = SaveCover(book.Id, imported.CoverImage);
-                if (await data.Repository.Audiobooks.UpsertAsync(book) != null) added++;
+                await data.Repository.Audiobooks.UpsertAsync(book);
+                // the repository silently keeps an existing book with the same title and author
+                if (await data.Repository.Audiobooks.GetByFilePathAsync(first) != null) added++;
                 else failed++;
             }
             catch (Exception e)

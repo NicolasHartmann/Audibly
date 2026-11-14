@@ -51,7 +51,8 @@ public static class AudiobookImporter
 
             if (index == 0)
             {
-                audiobook.Title = trackTitle;
+                // in a book of several files the track title is often just "Chapter 1"; the album names the book
+                audiobook.Title = files.Count > 1 && !string.IsNullOrWhiteSpace(track.Album) ? track.Album : trackTitle;
                 audiobook.Author = track.Artist ?? string.Empty;
                 audiobook.Composer = track.Composer ?? string.Empty;
                 audiobook.Description = Description(track);

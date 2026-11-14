@@ -29,8 +29,16 @@ public class PlaybackService : MediaSessionService
         var player = new ExoPlayerBuilder(this)
             .SetAudioAttributes(audio, true)!
             .SetHandleAudioBecomingNoisy(true)!
+            // without this the phone may put the CPU to sleep with the screen off and playback stalls
+            .SetWakeMode(C.WakeModeLocal)!
             .Build()!;
-        _session = new MediaSession.Builder(this, player).Build();
+
+        var builder = new MediaSession.Builder(this, player);
+        // tapping the playback notification opens the app
+        if (PackageManager?.GetLaunchIntentForPackage(PackageName!) is { } launch)
+            builder.SetSessionActivity(PendingIntent.GetActivity(this, 0, launch,
+                PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)!);
+        _session = builder.Build();
     }
 
     public override MediaSession? OnGetSession(MediaSession.ControllerInfo? controllerInfo) => _session;

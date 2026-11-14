@@ -23,7 +23,8 @@ public sealed class AudiobookImporterTests : IDisposable
     }
 
     /// <summary>Writes a silent WAV file and, when given, its tags.</summary>
-    private AudioFileSource Wav(string name, int seconds, string? title = null, string? artist = null)
+    private AudioFileSource Wav(string name, int seconds, string? title = null, string? artist = null,
+        string? album = null)
     {
         const int sampleRate = 8000;
         var path = Path.Combine(_folder, name);
@@ -45,11 +46,12 @@ public sealed class AudiobookImporterTests : IDisposable
             writer.Write(new byte[dataBytes]);
         }
 
-        if (title != null || artist != null)
+        if (title != null || artist != null || album != null)
         {
             var track = new Track(path);
             if (title != null) track.Title = title;
             if (artist != null) track.Artist = artist;
+            if (album != null) track.Album = album;
             Assert.True(track.Save());
         }
 
@@ -98,6 +100,24 @@ public sealed class AudiobookImporterTests : IDisposable
         Assert.Equal([0, 1, 2], book.Chapters.Select(chapter => chapter.ParentSourceFileIndex));
         Assert.Equal(3000u, book.Chapters[1].EndTime);
     }
+
+    [Fact]
+    public void ABookOfSeveralFilesIsNamedAfterItsAlbum()
+    {
+        var book = AudiobookImporter.Create(
+        [
+            Wav("01.wav", 2, "Chapter 1", "Author", "The Whole Book"),
+            Wav("02.wav", 2, "Chapter 2", "Author", "The Whole Book")
+        ]).Audiobook;
+
+        Assert.Equal("The Whole Book", book.Title);
+        Assert.Equal(["Chapter 1", "Chapter 2"], book.Chapters.Select(chapter => chapter.Title));
+    }
+
+    [Fact]
+    public void ASingleFileKeepsItsOwnTitleEvenWithAnAlbum() =>
+        Assert.Equal("The Title",
+            AudiobookImporter.Create([Wav("one.wav", 2, "The Title", "Author", "Some Series")]).Audiobook.Title);
 
     [Fact]
     public void AFileWithoutTagsUsesItsFileNameAsTitle()

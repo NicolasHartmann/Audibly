@@ -25,6 +25,7 @@ public partial class LibraryPage : ContentPage
     private readonly PlaybackCoordinator _playback;
     private readonly ObservableCollection<BookItem> _books = [];
     private bool _busy;
+    private bool _opening;
 
     public LibraryPage(AppData data, ILibraryImporter importer, PlaybackCoordinator playback)
     {
@@ -74,6 +75,8 @@ public partial class LibraryPage : ContentPage
     private async void Folder_Clicked(object? sender, EventArgs e)
     {
         if (_busy) return;
+        // set before the dialog opens, so a second tap cannot open a second dialog
+        _busy = true;
         try
         {
             if (await _importer.PickFolderAsync()) await ScanAsync();
@@ -81,6 +84,10 @@ public partial class LibraryPage : ContentPage
         catch (Exception exception)
         {
             ShowStatus("The folder could not be opened: " + exception.Message);
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 
@@ -130,6 +137,9 @@ public partial class LibraryPage : ContentPage
             return;
         }
 
+        // a double tap would open the player page twice
+        if (_opening) return;
+        _opening = true;
         try
         {
             // Android 13 and later only show the playback notification with this permission
@@ -140,6 +150,10 @@ public partial class LibraryPage : ContentPage
         catch (Exception exception)
         {
             ShowStatus("The audiobook could not be opened: " + exception.Message);
+        }
+        finally
+        {
+            _opening = false;
         }
     }
 
@@ -155,7 +169,7 @@ public partial class LibraryPage : ContentPage
         if (book == null) return;
         MiniTitle.Text = book.Title;
         MiniChapter.Text = _playback.CurrentChapter?.Title ?? string.Empty;
-        MiniPlayPause.Text = _playback.IsPlaying ? "Pause" : "Play";
+        MiniPlayPause.Text = _playback.WantsToPlay ? "Pause" : "Play";
     }
 
     private void ShowFailure(string message) => ShowStatus("Playback failed: " + message);

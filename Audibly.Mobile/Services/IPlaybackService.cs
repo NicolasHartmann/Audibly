@@ -9,7 +9,17 @@ public sealed record PlaybackItem(string Location, string Title, string Author, 
 /// </summary>
 public interface IPlaybackService
 {
+    /// <summary>True while audio is actually coming out.</summary>
     bool IsPlaying { get; }
+
+    /// <summary>
+    ///     True when the listener asked for playback, also while it is held up by a phone call,
+    ///     another app or buffering. Play and pause buttons follow this, not <see cref="IsPlaying" />.
+    /// </summary>
+    bool PlayWhenReady { get; }
+
+    /// <summary>True when the last file has played to its end.</summary>
+    bool HasEnded { get; }
     int SourceIndex { get; }
     double PositionMs { get; }
 
