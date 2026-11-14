@@ -70,6 +70,16 @@ Verify: `dotnet new maui` builds an APK and starts in the emulator.
 
 A throwaway MAUI app with a `MediaSessionService` hosting ExoPlayer that plays one bundled file, keeps playing with the screen off, shows the media notification and changes speed. Settles the Media3 binding packages and the service wiring before the real app is written. What it teaches goes into Task 7.
 
+**Tasks 4 and 5 done 2026-11-14.** Tools are in `D:\AndroidDev` (use `. D:\AndroidDev\env.ps1`): .NET SDK 10.0.404 with workload `maui-android`, OpenJDK 17, Android SDK (platform 36, build-tools 36.0.0, emulator, system image `android-35;google_apis;x86_64`), virtual phone `audibly`. What the spike in `D:\AndroidDev\probe` settled:
+
+- Packages `Xamarin.AndroidX.Media3.ExoPlayer` and `Xamarin.AndroidX.Media3.Session` 1.11.1 work on net10.0-android.
+- The service derives from `MediaSessionService` with `[Service(Exported = true, ForegroundServiceType = ForegroundService.TypeMediaPlayback)]` and `[IntentFilter(["androidx.media3.session.MediaSessionService"])]`; the player comes from `new ExoPlayerBuilder(context).Build()`, the session from `new MediaSession.Builder(context, player).Build()`.
+- The UI talks to it through `MediaController` (alias needed: `Android.Widget.MediaController` has the same name), built with `new MediaController.Builder(context, new SessionToken(context, componentName)).BuildAsync()`.
+- Manifest permissions: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `POST_NOTIFICATIONS`.
+- Measured on Android 15: speed 1.5 is applied, playback continues after leaving the app, the service runs in the foreground with the media notification that Media3 creates by itself.
+- The emulator runs without window and sound (`-no-window -no-audio`); state is read with `adb shell dumpsys media_session`, screens with `adb shell screencap`.
+- The machine's user-level NuGet config has no package sources; the repository's own `NuGet.Config` covers projects inside the repo.
+
 ### Task 6: App skeleton and data
 
 **Files:** Create `Audibly.Mobile/` (MAUI single project, Android only), `Audibly.Mobile.sln`. Database and `stats.db` in the app's private storage, `Audibly.Repository` migrations applied at start, shell with the three pages.
