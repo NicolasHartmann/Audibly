@@ -201,4 +201,35 @@ public static class UserSettings
         set => ApplicationData.Current.LocalSettings.Values["WatchedFolderTokens"] =
             JsonSerializer.Serialize(value);
     }
+
+    /// <summary>
+    ///     Whether the progress bar of the player covers the chapter or the whole title.
+    /// </summary>
+    public static PlayerProgressScope PlayerProgressScope
+    {
+        get => ReadEnum("PlayerProgressScope", PlayerProgressScope.Chapter);
+        set => ApplicationData.Current.LocalSettings.Values["PlayerProgressScope"] = (int)value;
+    }
+
+    /// <summary>
+    ///     What the player shows at the end of its progress bar.
+    /// </summary>
+    public static PlayerTimeDisplay PlayerTimeDisplay
+    {
+        get => ReadEnum("PlayerTimeDisplay", PlayerTimeDisplay.ElapsedAndTotal);
+        set => ApplicationData.Current.LocalSettings.Values["PlayerTimeDisplay"] = (int)value;
+    }
+
+    private static T ReadEnum<T>(string key, T fallback) where T : struct, Enum
+    {
+        try
+        {
+            return PlayerProgress.Parse(ApplicationData.Current.LocalSettings.Values[key], fallback);
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+            return fallback;
+        }
+    }
 }

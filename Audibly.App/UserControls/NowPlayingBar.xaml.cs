@@ -32,6 +32,11 @@ public sealed partial class NowPlayingBar : UserControl
     /// </summary>
     public PlayerViewModel PlayerViewModel => App.PlayerViewModel;
 
+    private void EndTime_OnClick(object sender, RoutedEventArgs e)
+    {
+        PlayerViewModel.CycleTimeDisplay();
+    }
+
     private void Slider_OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         _isPointerInteracting = true;

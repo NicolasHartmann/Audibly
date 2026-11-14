@@ -129,6 +129,36 @@
                     </toolkit:SettingsExpander.Items>
                 </toolkit:SettingsExpander>
 
+                <!--  what the progress bar of the player shows  -->
+                <toolkit:SettingsExpander Description="Choose what the progress bar covers and how the time is shown" Header="Player">
+                    <toolkit:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE916;" />
+                    </toolkit:SettingsExpander.HeaderIcon>
+                    <toolkit:SettingsExpander.Items>
+                        <toolkit:SettingsCard Description="The part of the audiobook the progress bar covers" Header="Progress bar">
+                            <RadioButtons
+                                AutomationProperties.AutomationId="ProgressScopeChoice"
+                                MaxColumns="2"
+                                SelectionChanged="ProgressScope_SelectionChanged"
+                                x:Name="ProgressScopeChoice">
+                                <RadioButton Content="Chapter" />
+                                <RadioButton Content="Full title" />
+                            </RadioButtons>
+                        </toolkit:SettingsCard>
+                        <toolkit:SettingsCard Description="Shown at the end of the progress bar. Time remaining takes the playback speed into account." Header="Time display">
+                            <RadioButtons
+                                AutomationProperties.AutomationId="TimeDisplayChoice"
+                                MaxColumns="3"
+                                SelectionChanged="TimeDisplay_SelectionChanged"
+                                x:Name="TimeDisplayChoice">
+                                <RadioButton Content="Elapsed and total" />
+                                <RadioButton Content="Time remaining" />
+                                <RadioButton Content="Percent" />
+                            </RadioButtons>
+                        </toolkit:SettingsCard>
+                    </toolkit:SettingsExpander.Items>
+                </toolkit:SettingsExpander>
+
                 <!--  Library  -->
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Library" />
                 <toolkit:SettingsExpander

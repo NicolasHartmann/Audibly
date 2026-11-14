@@ -30,7 +30,7 @@
             Grid.Column="0"
             HorizontalAlignment="Center"
             Style="{StaticResource CaptionTextBlockStyle}"
-            Text="{x:Bind PlayerViewModel.ChapterPositionText, Mode=OneWay}"
+            Text="{x:Bind PlayerViewModel.ProgressElapsedText, Mode=OneWay}"
             VerticalAlignment="Bottom"
             x:Name="CurrentTimeTextBlock" />
 
@@ -38,21 +38,35 @@
             Grid.Column="1"
             HorizontalAlignment="Stretch"
             Margin="0,0,0,-4"
-            Maximum="{x:Bind PlayerViewModel.ChapterDurationMs, Mode=OneWay}"
+            Maximum="{x:Bind PlayerViewModel.ProgressMaximumMs, Mode=OneWay}"
             ValueChanged="Slider_OnValueChanged"
             ThumbToolTipValueConverter="{StaticResource ProgressSliderValueConverter}"
-            Value="{x:Bind PlayerViewModel.ChapterPositionMs, Mode=OneWay}"
+            Value="{x:Bind PlayerViewModel.ProgressValueMs, Mode=OneWay}"
             VerticalAlignment="Bottom"
             x:Name="ProgressSlider" />
 
-        <TextBlock
-            FontSize="20"
+        <!--  Tapping the end time switches between total, time remaining and percent.  -->
+        <!--  A button, so it also works with the keyboard and assistive tools.  -->
+        <Button
+            AutomationProperties.AutomationId="ProgressEndButton"
+            AutomationProperties.Name="Switch time display"
+            Background="Transparent"
+            BorderThickness="0"
+            Click="EndTime_OnClick"
             Grid.Column="2"
             HorizontalAlignment="Center"
-            Style="{StaticResource CaptionTextBlockStyle}"
-            Text="{x:Bind PlayerViewModel.ChapterDurationText, Mode=OneWay}"
-            VerticalAlignment="Bottom"
-            x:Name="RemainingTimeTextBlock" />
+            MinHeight="0"
+            MinWidth="0"
+            Padding="0"
+            ToolTipService.ToolTip="Click to switch between total, time remaining and percent"
+            VerticalAlignment="Bottom">
+            <TextBlock
+                AutomationProperties.AutomationId="ProgressEndText"
+                FontSize="20"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind PlayerViewModel.ProgressEndText, Mode=OneWay}"
+                x:Name="RemainingTimeTextBlock" />
+        </Button>
 
     </Grid>
 </UserControl>

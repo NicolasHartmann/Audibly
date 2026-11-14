@@ -185,6 +185,7 @@ public class PlayerViewModel : BindableBase, IDisposable
     {
         OnPropertyChanged(nameof(ChapterRemainingText));
         OnPropertyChanged(nameof(BookRemainingText));
+        NotifyProgressChanged();
     }
 
     private void NowPlaying_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -192,8 +193,89 @@ public class PlayerViewModel : BindableBase, IDisposable
         if (string.IsNullOrEmpty(e.PropertyName) ||
             e.PropertyName is nameof(AudiobookViewModel.CurrentTimeMs) or
                 nameof(AudiobookViewModel.CurrentSourceFileIndex) or nameof(AudiobookViewModel.Model))
+        {
             OnPropertyChanged(nameof(BookRemainingText));
+            NotifyProgressChanged();
+        }
     }
+
+    #region progress bar
+
+    private PlayerProgressScope _progressScope = UserSettings.PlayerProgressScope;
+    private PlayerTimeDisplay _timeDisplay = UserSettings.PlayerTimeDisplay;
+
+    /// <summary>
+    ///     Whether the progress bar covers the current chapter or the whole title.
+    /// </summary>
+    public PlayerProgressScope ProgressScope
+    {
+        get => _progressScope;
+        set
+        {
+            if (_progressScope == value) return;
+            _progressScope = value;
+            UserSettings.PlayerProgressScope = value;
+            OnPropertyChanged();
+            NotifyProgressChanged();
+        }
+    }
+
+    /// <summary>
+    ///     What is shown at the end of the progress bar: total, time remaining or percent.
+    /// </summary>
+    public PlayerTimeDisplay TimeDisplay
+    {
+        get => _timeDisplay;
+        set
+        {
+            if (_timeDisplay == value) return;
+            _timeDisplay = value;
+            UserSettings.PlayerTimeDisplay = value;
+            OnPropertyChanged();
+            NotifyProgressChanged();
+        }
+    }
+
+    public void CycleTimeDisplay() => TimeDisplay = PlayerProgress.Next(TimeDisplay);
+
+    private bool ProgressCoversBook => ProgressScope == PlayerProgressScope.Book && NowPlaying is
+        { SourcePaths.Count: > 0, Duration: > 0 };
+
+    /// <summary>
+    ///     Length of what the progress bar covers, in audio milliseconds.
+    /// </summary>
+    public double ProgressMaximumMs => ProgressCoversBook ? NowPlaying!.Duration * 1000.0 : ChapterDurationMs;
+
+    /// <summary>
+    ///     Position in what the progress bar covers, in audio milliseconds.
+    /// </summary>
+    public double ProgressValueMs
+    {
+        get
+        {
+            if (!ProgressCoversBook) return ChapterPositionMs;
+            var book = NowPlaying!;
+            return Math.Min(ProgressMaximumMs, PlayerProgress.BookPositionMs(
+                book.SourcePaths.Select(file => (double)file.Duration), book.CurrentSourceFileIndex,
+                book.CurrentTimeMs));
+        }
+    }
+
+    public string ProgressElapsedText => PlayerProgress.Elapsed(ProgressValueMs);
+
+    public string ProgressEndText =>
+        PlayerProgress.End(TimeDisplay, ProgressMaximumMs, ProgressValueMs, PlaybackSpeed);
+
+    private void NotifyProgressChanged()
+    {
+        // the maximum first: a slider clamps a value that is above its current maximum
+        OnPropertyChanged(nameof(ProgressMaximumMs));
+        OnPropertyChanged(nameof(ProgressValueMs));
+        OnPropertyChanged(nameof(ProgressElapsedText));
+        OnPropertyChanged(nameof(ProgressEndText));
+    }
+
+    #endregion
 
     /// <summary>
     ///     Gets or sets the chapter duration text.
@@ -224,6 +306,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             Set(ref _chapterPositionMs, value);
             ChapterPositionText = _chapterPositionMs.ToStr_ms();
             OnPropertyChanged(nameof(ChapterRemainingText));
+            NotifyProgressChanged();
         }
     }
 
@@ -238,6 +321,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             Set(ref _chapterDurationMs, value);
             ChapterDurationText = _chapterDurationMs.ToStr_ms();
             OnPropertyChanged(nameof(ChapterRemainingText));
+            NotifyProgressChanged();
         }
     }
 
@@ -639,16 +723,27 @@ public class PlayerViewModel : BindableBase, IDisposable
     }
 
     /// <summary>
-    ///     Seeks to the specified slider value within the current chapter.
+    ///     Seeks to the specified progress bar value: a position in the current chapter or, when the
+    ///     bar covers the whole title, a position in the book that may lie in another file.
     /// </summary>
     public async Task SeekToPositionAsync(double sliderValue)
     {
         if (NowPlaying?.CurrentChapter == null) return;
 
         IsUserSeeking = false;
-        CurrentPosition =
-            TimeSpan.FromMilliseconds(NowPlaying.CurrentChapter.StartTime + sliderValue);
-        await NowPlaying.SaveAsync();
+        var book = NowPlaying;
+        if (ProgressCoversBook)
+        {
+            var (sourceIndex, positionMs) = PlayerProgress.Locate(
+                book.SourcePaths.Select(file => (double)file.Duration).ToList(), sliderValue);
+            await SeekReadAlongAsync(sourceIndex, positionMs / 1000);
+        }
+        else
+        {
+            CurrentPosition = TimeSpan.FromMilliseconds(book.CurrentChapter.StartTime + sliderValue);
+        }
+
+        await book.SaveAsync();
     }
 
     #endregion

@@ -449,17 +449,17 @@
         </Button>
 
         <Slider
-            AutomationProperties.Name="Chapter progress"
+            AutomationProperties.Name="Playback progress"
             Canvas.ZIndex="0"
             Grid.Row="3"
             Height="15"
             HorizontalAlignment="Stretch"
-            Maximum="{x:Bind PlayerViewModel.ChapterDurationMs, Mode=OneWay}"
+            Maximum="{x:Bind PlayerViewModel.ProgressMaximumMs, Mode=OneWay}"
             MinHeight="0"
             VerticalAlignment="Center"
             ValueChanged="Slider_OnValueChanged"
             ThumbToolTipValueConverter="{StaticResource ProgressSliderValueConverter}"
-            Value="{x:Bind PlayerViewModel.ChapterPositionMs, Mode=OneWay}"
+            Value="{x:Bind PlayerViewModel.ProgressValueMs, Mode=OneWay}"
             x:Name="ProgressSlider">
             <Slider.Resources>
                 <x:Double x:Key="SliderHorizontalHeight">15</x:Double>

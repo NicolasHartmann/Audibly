@@ -50,6 +50,21 @@ public sealed partial class SettingsPage : Page
                 themeMode.SelectedIndex = 2;
                 break;
         }
+
+        ProgressScopeChoice.SelectedIndex = (int)App.PlayerViewModel.ProgressScope;
+        TimeDisplayChoice.SelectedIndex = (int)App.PlayerViewModel.TimeDisplay;
+    }
+
+    private void ProgressScope_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ProgressScopeChoice.SelectedIndex >= 0)
+            App.PlayerViewModel.ProgressScope = (PlayerProgressScope)ProgressScopeChoice.SelectedIndex;
+    }
+
+    private void TimeDisplay_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (TimeDisplayChoice.SelectedIndex >= 0)
+            App.PlayerViewModel.TimeDisplay = (PlayerTimeDisplay)TimeDisplayChoice.SelectedIndex;
     }
 
     private async void themeMode_SelectionChanged(object sender, RoutedEventArgs e)
