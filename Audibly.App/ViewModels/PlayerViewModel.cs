@@ -861,8 +861,10 @@ public class PlayerViewModel : BindableBase, IDisposable
         {
             if (_disposed || !ReferenceEquals(endedSource, MediaPlayer.Source) || AudioPlayer.IsOpening) return;
             PlayPauseIcon = Symbol.Play;
-            if (ReferenceEquals(endedSource, _sleepTimerStoppedSource) || TryCompleteChapterSleepTimer(sourceEnded: true))
-                return;
+            // the sleep timer paused playback at the end of this file, usually "end of chapter" in a
+            // book with one file per chapter
+            var stoppedByTimer = ReferenceEquals(endedSource, _sleepTimerStoppedSource) ||
+                                 TryCompleteChapterSleepTimer(sourceEnded: true);
             // check if there is a next source file
             if (NowPlaying == null || NowPlaying.CurrentSourceFileIndex >= NowPlaying.SourcePaths.Count - 1) return;
 
@@ -874,7 +876,9 @@ public class PlayerViewModel : BindableBase, IDisposable
 
             if (nextChapter == null) return;
 
-            _pendingAutoPlay = true;
+            // After the timer the next file is still opened, but paused: a file that has played to its
+            // end starts again from its beginning on Play, so staying on it would repeat the chapter.
+            _pendingAutoPlay = !stoppedByTimer;
 
             await OpenSourceFile(nextSourceFileIndex, nextChapter.Index);
         });

@@ -87,6 +87,23 @@ public sealed class PitchPreservingPlayerTests : IDisposable
         Assert.Equal(2, _player.Speed);
     }
 
+    // Root cause of "end of chapter" restarting the chapter: a file that played to its end starts
+    // again from its beginning on Play. The view model must open the next file instead.
+    [Fact]
+    public async Task PlayAfterTheEndStartsTheSameFileAgain()
+    {
+        var ended = false;
+        _player.MediaPlayer.MediaEnded += (_, _) => ended = true;
+        _player.Open(_file, TimeSpan.FromSeconds(11), true);
+        await Until(() => ended);
+        _player.Pause();
+
+        _player.Play();
+        await Until(() => _player.MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing);
+        await Until(() => _player.Position.TotalSeconds is > 0 and < 2);
+        _player.Pause();
+    }
+
     [Theory]
     [InlineData(".mp3")]
     [InlineData(".m4b")]
