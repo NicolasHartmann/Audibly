@@ -58,7 +58,8 @@ public sealed partial class StatsPage : Page
     {
         try
         {
-            _data = await App.ListeningStats.LoadAsync();
+            // with a sync folder: this device plus the others, counted under the local book where they share one
+            _data = await App.Sync.LoadStatsAsync();
             if (IsLoaded) Show();
         }
         catch (Exception e)

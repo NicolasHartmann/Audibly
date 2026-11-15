@@ -2,6 +2,8 @@ using System;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
+using Audibly.App.Services;
+using Audibly.Stats;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -47,6 +49,17 @@ public sealed partial class TrophiesPage : Page
         try
         {
             var trophies = await App.ListeningStats.LoadTrophiesAsync();
+            if (App.Sync.IsEnabled)
+            {
+                // values from all devices together; a tier this device already reached stays reached
+                var combined = TrophyCatalog.Evaluate(new TrophyInput(await App.Sync.LoadStatsAsync(),
+                    ListeningStatsService.LibraryCount()));
+                var own = trophies.ToDictionary(trophy => trophy.Definition.Id);
+                trophies = combined.Select(trophy => own.TryGetValue(trophy.Definition.Id, out var stored)
+                    ? trophy with { Value = Math.Max(trophy.Value, stored.Value), Tier = Math.Max(trophy.Tier, stored.Tier) }
+                    : trophy).ToList();
+            }
+
             if (!IsLoaded || reload != _reloads) return;
             Badges.ItemsSource = trophies;
             SummaryText.Text = string.Create(CultureInfo.InvariantCulture,

@@ -66,6 +66,48 @@ public static class DialogService
         return result;
     }
 
+    /// <summary>
+    ///     A question with two answers. True for the primary button, false for the close button or a
+    ///     dismissed dialog, and null when the dialog could not be shown at all, so that "not asked"
+    ///     is never mistaken for "no".
+    /// </summary>
+    internal static async Task<bool?> ShowChoiceDialogAsync(string title, string content,
+        string primaryButtonText, string closeButtonText)
+    {
+        var xamlRoot = GetXamlRoot();
+        if (xamlRoot == null) return null;
+
+        bool? choice = null;
+        try
+        {
+            await _dispatcherQueue.EnqueueAsync(async () =>
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = title,
+                    Content = new TextBlock { Text = content, TextWrapping = TextWrapping.Wrap },
+                    PrimaryButtonText = primaryButtonText,
+                    CloseButtonText = closeButtonText,
+                    // a key pressed just as the dialog appears must not pick the answer that changes something
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = App.Window.Content.XamlRoot,
+                    RequestedTheme = ThemeHelper.ActualTheme
+                };
+
+                // not ShowOneAtATimeAsync: it answers a failure to show with the same result as a closed dialog
+                var result = await DialogManager.OneAtATimeAsync(async () => await dialog.ShowAsync(), null, null);
+                choice = result == ContentDialogResult.Primary;
+            });
+        }
+        catch (Exception e)
+        {
+            App.ViewModel.LoggingService.LogError(e);
+            return null;
+        }
+
+        return choice;
+    }
+
     internal static async Task ShowErrorDialogAsync(string title, string content)
     {
         var xamlRoot = GetXamlRoot();

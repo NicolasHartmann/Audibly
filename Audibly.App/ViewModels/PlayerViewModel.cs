@@ -602,6 +602,9 @@ public class PlayerViewModel : BindableBase, IDisposable
             NowPlaying.IsNowPlaying = false;
 
             await NowPlaying.SaveAsync();
+
+            // the other devices learn where the book that is being left stands
+            _ = App.Sync.PushAsync(true);
         }
 
         AudioPlayer.Pause();
@@ -643,7 +646,9 @@ public class PlayerViewModel : BindableBase, IDisposable
             }
 
             NowPlaying.IsNowPlaying = true;
-            NowPlaying.DateLastPlayed = DateTime.Now;
+            // DateLastPlayed is not touched here: it says when the book was last listened to (see
+            // the position handler), and the sync compares it with the other devices. Opening a book
+            // is not listening, and the app opens the last book again every time it starts.
 
             ChapterComboSelectedIndex = NowPlaying.CurrentChapterIndex ?? 0;
             NowPlaying.CurrentChapterTitle = NowPlaying.Chapters[ChapterComboSelectedIndex].Title;
@@ -652,6 +657,61 @@ public class PlayerViewModel : BindableBase, IDisposable
         });
 
         OpenAudioSource(TimeSpan.FromMilliseconds(audiobook.CurrentTimeMs), false);
+
+        // not awaited: the book is open; the question may come a moment later
+        _ = OfferSyncedPositionAsync(audiobook);
+    }
+
+    /// <summary>
+    ///     Asks whether to continue where another device left this book. The position only changes
+    ///     when the listener chooses "Continue there"; the playback speed is left alone.
+    /// </summary>
+    private async Task OfferSyncedPositionAsync(AudiobookViewModel book)
+    {
+        try
+        {
+            var offer = await App.Sync.OfferForAsync(book.Id);
+            if (offer == null) return;
+
+            await _dispatcherQueue.EnqueueAsync(async () =>
+            {
+                bool? accepted = null;
+                // the last book is opened again while the app starts, when the window may not be able
+                // to show a dialog yet; try again for a while instead of dropping the question
+                for (var attempt = 0; attempt < 30 && accepted == null; attempt++)
+                {
+                    if (attempt > 0) await Task.Delay(1000);
+                    if (_disposed || !ReferenceEquals(NowPlaying, book)) return;
+                    // the listener went on listening here in the meantime; the offer is no longer the newer state
+                    if (book.DateLastPlayed?.ToUniversalTime() >= offer.UpdatedUtc.ToUniversalTime()) return;
+
+                    accepted = await DialogService.ShowChoiceDialogAsync("Continue where you left off?",
+                        $"On {offer.DeviceName} you were at {PlayerProgress.Elapsed(offer.PositionSeconds * 1000)} " +
+                        $"({SyncHost.When(offer.UpdatedUtc, DateTime.Now)}). Continue there?",
+                        "Continue there", "Stay here");
+                }
+
+                // not shown, or the app is closing: neither an answer nor a refusal, so it can be asked again
+                if (accepted == null || _disposed) return;
+                if (accepted == false)
+                {
+                    App.Sync.Decline(offer);
+                    return;
+                }
+
+                // another book was opened while the question was on screen
+                if (!ReferenceEquals(NowPlaying, book)) return;
+
+                var (sourceIndex, positionMs) = PlayerProgress.Locate(
+                    book.SourcePaths.Select(file => (double)file.Duration).ToList(), offer.PositionSeconds * 1000);
+                await SeekReadAlongAsync(sourceIndex, positionMs / 1000);
+                await book.SaveAsync();
+            });
+        }
+        catch (Exception e)
+        {
+            App.ViewModel.LoggingService.LogError(e);
+        }
     }
 
     public Task OpenSourceFile(int index, int chapterIndex) => OpenSourceFileAsync(index, chapterIndex, null);
@@ -863,6 +923,7 @@ public class PlayerViewModel : BindableBase, IDisposable
                 _dispatcherQueue.TryEnqueue(() =>
                 {
                     App.ListeningStats.OnInterrupted();
+                    _ = App.Sync.PushAsync(true);
                     if (PlayPauseIcon == Symbol.Play) return;
                     PlayPauseIcon = Symbol.Play;
                 });
@@ -927,6 +988,15 @@ public class PlayerViewModel : BindableBase, IDisposable
             audiobook.IsCompleted = audiobook.Progress >= 99.9;
             // only reaching the end while playing counts as finishing the book, not seeking there
             if (!wasCompleted && audiobook.IsCompleted && isPlaying) App.ListeningStats.OnCompleted(audiobook.Id);
+            if (isPlaying)
+            {
+                // the other devices compare this time with their own to tell which position is newer;
+                // a seek while paused leaves it alone
+                audiobook.DateLastPlayed = DateTime.Now;
+                // at most once a minute; pause, book change and exit write at once
+                _ = App.Sync.PushAsync(false);
+            }
+
             await audiobook.SaveAsync();
         });
     }

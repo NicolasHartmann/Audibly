@@ -159,6 +159,55 @@
                     </toolkit:SettingsExpander.Items>
                 </toolkit:SettingsExpander>
 
+                <!--  positions and listening time shared with the listener's other devices  -->
+                <toolkit:SettingsExpander Description="Continue on another device and count listening time across devices" Header="Sync">
+                    <toolkit:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE895;" />
+                    </toolkit:SettingsExpander.HeaderIcon>
+                    <toolkit:SettingsExpander.Items>
+                        <toolkit:SettingsCard Description="A folder that a cloud service such as OneDrive keeps in sync on all your devices" Header="Sync folder">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock
+                                    AutomationProperties.AutomationId="SyncFolderText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    MaxWidth="280"
+                                    Text="Not set"
+                                    TextTrimming="CharacterEllipsis"
+                                    VerticalAlignment="Center"
+                                    x:Name="SyncFolderText" />
+                                <Button
+                                    AutomationProperties.AutomationId="ChooseSyncFolderButton"
+                                    Click="ChooseSyncFolder_Click"
+                                    Content="Choose folder"
+                                    x:Name="ChooseSyncFolderButton" />
+                                <Button
+                                    AutomationProperties.AutomationId="TurnOffSyncButton"
+                                    Click="TurnOffSync_Click"
+                                    Content="Turn off"
+                                    IsEnabled="False"
+                                    x:Name="TurnOffSyncButton" />
+                            </StackPanel>
+                        </toolkit:SettingsCard>
+                        <toolkit:SettingsCard Header="Status">
+                            <StackPanel MaxWidth="420" Spacing="2">
+                                <TextBlock
+                                    AutomationProperties.AutomationId="SyncStatusText"
+                                    HorizontalAlignment="Right"
+                                    Text="Off"
+                                    TextWrapping="Wrap"
+                                    x:Name="SyncStatusText" />
+                                <TextBlock
+                                    AutomationProperties.AutomationId="SyncDevicesText"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    HorizontalAlignment="Right"
+                                    TextWrapping="Wrap"
+                                    Visibility="Collapsed"
+                                    x:Name="SyncDevicesText" />
+                            </StackPanel>
+                        </toolkit:SettingsCard>
+                    </toolkit:SettingsExpander.Items>
+                </toolkit:SettingsExpander>
+
                 <!--  Library  -->
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}" Text="Library" />
                 <toolkit:SettingsExpander

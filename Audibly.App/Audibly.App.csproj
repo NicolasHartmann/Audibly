@@ -164,6 +164,7 @@
         <ProjectReference Include="..\Audibly.Repository\Audibly.Repository.csproj" />
         <ProjectReference Include="..\Audibly.ReadAlong\Audibly.ReadAlong.csproj" />
         <ProjectReference Include="..\Audibly.Stats\Audibly.Stats.csproj" />
+        <ProjectReference Include="..\Audibly.Sync\Audibly.Sync.csproj" />
     </ItemGroup>
     <ItemGroup>
         <Page Update="Views\ControlPages\ChangelogDialogContent.xaml">

@@ -221,6 +221,31 @@ public static class UserSettings
         set => ApplicationData.Current.LocalSettings.Values["PlayerTimeDisplay"] = (int)value;
     }
 
+    /// <summary>
+    ///     The folder a cloud service keeps in sync between the listener's devices; null when sync is off.
+    /// </summary>
+    public static string? SyncFolderPath
+    {
+        get
+        {
+            try
+            {
+                var path = ApplicationData.Current.LocalSettings.Values["SyncFolderPath"]?.ToString();
+                return string.IsNullOrWhiteSpace(path) ? null : path;
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                return null;
+            }
+        }
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) ApplicationData.Current.LocalSettings.Values.Remove("SyncFolderPath");
+            else ApplicationData.Current.LocalSettings.Values["SyncFolderPath"] = value;
+        }
+    }
+
     private static T ReadEnum<T>(string key, T fallback) where T : struct, Enum
     {
         try

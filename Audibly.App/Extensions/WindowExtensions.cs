@@ -228,6 +228,7 @@ public static class WindowExtensions
         {
             Thread.Sleep(200);
             App.ListeningStats.FlushBeforeExit();
+            App.Sync.PushBeforeExit();
             Application.Current.Exit();
         }
     }

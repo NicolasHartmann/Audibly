@@ -393,6 +393,7 @@ public sealed partial class NewMiniPlayerPage : Page
         }
 
         App.ListeningStats.FlushBeforeExit();
+        App.Sync.PushBeforeExit();
         PlayerViewModel.Dispose();
         Application.Current.Exit();
     }

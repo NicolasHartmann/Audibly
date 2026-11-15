@@ -95,6 +95,12 @@ public partial class App : Application
         new(ApplicationData.Current.LocalFolder.Path + @"\stats.db");
 
     /// <summary>
+    ///     Exchanges positions and listening time with the listener's other devices through a
+    ///     folder they chose; does nothing while no folder is set.
+    /// </summary>
+    public static SyncHost Sync { get; } = new();
+
+    /// <summary>
     ///     Pipeline for interacting with backend service or database.
     /// </summary>
     public static IAudiblyRepository Repository { get; private set; }
@@ -142,6 +148,7 @@ public partial class App : Application
         appWindow.Closing += async (_, _) =>
         {
             ListeningStats.FlushBeforeExit();
+            Sync.PushBeforeExit();
             if (PlayerViewModel.NowPlaying != null) await PlayerViewModel.NowPlaying.SaveAsync();
             PlayerViewModel.Dispose();
             WindowHelper.CloseAll();

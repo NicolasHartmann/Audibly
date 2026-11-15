@@ -4,9 +4,11 @@
 using Audibly.Core;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.Storage.Pickers;
 using Windows.System;
 using Audibly.App.Helpers;
 using Audibly.App.Services;
@@ -15,6 +17,7 @@ using CommunityToolkit.WinUI;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using WinRT.Interop;
 using DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue;
 
 namespace Audibly.App.Views;
@@ -27,6 +30,7 @@ public sealed partial class SettingsPage : Page
     {
         InitializeComponent();
         Loaded += OnSettingsPageLoaded;
+        Unloaded += OnSettingsPageUnloaded;
     }
 
     /// <summary>
@@ -54,7 +58,94 @@ public sealed partial class SettingsPage : Page
 
         ProgressScopeChoice.SelectedIndex = (int)App.PlayerViewModel.ProgressScope;
         TimeDisplayChoice.SelectedIndex = (int)App.PlayerViewModel.TimeDisplay;
+
+        // Loaded can come again for the same page; never subscribe twice
+        App.Sync.Changed -= ShowSyncState;
+        App.Sync.Changed += ShowSyncState;
+        ShowSyncState();
+        // nothing was read or written since the app started: do it now, so the status says something real
+        if (App.Sync is { IsEnabled: true, LastSuccessUtc: null, LastError: null }) _ = App.Sync.SyncNowAsync();
     }
+
+    private void OnSettingsPageUnloaded(object sender, RoutedEventArgs e) => App.Sync.Changed -= ShowSyncState;
+
+    #region sync
+
+    private void ShowSyncState()
+    {
+        var sync = App.Sync;
+        SyncFolderText.Text = sync.FolderPath ?? "Not set";
+        ToolTipService.SetToolTip(SyncFolderText, sync.FolderPath);
+        TurnOffSyncButton.IsEnabled = sync.IsEnabled;
+
+        if (!sync.IsEnabled)
+            SyncStatusText.Text = "Off";
+        else if (sync.LastError is { } error)
+            SyncStatusText.Text = "Last sync failed: " + error;
+        else if (sync.LastSuccessUtc is { } success)
+            SyncStatusText.Text = "Last sync: " + success.ToLocalTime().ToString("g");
+        else
+            SyncStatusText.Text = "Not synced yet";
+
+        var devices = sync.Others.Select(device => device.DeviceName)
+            .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct().ToList();
+        SyncDevicesText.Visibility = sync.IsEnabled ? Visibility.Visible : Visibility.Collapsed;
+        SyncDevicesText.Text = devices.Count == 0
+            ? "No other devices found yet"
+            : "Other devices: " + string.Join(", ", devices);
+    }
+
+    private async void ChooseSyncFolder_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var openPicker = new FolderPicker();
+            var hWnd = WindowNative.GetWindowHandle(App.Window);
+            InitializeWithWindow.Initialize(openPicker, hWnd);
+            openPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            openPicker.ViewMode = PickerViewMode.List;
+            openPicker.FileTypeFilter.Add("*");
+
+            var folder = await openPicker.PickSingleFolderAsync();
+            if (folder == null) return;
+            if (string.IsNullOrWhiteSpace(folder.Path))
+            {
+                // libraries and other virtual places have no path in the file system
+                ViewModel.EnqueueNotification(new Notification
+                {
+                    Message = "This location cannot be used as a sync folder. Please choose a regular folder.",
+                    Severity = InfoBarSeverity.Warning
+                });
+                return;
+            }
+
+            App.Sync.SetFolder(folder.Path);
+            ChooseSyncFolderButton.IsEnabled = false;
+            try
+            {
+                // read the other devices and write this one right away, so the status below is real
+                await App.Sync.SyncNowAsync();
+            }
+            finally
+            {
+                ChooseSyncFolderButton.IsEnabled = true;
+            }
+
+            ShowSyncState();
+        }
+        catch (Exception exception)
+        {
+            ViewModel.LoggingService.LogError(exception);
+        }
+    }
+
+    private void TurnOffSync_Click(object sender, RoutedEventArgs e)
+    {
+        App.Sync.TurnOff();
+        ShowSyncState();
+    }
+
+    #endregion
 
     private void ProgressScope_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
