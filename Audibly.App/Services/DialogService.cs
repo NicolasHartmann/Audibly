@@ -94,9 +94,12 @@ public static class DialogService
                     RequestedTheme = ThemeHelper.ActualTheme
                 };
 
-                // not ShowOneAtATimeAsync: it answers a failure to show with the same result as a closed dialog
-                var result = await DialogManager.OneAtATimeAsync(async () => await dialog.ShowAsync(), null, null);
-                choice = result == ContentDialogResult.Primary;
+                // not ShowOneAtATimeAsync: it answers a failure to show with the same result as a closed
+                // dialog, and it waits up to an hour behind another dialog (seen after an import, whose
+                // progress dialog kept the queue). Waiting only briefly lets the caller ask again later.
+                var (shown, result) = await DialogManager.TryOneAtATimeAsync(async () => await dialog.ShowAsync(),
+                    TimeSpan.FromSeconds(5));
+                if (shown) choice = result == ContentDialogResult.Primary;
             });
         }
         catch (Exception e)

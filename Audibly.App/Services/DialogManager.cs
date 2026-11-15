@@ -27,4 +27,22 @@ public static class DialogManager
             _oneAtATimeAsync.Release();
         }
     }
+
+    /// <summary>
+    ///     Like <see cref="OneAtATimeAsync{T}" />, but gives up quietly when another dialog keeps the
+    ///     queue busy for longer than <paramref name="wait" />. For questions that can be asked again
+    ///     later and must not hang unseen behind another dialog.
+    /// </summary>
+    internal static async Task<(bool Shown, T? Result)> TryOneAtATimeAsync<T>(Func<Task<T>> show, TimeSpan wait)
+    {
+        if (!await _oneAtATimeAsync.WaitAsync(wait)) return (false, default);
+        try
+        {
+            return (true, await show());
+        }
+        finally
+        {
+            _oneAtATimeAsync.Release();
+        }
+    }
 }
