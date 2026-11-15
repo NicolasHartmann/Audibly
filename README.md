@@ -1,86 +1,65 @@
 <a name="readme-top"></a>
 
-Read Along development: [Windows setup, usage, verified alignment results and remaining manual checks](docs/read-along.md).
-
-
-
-<!-- PROJECT SHIELDS -->
-[![Version][version-shield]][version-url]
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
-
-<!-- PROJECT LOGO -->
-<br />
 <div align="center">
-  <a href="https://github.com/rstewa/Audibly">
-    <img src="images/logo.svg" alt="Logo" width="250" height="250">
-  </a>
+  <img src="images/logo.svg" alt="Logo" width="200" height="200">
 
-<h3 align="center">Audibly — Audiobook Player</h3>
+<h3 align="center">Audibly — Audiobook Player (extended fork)</h3>
 
   <p align="center">
-    Desktop Audiobook player for Windows 10/11. Supports `.m4b` and `.mp3` file types. It also supports audiobooks that
-    consist of multiple files. I created this because Audible removed their desktop player (and I really hate browser based players).
-    <br />
-    <a href="https://github.com/rstewa/Audibly"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/rstewa/Audibly">View Demo</a>
-    ·
-    <a href="https://github.com/rstewa/Audibly/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/rstewa/Audibly/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    Audiobook player for Windows 10/11 and Android. Plays <code>.m4b</code>, <code>.m4a</code> and <code>.mp3</code>,
+    including audiobooks made of many files, and continues on another device where you stopped.
   </p>
 </div>
 
+> This is a fork of [rstewa/Audibly](https://github.com/rstewa/Audibly). The original Windows app is available in the
+> [Microsoft Store](https://apps.microsoft.com/detail/9p6r1m1gg9jr?mode=direct). This fork adds the features listed
+> below; some of them are offered back to the original project as pull requests.
 
-<!-- link to store page -->
-<a href="https://apps.microsoft.com/detail/9p6r1m1gg9jr?mode=direct">
-	<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>
-</a>
-
-<br>
-<br>
-
-
-<!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#whats-new-in-this-fork">What's new in this fork</a></li>
+    <li><a href="#screenshots">Screenshots</a></li>
+    <li><a href="#sync-between-devices">Sync between devices</a></li>
+    <li><a href="#building">Building</a></li>
+    <li><a href="#project-structure">Project structure</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
 
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+## What's new in this fork
 
-This desktop audiobook player for Windows 10/11 supports playing .m4b and .mp3 files, including audiobooks composed of multiple files.
+### Windows
+
+- **Playback speed control** — the speed is shown as a number in the player; a flyout offers −/+ in 0.05× steps,
+  a slider from 0.5× to 4×, quick picks and "use as default". The narrator's pitch is preserved.
+- **Progress over the whole title** — the progress bar can cover the chapter or the full audiobook, and the time
+  display can show elapsed/total, the time remaining at the current speed, or percent. Click the time to switch.
+- **Listening statistics** — listening time and time saved by faster playback for the current title and in total,
+  per day, month and year, and the number of titles in the library.
+- **Trophies** — 14 achievements with bronze, silver and gold tiers, unlocked by listening; each shows what the next
+  tier needs.
+- **Read Along** — follow an EPUB word by word while the audiobook plays
+  ([details](docs/read-along.md)).
+- **Better multi-file audiobooks** — no skipped audio when one file ends, and chapters are named after their files
+  when the files share one title tag.
+
+### Android
+
+- A player in the style of classic audiobook apps: progress of the whole book and of the chapter, time remaining
+  at the current speed, large play button, short and long jumps, chapter list, sleep timer.
+- Plays in the background with the usual media notification, lock screen and headset controls.
+- Imports audiobooks from a folder on the phone; a subfolder with several files is one book.
+- Remove books from the library, optionally deleting their files from the phone.
+- Opens straight into the player with the book you listened to last.
+
+### Both
+
+- **Sync** — continue on another device at the same place; listening statistics count all devices together.
+  See [Sync between devices](#sync-between-devices).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -88,158 +67,132 @@ This desktop audiobook player for Windows 10/11 supports playing .m4b and .mp3 f
 
 ## Screenshots
 
-### Home/Library
+### Windows: listening statistics
 <p align="middle">
-  <img src="images/v2.2.7/audibly_home_page.png" />
-</p> 
-
-### Expanded Player
-<p align="middle">
-  <img src="images/v2.2.7/audibly_player_page.png" />
-</p> 
-
-### Mini-player
-<p align="middle">
-  <img src="images/v2.2.7/audibly_mini_player.png" />
-</p> 
-
-### Sleep Timer
-<p align="middle">
-    <img src="images/v2.2.7/audibly_sleep_timer.png" />
+  <img src="images/listening-stats/stats-daily.png" width="49%" />
+  <img src="images/listening-stats/stats-monthly.png" width="49%" />
 </p>
 
-### More Info Dialog
+### Windows: trophies
 <p align="middle">
-  <img src="images/v2.2.7/audibly_more_info.png" />
-</p> 
+  <img src="images/listening-stats/trophies.png" width="49%" />
+  <img src="images/listening-stats/trophy-dialog.png" width="49%" />
+</p>
+
+<sub>The numbers in the statistics and trophy screenshots are sample data.</sub>
+
+### Windows: Read Along
+<p align="middle">
+  <img src="images/read-along/read-along.png" />
+</p>
+
+### Android: player, library and speed
+<p align="middle">
+  <img src="images/android/player.png" width="30%" />
+  <img src="images/android/library.png" width="30%" />
+  <img src="images/android/speed.png" width="30%" />
+</p>
+
+### Original Windows app
+<p align="middle">
+  <img src="images/v2.2.7/audibly_home_page.png" width="49%" />
+  <img src="images/v2.2.7/audibly_player_page.png" width="49%" />
+</p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-### Built With
+## Sync between devices
 
-[![WinUI 3][winui]][winui-url]
+Audibly does not run a server and needs no account. Each device writes one small file into a folder that a cloud
+service keeps in sync on all your devices, and reads the files of the others:
+
+1. **Windows:** Settings → Sync → *Choose folder*, and pick a folder in Google Drive or OneDrive.
+2. **Android:** Settings → *Choose sync folder*, and pick the same folder in the system folder dialog. Google Drive
+   works well for this.
+3. Listen on one device and pause. Once the cloud service has copied the file, open the same audiobook on the other
+   device: it asks whether to continue where you stopped. Nothing changes until you answer.
+
+The same audiobook is recognised on both devices by title and author, or by author and length when the titles differ.
+The audio files themselves are not synced; copy them to each device yourself.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-## Building locally
+## Building
 
-Use Windows 10/11 with the .NET 8 SDK or newer and the Windows build tools for WinUI 3.
-The repository's `NuGet.Config` includes the Community Toolkit Labs feed needed by the existing preview controls.
+### Windows app
+
+Windows 10/11 with the .NET 8 SDK and the Windows build tools for WinUI 3. The repository's `NuGet.Config` includes the
+Community Toolkit Labs feed needed by the preview controls.
 
 ```powershell
 dotnet build Audibly.App/Audibly.App.csproj -p:Platform=x64 -p:WindowsPackageType=None -p:AppxPackageSigningEnabled=false -p:GenerateAppxPackageOnBuild=false
 dotnet test Audibly.Audio.Tests/Audibly.Audio.Tests.csproj
+dotnet test Audibly.Stats.Tests/Audibly.Stats.Tests.csproj
+dotnet test Audibly.Sync.Tests/Audibly.Sync.Tests.csproj
 ```
 
-### Pitch-preserving playback
+Read Along needs extra tools; see [docs/read-along.md](docs/read-along.md).
 
-The speed slider snaps to 1x, 1.1x, 1.25x, 1.5x, 1.75x, 2x, 2.5x, 3x, 3.5x and 4x while preserving the narrator's pitch.
-The main player, mini-player, default-speed settings and keyboard controls share these presets. Previously saved speeds snap to the nearest preset when loaded.
-NAudio decodes the file, SoundTouch.NET changes tempo, and Windows MediaPlayer plays the resulting PCM audio at 1x.
-Normal-speed playback bypasses time-stretching. Audio is streamed in small buffers rather than converting or caching an entire audiobook.
+### Android app
 
-Changing speed reopens the stream at the current audiobook position and preserves the play/pause state; a brief buffering pause may occur.
-Chapter positions, skipping, progress and saved resume positions use the original audiobook timeline.
-The Windows-only audio tests measure pitch and duration, decode MP3/M4B files, and exercise seeking, speed changes and end-of-file playback without audible output.
+The .NET 10 SDK with the `maui-android` workload, a JDK 17 and the Android SDK (API 36). The Android app has its own
+solution, `Audibly.Mobile.slnx`, so the Windows solution keeps building with .NET 8.
 
-Audio dependencies: [NAudio](https://github.com/naudio/NAudio) (MIT) and
-[SoundTouch.NET](https://github.com/owoudenberg/soundtouch.net) (LGPL-2.1-or-later, C# port by Olaf Woudenberg of Olli Parviainen's SoundTouch).
-They are used as separate, unmodified assemblies. Their license notices are included in `Audibly.App/Assets/ThirdPartyNotices`.
+```powershell
+dotnet workload install maui-android
+dotnet build Audibly.Mobile/Audibly.Mobile.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSdkLicenses=True
+dotnet publish Audibly.Mobile/Audibly.Mobile.csproj -f net10.0-android -c Release -p:AndroidPackageFormat=apk
+```
 
-
-
-<!-- TODO: USAGE EXAMPLES -->
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [x] Add `.mp3` file support
-- [x] Add support for multiple files in an audiobook
-- [x] Add mini-player
-
-See the [open issues](https://github.com/rstewa/Audibly/issues) for a full list of proposed features (and known issues).
+The installable file is `Audibly.Mobile/bin/Release/net10.0-android/publish/app.audibly.mobile-Signed.apk`. Copy it
+to the phone and open it; Android asks once to allow installing apps from that source. Android 8 or newer is required.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-<!-- CONTRIBUTING -->
-## Contributing
+## Project structure
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+| Project | Purpose |
+| --- | --- |
+| `Audibly.App` | Windows app (WinUI 3) |
+| `Audibly.Mobile` | Android app (.NET MAUI) |
+| `Audibly.Core` | Shared playback logic and audiobook import, used by both apps |
+| `Audibly.Models`, `Audibly.Repository` | Library data and database |
+| `Audibly.Stats` | Listening statistics and trophies |
+| `Audibly.Sync` | Sync between devices |
+| `Audibly.ReadAlong` | Read Along alignment |
+| `*.Tests` | Unit tests |
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Top contributors:
-
-<a href="https://github.com/rstewa/audibly/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=rstewa/audibly" alt="contrib.rocks image" />
-</a>
+Design notes and implementation plans for the features of this fork are in [docs/superpowers](docs/superpowers).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-<!-- LICENSE -->
 ## License
 
-Distributed under the GNU General Public License v3.0. See `LICENSE.txt` for more information.
+Distributed under the GNU General Public License v3.0. See `LICENSE` for more information.
+
+Audio dependencies of the Windows app: [NAudio](https://github.com/naudio/NAudio) (MIT) and
+[SoundTouch.NET](https://github.com/owoudenberg/soundtouch.net) (LGPL-2.1-or-later). They are used as separate,
+unmodified assemblies; their license notices are in `Audibly.App/Assets/ThirdPartyNotices`. The Android app uses
+[AndroidX Media3](https://developer.android.com/media/media3) (Apache 2.0).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-<!-- CONTACT -->
-## Contact
-
-rstewa - dev@audibly.info
-
-Project Link: [https://github.com/rstewa/Audibly](https://github.com/rstewa/Audibly)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
+* [rstewa/Audibly](https://github.com/rstewa/Audibly), the original project this fork is based on
 * [Rise Media Player](https://github.com/Rise-Software/Rise-Media-Player) for inspiration
 * [Libation](https://github.com/rmcrackan/Libation) for the FolderIcon code
-* [OpenAudible](https://openaudible.org/) for giving me a license and for helping me find/fix a bug in my import code
-* [Best-README-Template](https://github.com/othneildrew/Best-README-Template) for the README template
+* [OpenAudible](https://openaudible.org/) for help with the original import code
+* [Best-README-Template](https://github.com/othneildrew/Best-README-Template) for the original README template
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[version-shield]: https://img.shields.io/github/v/release/rstewa/audibly?style=for-the-badge
-[version-url]: https://github.com/rstewa/audibly/releases/latest
-[contributors-shield]: https://img.shields.io/github/contributors/rstewa/Audibly.svg?style=for-the-badge
-[contributors-url]: https://github.com/rstewa/Audibly/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/rstewa/Audibly.svg?style=for-the-badge
-[forks-url]: https://github.com/rstewa/Audibly/network/members
-[stars-shield]: https://img.shields.io/github/stars/rstewa/Audibly.svg?style=for-the-badge
-[stars-url]: https://github.com/rstewa/Audibly/stargazers
-[issues-shield]: https://img.shields.io/github/issues/rstewa/Audibly.svg?style=for-the-badge
-[issues-url]: https://github.com/rstewa/Audibly/issues
-[license-shield]: https://img.shields.io/github/license/rstewa/Audibly.svg?style=for-the-badge
-[license-url]: https://github.com/rstewa/Audibly/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/in/stewart-ryan-p/
-[winui]: https://img.shields.io/badge/-WinUI_3-512BD4?style=for-the-badge&logo=.net&logoColor=white
-[winui-url]: https://learn.microsoft.com/en-us/windows/apps/winui
