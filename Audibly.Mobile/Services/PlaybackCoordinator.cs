@@ -1,6 +1,7 @@
 using Audibly.Core;
 using Audibly.Models;
 using Audibly.Stats;
+using Audibly.Sync;
 
 namespace Audibly.Mobile.Services;
 
@@ -17,15 +18,19 @@ public sealed class PlaybackCoordinator
     private readonly AppData _data;
     private readonly IPlaybackService _player;
     private readonly ListeningStatsRecorder _stats;
+    private readonly SyncHost _sync;
     private IDispatcherTimer? _timer;
     private DateTime _lastSave = DateTime.MinValue;
     private DateTime _lastStatsFlush = DateTime.MinValue;
     private bool _saving;
 
-    public PlaybackCoordinator(AppData data, IPlaybackService player)
+    public PlaybackCoordinator(AppData data, IPlaybackService player, SyncHost sync)
     {
         _data = data;
         _player = player;
+        _sync = sync;
+        // the sync writes the position of this moment, not the one last saved to the database
+        _sync.PlayingBook = () => Book;
         _stats = new ListeningStatsRecorder(data.Stats, () => DateTime.Now, () => LibraryCount,
             e => System.Diagnostics.Debug.WriteLine("[Stats] " + e));
         _player.StateChanged += OnPlayerStateChanged;
@@ -90,11 +95,15 @@ public sealed class PlaybackCoordinator
             _stats.OnInterrupted();
             Book.IsNowPlaying = false;
             await SaveAsync();
+            // the book that was playing until now: tell the other devices where it stopped
+            await _sync.PushAsync(force: true);
         }
 
         Book = book;
+        PendingOffer = null;
         book.IsNowPlaying = true;
-        book.DateLastPlayed = DateTime.Now;
+        // DateLastPlayed is only set while listening: the other devices compare it to decide whose
+        // position is newer, and merely opening a book must not make this device look newer
         if (book.PlaybackSpeed <= 0) book.PlaybackSpeed = 1;
 
         var index = Math.Clamp(book.CurrentSourceFileIndex, 0, Math.Max(0, book.SourcePaths.Count - 1));
@@ -107,6 +116,7 @@ public sealed class PlaybackCoordinator
         EnsureTimer();
         await SaveAsync();
         Changed?.Invoke();
+        _ = LookForOtherDevicesAsync(book.Id);
     }
 
     public void PlayPause()
@@ -181,6 +191,60 @@ public sealed class PlaybackCoordinator
         ReadPosition();
         await SaveAsync();
         await _stats.FlushAsync();
+        await _sync.PushAsync(force: true);
+    }
+
+    /// <summary>
+    ///     Another device listened to the open book more recently and is at a different place. The
+    ///     player page shows this until the listener answers; nothing changes before that, and an
+    ///     unanswered offer is simply asked again the next time the book is opened.
+    /// </summary>
+    public PositionOffer? PendingOffer { get; private set; }
+
+    /// <summary>The listener chose to continue where the other device stopped.</summary>
+    public void AcceptOffer()
+    {
+        if (PendingOffer is not { } offer) return;
+        PendingOffer = null;
+        if (Book is { } book && book.Id == offer.BookId)
+        {
+            SeekBook(offer.PositionSeconds * 1000);
+            // from now on this device's position is the newest one
+            book.DateLastPlayed = DateTime.Now;
+            _ = SaveAsync();
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>The listener chose to stay; this state of the other device is not offered again.</summary>
+    public void DeclineOffer()
+    {
+        if (PendingOffer is not { } offer) return;
+        PendingOffer = null;
+        _sync.Decline(offer);
+        Changed?.Invoke();
+    }
+
+    // The book is open already; the other devices are read in the background and the question
+    // may appear a moment later.
+    private async Task LookForOtherDevicesAsync(Guid bookId)
+    {
+        try
+        {
+            var offer = await _sync.OfferForAsync(bookId);
+            if (offer == null) return;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (Book?.Id != bookId) return;
+                PendingOffer = offer;
+                Changed?.Invoke();
+            });
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine("[Sync] offer failed: " + e);
+        }
     }
 
     private void SeekTo(int sourceIndex, double positionMs)
@@ -209,6 +273,8 @@ public sealed class PlaybackCoordinator
 
         var wasCompleted = book.IsCompleted;
         ReadPosition();
+        book.DateLastPlayed = DateTime.Now;
+        _ = _sync.PushAsync(force: false);
         _stats.OnPosition(book.Id, book.CurrentSourceFileIndex, CurrentFileMs / 1000, book.PlaybackSpeed);
         // only reaching the end while listening counts as finishing, not a jump to the end
         if (!wasCompleted && book.IsCompleted) _ = _stats.OnCompletedAsync(book.Id);
@@ -262,10 +328,17 @@ public sealed class PlaybackCoordinator
             // pausing is the moment a listener may put the phone away: save now
             _stats.OnInterrupted();
             _ = SaveAsync();
-            _ = _stats.FlushAsync();
+            _ = FlushStatsThenSyncAsync();
         }
 
         Changed?.Invoke();
+    }
+
+    // listening time first, so the state written for the other devices includes it
+    private async Task FlushStatsThenSyncAsync()
+    {
+        await _stats.FlushAsync();
+        await _sync.PushAsync(force: true);
     }
 
     private async void OnPlayerEnded()

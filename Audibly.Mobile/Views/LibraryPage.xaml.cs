@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using Audibly.Core;
 using Audibly.Mobile.Services;
 using Audibly.Models;
+using Audibly.Sync;
 
 namespace Audibly.Mobile.Views;
 
@@ -23,16 +25,18 @@ public partial class LibraryPage : ContentPage
     private readonly AppData _data;
     private readonly ILibraryImporter _importer;
     private readonly PlaybackCoordinator _playback;
+    private readonly SyncHost _sync;
     private readonly ObservableCollection<BookItem> _books = [];
     private bool _busy;
     private bool _opening;
 
-    public LibraryPage(AppData data, ILibraryImporter importer, PlaybackCoordinator playback)
+    public LibraryPage(AppData data, ILibraryImporter importer, PlaybackCoordinator playback, SyncHost sync)
     {
         InitializeComponent();
         _data = data;
         _importer = importer;
         _playback = playback;
+        _sync = sync;
         BookList.ItemsSource = _books;
     }
 

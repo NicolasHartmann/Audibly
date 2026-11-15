@@ -15,5 +15,9 @@ public class MainActivity : MauiAppCompatActivity
         // the folder dialog of the library importer
         if (requestCode == AndroidLibraryImporter.PickFolderRequest)
             AndroidLibraryImporter.OnFolderPicked(resultCode == Result.Ok ? data?.Data : null);
+
+        // the folder dialog of the sync settings
+        if (requestCode == AndroidSyncFolderAccess.PickFolderRequest)
+            AndroidSyncFolderAccess.OnFolderPicked(resultCode == Result.Ok ? data?.Data : null);
     }
 }

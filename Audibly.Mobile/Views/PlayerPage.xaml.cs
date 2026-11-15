@@ -66,6 +66,13 @@ public partial class PlayerPage : ContentPage
                 : null;
         }
 
+        var offer = _playback.PendingOffer;
+        OfferCard.IsVisible = offer != null;
+        if (offer != null)
+            OfferLabel.Text = $"On {offer.DeviceName} you were at " +
+                              $"{PlayerProgress.Elapsed(offer.PositionSeconds * 1000)} ({When(offer.UpdatedUtc)}). " +
+                              "Continue there?";
+
         ChapterButton.Text = _playback.CurrentChapter?.Title ?? string.Empty;
         PlayPauseIcon.Data = _playback.WantsToPlay ? PlayerIcons.Pause : PlayerIcons.Play;
         SemanticProperties.SetDescription(PlayPauseButton, _playback.WantsToPlay ? "Pause" : "Play");
@@ -85,6 +92,18 @@ public partial class PlayerPage : ContentPage
 
         ElapsedLabel.Text = PlayerProgress.Elapsed(value);
         EndButton.Text = PlayerProgress.End(PlayerSettings.TimeDisplay, range, value, book.PlaybackSpeed);
+    }
+
+    private void OfferContinue_Clicked(object? sender, EventArgs e) => _playback.AcceptOffer();
+    private void OfferStay_Clicked(object? sender, EventArgs e) => _playback.DeclineOffer();
+
+    private static string When(DateTime utc)
+    {
+        var local = utc.ToLocalTime();
+        var days = (DateTime.Now.Date - local.Date).Days;
+        return days == 0 ? $"today {local:HH:mm}"
+            : days == 1 ? $"yesterday {local:HH:mm}"
+            : local.ToString("d MMM yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private void Slider_DragStarted(object? sender, EventArgs e) => _dragging = true;

@@ -7,6 +7,24 @@
     <ScrollView>
         <VerticalStackLayout Padding="24,16" Spacing="14">
 
+            <!--  another device is further along: stays until the listener answers  -->
+            <Border
+                x:Name="OfferCard"
+                AutomationId="OfferCard"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                IsVisible="False"
+                Padding="14,12"
+                StrokeShape="RoundRectangle 10"
+                StrokeThickness="0">
+                <VerticalStackLayout Spacing="10">
+                    <Label x:Name="OfferLabel" AutomationId="OfferLabel" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                        <Button AutomationId="OfferStayButton" BackgroundColor="Transparent" BorderColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" BorderWidth="1" Clicked="OfferStay_Clicked" Text="Stay here" TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        <Button AutomationId="OfferContinueButton" Clicked="OfferContinue_Clicked" Grid.Column="1" Text="Continue there" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
             <Border
                 BackgroundColor="{StaticResource Gray100}"
                 HeightRequest="280"
