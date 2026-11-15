@@ -1,32 +1,68 @@
+using System.Globalization;
 using Audibly.Core;
 using Audibly.Mobile.Services;
 
 namespace Audibly.Mobile.Views;
 
+/// <summary>
+///     The app's home: the book that is open, its progress and the transport controls. The app
+///     starts here with the book that was listened to last.
+/// </summary>
 public partial class PlayerPage : ContentPage
 {
     private static readonly int[] TimerMinutes = [5, 10, 15, 30, 45, 60];
+    private static readonly double[] SpeedQuickPicks = [1.0, 1.25, 1.5, 1.75, 2.0];
 
     private readonly PlaybackCoordinator _playback;
     private bool _dragging;
+    private bool _restored;
+    private bool _settingSpeed;
     private Guid? _shownBook;
 
     public PlayerPage(PlaybackCoordinator playback)
     {
         InitializeComponent();
         _playback = playback;
+
+        SpeedSlider.Maximum = PlaybackSpeedPresets.StepCount;
+        foreach (var pick in SpeedQuickPicks)
+        {
+            var text = pick.ToString("0.00", CultureInfo.InvariantCulture);
+            var button = new Button
+            {
+                Text = text,
+                BackgroundColor = Colors.Transparent,
+                FontAttributes = FontAttributes.Bold,
+                Padding = new Thickness(8, 0),
+                AutomationId = "SpeedPick" + text
+            };
+            button.SetAppThemeColor(Button.TextColorProperty, (Color)Application.Current!.Resources["Primary"],
+                (Color)Application.Current.Resources["PrimaryDark"]);
+            button.Clicked += (_, _) => SetSpeed(pick);
+            SpeedPicks.Add(button);
+        }
     }
 
-    private bool CoversBook => PlayerSettings.ProgressScope == PlayerProgressScope.Book && _playback.BookDurationMs > 0;
-    private double RangeMs => CoversBook ? _playback.BookDurationMs : _playback.ChapterDurationMs;
-    private double ValueMs => CoversBook ? _playback.BookPositionMs : _playback.ChapterPositionMs;
-
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
         _playback.Changed += Update;
         _playback.Failed += ShowFailure;
         _shownBook = null;
+        Update();
+
+        if (_restored) return;
+        _restored = true;
+        try
+        {
+            // the app opens where the listener left: in the player, with the last book loaded
+            await _playback.RestoreAsync();
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine("[Player] restore failed: " + e);
+        }
+
         Update();
     }
 
@@ -35,6 +71,14 @@ public partial class PlayerPage : ContentPage
         _playback.Changed -= Update;
         _playback.Failed -= ShowFailure;
         base.OnDisappearing();
+    }
+
+    /// <summary>Android's back button closes the speed panel first, then leaves the app as usual.</summary>
+    protected override bool OnBackButtonPressed()
+    {
+        if (!SpeedOverlay.IsVisible) return base.OnBackButtonPressed();
+        SpeedOverlay.IsVisible = false;
+        return true;
     }
 
     private async void ShowFailure(string message)
@@ -54,6 +98,8 @@ public partial class PlayerPage : ContentPage
     private void Update()
     {
         var book = _playback.Book;
+        PlayerLayout.IsVisible = book != null;
+        EmptyLayout.IsVisible = book == null;
         if (book == null) return;
 
         if (_shownBook != book.Id)
@@ -61,9 +107,9 @@ public partial class PlayerPage : ContentPage
             _shownBook = book.Id;
             TitleLabel.Text = book.Title;
             AuthorLabel.Text = book.Author;
-            CoverImage.Source = !string.IsNullOrEmpty(book.CoverImagePath) && File.Exists(book.CoverImagePath)
-                ? ImageSource.FromFile(book.CoverImagePath)
-                : null;
+            var hasCover = !string.IsNullOrEmpty(book.CoverImagePath) && File.Exists(book.CoverImagePath);
+            CoverImage.Source = hasCover ? ImageSource.FromFile(book.CoverImagePath) : null;
+            CoverImage.IsVisible = hasCover;
         }
 
         var offer = _playback.PendingOffer;
@@ -73,29 +119,42 @@ public partial class PlayerPage : ContentPage
                               $"{PlayerProgress.Elapsed(offer.PositionSeconds * 1000)} ({When(offer.UpdatedUtc)}). " +
                               "Continue there?";
 
-        ChapterButton.Text = _playback.CurrentChapter?.Title ?? string.Empty;
+        var speed = book.PlaybackSpeed;
+        SpeedButton.Text = PlaybackSpeedPresets.Snap(speed).ToString("0.00", CultureInfo.InvariantCulture) + "×";
         PlayPauseIcon.Data = _playback.WantsToPlay ? PlayerIcons.Pause : PlayerIcons.Play;
         SemanticProperties.SetDescription(PlayPauseButton, _playback.WantsToPlay ? "Pause" : "Play");
-        SpeedButton.Text = "Speed " + PlaybackSpeedPresets.Format(book.PlaybackSpeed);
-        TimerButton.Text = _playback.SleepTimerEnd is { } end
-            ? "Sleep in " + Math.Max(1, (int)Math.Ceiling((end - DateTime.Now).TotalMinutes)) + " min"
-            : "Sleep timer";
 
-        var range = Math.Max(1, RangeMs);
-        var value = Math.Clamp(ValueMs, 0, range);
+        var timer = _playback.SleepTimerEnd;
+        TimerIcon.IsVisible = timer == null;
+        TimerText.IsVisible = timer != null;
+        if (timer is { } end)
+            TimerText.Text = Math.Max(1, (int)Math.Ceiling((end - DateTime.Now).TotalMinutes)) + " min";
+
+        // the whole book: elapsed audio time, percent, and what is left at the current speed
+        var bookDuration = Math.Max(1, _playback.BookDurationMs);
+        var bookPosition = Math.Clamp(_playback.BookPositionMs, 0, bookDuration);
+        BookProgress.Progress = bookPosition / bookDuration;
+        BookElapsedLabel.Text = PlayerProgress.Elapsed(bookPosition);
+        BookPercentLabel.Text = (Math.Floor(bookPosition / bookDuration * 1000) / 10)
+            .ToString("0.0", CultureInfo.InvariantCulture) + "%";
+        BookRemainingLabel.Text = "-" + PlaybackTimeRemaining.Format(bookDuration, bookPosition, speed);
+
+        // the chapter
+        var chapterDuration = Math.Max(1, _playback.ChapterDurationMs);
+        var chapterPosition = Math.Clamp(_playback.ChapterPositionMs, 0, chapterDuration);
         if (!_dragging)
         {
             // the maximum first: a slider clamps a value that is above its current maximum
-            ProgressSlider.Maximum = range;
-            ProgressSlider.Value = value;
+            ProgressSlider.Maximum = chapterDuration;
+            ProgressSlider.Value = chapterPosition;
         }
 
-        ElapsedLabel.Text = PlayerProgress.Elapsed(value);
-        EndButton.Text = PlayerProgress.End(PlayerSettings.TimeDisplay, range, value, book.PlaybackSpeed);
+        ChapterElapsedLabel.Text = PlaybackTimeRemaining.Format(chapterPosition, 0, 1);
+        ChapterRemainingLabel.Text = "-" + PlaybackTimeRemaining.Format(chapterDuration, chapterPosition, speed);
+        var chapter = _playback.CurrentChapter;
+        ChapterButton.Text = chapter?.Title ?? string.Empty;
+        ChapterNumberLabel.Text = chapter == null ? string.Empty : $"{chapter.Index + 1}/{book.Chapters.Count}";
     }
-
-    private void OfferContinue_Clicked(object? sender, EventArgs e) => _playback.AcceptOffer();
-    private void OfferStay_Clicked(object? sender, EventArgs e) => _playback.DeclineOffer();
 
     private static string When(DateTime utc)
     {
@@ -103,27 +162,34 @@ public partial class PlayerPage : ContentPage
         var days = (DateTime.Now.Date - local.Date).Days;
         return days == 0 ? $"today {local:HH:mm}"
             : days == 1 ? $"yesterday {local:HH:mm}"
-            : local.ToString("d MMM yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+            : local.ToString("d MMM yyyy HH:mm", CultureInfo.InvariantCulture);
     }
+
+    // --- quick links and menu
+
+    private void Menu_Clicked(object? sender, EventArgs e) => Shell.Current.FlyoutIsPresented = true;
+
+    private async void Library_Clicked(object? sender, EventArgs e) =>
+        await Shell.Current.GoToAsync(nameof(LibraryPage));
+
+    private void OfferContinue_Clicked(object? sender, EventArgs e) => _playback.AcceptOffer();
+    private void OfferStay_Clicked(object? sender, EventArgs e) => _playback.DeclineOffer();
+
+    // --- transport
 
     private void Slider_DragStarted(object? sender, EventArgs e) => _dragging = true;
 
     private void Slider_DragCompleted(object? sender, EventArgs e)
     {
         _dragging = false;
-        if (CoversBook) _playback.SeekBook(ProgressSlider.Value);
-        else _playback.SeekChapter(ProgressSlider.Value);
-    }
-
-    private void End_Clicked(object? sender, EventArgs e)
-    {
-        PlayerSettings.TimeDisplay = PlayerProgress.Next(PlayerSettings.TimeDisplay);
-        Update();
+        _playback.SeekChapter(ProgressSlider.Value);
     }
 
     private void PlayPause_Clicked(object? sender, EventArgs e) => _playback.PlayPause();
     private void Back_Clicked(object? sender, EventArgs e) => _playback.Skip(-10);
+    private void BackFar_Clicked(object? sender, EventArgs e) => _playback.Skip(-60);
     private void Forward_Clicked(object? sender, EventArgs e) => _playback.Skip(30);
+    private void ForwardFar_Clicked(object? sender, EventArgs e) => _playback.Skip(60);
     private void PreviousChapter_Clicked(object? sender, EventArgs e) => _playback.PreviousChapter();
     private void NextChapter_Clicked(object? sender, EventArgs e) => _playback.NextChapter();
 
@@ -136,15 +202,8 @@ public partial class PlayerPage : ContentPage
         if (picked >= 0) _playback.GoToChapter(book.Chapters[picked]);
     }
 
-    private async void Speed_Clicked(object? sender, EventArgs e)
-    {
-        var options = PlaybackSpeedPresets.QuickPicks.Select(PlaybackSpeedPresets.Format).ToArray();
-        var choice = await DisplayActionSheetAsync("Playback speed", "Cancel", null, options);
-        var picked = Array.IndexOf(options, choice);
-        if (picked >= 0) _playback.SetSpeed(PlaybackSpeedPresets.QuickPicks[picked]);
-    }
-
-    private async void Timer_Clicked(object? sender, EventArgs e)
+    /// <summary>Opened from the quick link here and from the menu.</summary>
+    public async Task ShowTimerAsync()
     {
         var options = TimerMinutes.Select(minutes => minutes + " minutes").ToArray();
         var choice = await DisplayActionSheetAsync("Sleep timer", "Cancel",
@@ -152,5 +211,58 @@ public partial class PlayerPage : ContentPage
         if (choice == "Turn off") _playback.SetSleepTimer(null);
         var picked = Array.IndexOf(options, choice);
         if (picked >= 0) _playback.SetSleepTimer(TimeSpan.FromMinutes(TimerMinutes[picked]));
+    }
+
+    private async void Timer_Clicked(object? sender, EventArgs e) => await ShowTimerAsync();
+
+    // --- playback speed
+
+    /// <summary>Opened from the quick link here and from the menu.</summary>
+    public void ShowSpeed()
+    {
+        if (_playback.Book is not { } book) return;
+        ShowSpeedValue(book.PlaybackSpeed);
+        _settingSpeed = true;
+        SpeedDefaultCheck.IsChecked =
+            Math.Abs(PlaybackCoordinator.DefaultSpeed - PlaybackSpeedPresets.Snap(book.PlaybackSpeed)) < 0.001;
+        _settingSpeed = false;
+        SpeedOverlay.IsVisible = true;
+    }
+
+    private void Speed_Clicked(object? sender, EventArgs e) => ShowSpeed();
+    private void SpeedClose_Tapped(object? sender, EventArgs e) => SpeedOverlay.IsVisible = false;
+
+    private void ShowSpeedValue(double speed)
+    {
+        _settingSpeed = true;
+        SpeedSlider.Value = PlaybackSpeedPresets.ToIndex(speed);
+        _settingSpeed = false;
+        SpeedValueLabel.Text = PlaybackSpeedPresets.Snap(speed).ToString("0.00", CultureInfo.InvariantCulture) + "×";
+    }
+
+    private void SetSpeed(double speed)
+    {
+        speed = PlaybackSpeedPresets.Snap(speed);
+        ShowSpeedValue(speed);
+        _playback.SetSpeed(speed);
+        // the box says "this speed is the default"; a new speed keeps that promise
+        if (SpeedDefaultCheck.IsChecked) PlaybackCoordinator.DefaultSpeed = speed;
+    }
+
+    private void SpeedMinus_Clicked(object? sender, EventArgs e) =>
+        SetSpeed((_playback.Book?.PlaybackSpeed ?? 1) - PlaybackSpeedPresets.Step);
+
+    private void SpeedPlus_Clicked(object? sender, EventArgs e) =>
+        SetSpeed((_playback.Book?.PlaybackSpeed ?? 1) + PlaybackSpeedPresets.Step);
+
+    private void SpeedSlider_ValueChanged(object? sender, ValueChangedEventArgs e)
+    {
+        if (!_settingSpeed) SetSpeed(PlaybackSpeedPresets.FromIndex(e.NewValue));
+    }
+
+    private void SpeedDefault_Changed(object? sender, CheckedChangedEventArgs e)
+    {
+        if (_settingSpeed) return;
+        PlaybackCoordinator.DefaultSpeed = e.Value ? PlaybackSpeedPresets.Snap(_playback.Book?.PlaybackSpeed ?? 1) : 1.0;
     }
 }

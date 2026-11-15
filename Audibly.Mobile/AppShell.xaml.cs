@@ -1,30 +1,56 @@
+using Audibly.Mobile.Views;
+
 namespace Audibly.Mobile;
 
+/// <summary>
+///     The player is the app's home. Library and Settings open on top of it, from the quick link
+///     or the menu, and Android's back button returns to the player.
+/// </summary>
 public partial class AppShell : Shell
 {
 	public AppShell()
 	{
 		InitializeComponent();
-		// the player opens on top of the library
-		Routing.RegisterRoute(nameof(Views.PlayerPage), typeof(Views.PlayerPage));
+		Routing.RegisterRoute(nameof(LibraryPage), typeof(LibraryPage));
+		Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
 	}
 
-	/// <summary>
-	///     Android's back button or gesture: closes the player page, and from the Settings tab returns
-	///     to the Library tab (which still shows the player when it was open). Only on the library
-	///     itself does back leave the app.
-	/// </summary>
+	private async Task GoAsync(string route)
+	{
+		FlyoutIsPresented = false;
+		// one page on top of the player at a time, so back always returns to the player
+		if (Navigation.NavigationStack.Count > 1) await Navigation.PopToRootAsync(false);
+		if (!string.IsNullOrEmpty(route)) await GoToAsync(route);
+	}
+
+	private async void Player_Clicked(object? sender, EventArgs e) => await GoAsync(string.Empty);
+	private async void Library_Clicked(object? sender, EventArgs e) => await GoAsync(nameof(LibraryPage));
+	private async void Settings_Clicked(object? sender, EventArgs e) => await GoAsync(nameof(SettingsPage));
+
+	private async void Speed_Clicked(object? sender, EventArgs e)
+	{
+		await GoAsync(string.Empty);
+		(CurrentPage as PlayerPage)?.ShowSpeed();
+	}
+
+	private async void Timer_Clicked(object? sender, EventArgs e)
+	{
+		await GoAsync(string.Empty);
+		if (CurrentPage is PlayerPage player) await player.ShowTimerAsync();
+	}
+
+	/// <summary>Android's back button: closes the menu or the page on top; on the player it leaves the app.</summary>
 	protected override bool OnBackButtonPressed()
 	{
-		if (Navigation.NavigationStack.Count > 1)
+		if (FlyoutIsPresented)
 		{
-			_ = GoToAsync("..");
+			FlyoutIsPresented = false;
 			return true;
 		}
 
-		if (CurrentItem?.CurrentItem is { } tab && CurrentItem.Items.Count > 0 && tab != CurrentItem.Items[0])
+		if (Navigation.NavigationStack.Count > 1)
 		{
-			CurrentItem.CurrentItem = CurrentItem.Items[0];
+			_ = GoToAsync("..");
 			return true;
 		}
 

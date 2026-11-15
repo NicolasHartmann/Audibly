@@ -1,13 +1,11 @@
 using System.Collections.ObjectModel;
-using Audibly.Core;
 using Audibly.Mobile.Services;
 using Audibly.Models;
-using Audibly.Sync;
 
 namespace Audibly.Mobile.Views;
 
-/// <summary>One book in the library grid.</summary>
-public sealed class BookItem(Audiobook book, bool available)
+/// <summary>One book in the library list.</summary>
+public sealed class BookItem(Audiobook book, bool available, bool isOpen)
 {
     public Audiobook Book { get; } = book;
     public string Title { get; } = string.IsNullOrWhiteSpace(book.Title) ? "Untitled" : book.Title;
@@ -17,6 +15,13 @@ public sealed class BookItem(Audiobook book, bool available)
         ? ImageSource.FromFile(book.CoverImagePath)
         : null;
     public double Progress { get; } = Math.Clamp(book.Progress / 100.0, 0, 1);
+    public string Percent { get; } = $"{Math.Clamp(Math.Floor(book.Progress), 0, 100):0}%";
+
+    /// <summary>Length of the whole book as hours and minutes, e.g. "14:11".</summary>
+    public string Length { get; } = $"{book.Duration / 3600}:{book.Duration / 60 % 60:00}";
+
+    public bool IsOpen { get; } = isOpen;
+    public FontAttributes TitleAttributes => IsOpen ? FontAttributes.Bold : FontAttributes.None;
     public bool Available { get; } = available;
 }
 
@@ -25,35 +30,23 @@ public partial class LibraryPage : ContentPage
     private readonly AppData _data;
     private readonly ILibraryImporter _importer;
     private readonly PlaybackCoordinator _playback;
-    private readonly SyncHost _sync;
     private readonly ObservableCollection<BookItem> _books = [];
     private bool _busy;
     private bool _opening;
 
-    public LibraryPage(AppData data, ILibraryImporter importer, PlaybackCoordinator playback, SyncHost sync)
+    public LibraryPage(AppData data, ILibraryImporter importer, PlaybackCoordinator playback)
     {
         InitializeComponent();
         _data = data;
         _importer = importer;
         _playback = playback;
-        _sync = sync;
         BookList.ItemsSource = _books;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        _playback.Changed += UpdateMiniBar;
-        _playback.Failed += ShowFailure;
-        UpdateMiniBar();
         await LoadAsync();
-    }
-
-    protected override void OnDisappearing()
-    {
-        _playback.Changed -= UpdateMiniBar;
-        _playback.Failed -= ShowFailure;
-        base.OnDisappearing();
     }
 
     private string NoAccessMessage =>
@@ -63,12 +56,17 @@ public partial class LibraryPage : ContentPage
     {
         try
         {
-            var books = (await _data.Repository.Audiobooks.GetAsync()).ToList();
+            var books = await _data.LoadBooksAsync();
             _playback.LibraryCount = books.Count;
+            var open = _playback.Book?.Id;
             // checking the files touches storage; keep it off the UI thread
             var items = await Task.Run(() => books
+                // the book that was listened to last comes first, then the others by title
+                .OrderByDescending(book => book.Id == open)
+                .ThenByDescending(book => book.DateLastPlayed ?? DateTime.MinValue)
+                .ThenBy(book => book.Title)
                 .Select(book => new BookItem(book,
-                    book.SourcePaths.Count > 0 && _importer.IsAvailable(book.SourcePaths[0].FilePath)))
+                    book.SourcePaths.Count > 0 && _importer.IsAvailable(book.SourcePaths[0].FilePath), book.Id == open))
                 .ToList());
             _books.Clear();
             foreach (var item in items) _books.Add(item);
@@ -142,6 +140,7 @@ public partial class LibraryPage : ContentPage
         }
     }
 
+    /// <summary>Opens the book, paused, and goes straight back to the player.</summary>
     private async void Book_Tapped(object? sender, TappedEventArgs e)
     {
         if ((sender as BindableObject)?.BindingContext is not BookItem item) return;
@@ -151,16 +150,15 @@ public partial class LibraryPage : ContentPage
             return;
         }
 
-        // a double tap would open the player page twice
+        // a double tap would open the book twice
         if (_opening) return;
         _opening = true;
         try
         {
             // Android 13 and later only show the playback notification with this permission
             await Permissions.RequestAsync<Permissions.PostNotifications>();
-            // opening only loads the book; it starts when the listener presses Play
             if (_playback.Book?.Id != item.Book.Id) await _playback.OpenAsync(item.Book, false);
-            await Shell.Current.GoToAsync(nameof(PlayerPage));
+            await Shell.Current.GoToAsync("..");
         }
         catch (Exception exception)
         {
@@ -171,24 +169,6 @@ public partial class LibraryPage : ContentPage
             _opening = false;
         }
     }
-
-    private async void MiniBar_Tapped(object? sender, TappedEventArgs e) =>
-        await Shell.Current.GoToAsync(nameof(PlayerPage));
-
-    private void MiniPlayPause_Clicked(object? sender, EventArgs e) => _playback.PlayPause();
-
-    private void UpdateMiniBar()
-    {
-        var book = _playback.Book;
-        MiniBar.IsVisible = book != null;
-        if (book == null) return;
-        MiniTitle.Text = book.Title;
-        MiniChapter.Text = _playback.CurrentChapter?.Title ?? string.Empty;
-        MiniPlayPauseIcon.Data = _playback.WantsToPlay ? PlayerIcons.Pause : PlayerIcons.Play;
-        SemanticProperties.SetDescription(MiniPlayPause, _playback.WantsToPlay ? "Pause" : "Play");
-    }
-
-    private void ShowFailure(string message) => ShowStatus("Playback failed: " + message);
 
     private void ShowStatus(string text)
     {

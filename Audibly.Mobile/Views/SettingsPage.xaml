@@ -14,7 +14,7 @@
 
             <VerticalStackLayout Spacing="6">
                 <Label FontAttributes="Bold" Text="Sync" />
-                <Label Text="Continue on another device and count listening time across devices. Choose a folder that a cloud app such as OneDrive keeps in sync on all your devices." TextColor="{StaticResource Gray500}" />
+                <Label Text="Continue on another device and count listening time across devices. Choose a folder that a cloud app such as Google Drive or OneDrive keeps in sync on all your devices." TextColor="{StaticResource Gray500}" />
                 <Label x:Name="SyncFolderLabel" AutomationId="SyncFolderLabel" />
                 <Label x:Name="SyncStatusLabel" AutomationId="SyncStatusLabel" TextColor="{StaticResource Gray500}" />
                 <Label x:Name="SyncDevicesLabel" AutomationId="SyncDevicesLabel" TextColor="{StaticResource Gray500}" />
@@ -22,21 +22,6 @@
                     <Button AutomationId="SyncChooseButton" Clicked="SyncChoose_Clicked" Text="Choose sync folder" />
                     <Button x:Name="SyncOffButton" AutomationId="SyncOffButton" Clicked="SyncOff_Clicked" Grid.Column="1" Text="Turn off" />
                 </Grid>
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Spacing="6">
-                <Label FontAttributes="Bold" Text="Progress bar" />
-                <Label Text="The part of the audiobook the progress bar covers" TextColor="{StaticResource Gray500}" />
-                <RadioButton x:Name="ScopeChapter" AutomationId="ScopeChapter" CheckedChanged="Scope_Changed" Content="Chapter" GroupName="Scope" />
-                <RadioButton x:Name="ScopeBook" AutomationId="ScopeBook" CheckedChanged="Scope_Changed" Content="Full title" GroupName="Scope" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Spacing="6">
-                <Label FontAttributes="Bold" Text="Time display" />
-                <Label Text="Shown at the end of the progress bar. Time remaining takes the playback speed into account." TextColor="{StaticResource Gray500}" />
-                <RadioButton x:Name="DisplayTotal" AutomationId="DisplayTotal" CheckedChanged="Display_Changed" Content="Elapsed and total" GroupName="Display" />
-                <RadioButton x:Name="DisplayRemaining" AutomationId="DisplayRemaining" CheckedChanged="Display_Changed" Content="Time remaining" GroupName="Display" />
-                <RadioButton x:Name="DisplayPercent" AutomationId="DisplayPercent" CheckedChanged="Display_Changed" Content="Percent" GroupName="Display" />
             </VerticalStackLayout>
 
         </VerticalStackLayout>

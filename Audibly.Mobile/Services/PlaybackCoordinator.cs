@@ -22,7 +22,6 @@ public sealed class PlaybackCoordinator
     private IDispatcherTimer? _timer;
     private DateTime _lastSave = DateTime.MinValue;
     private DateTime _lastStatsFlush = DateTime.MinValue;
-    private bool _saving;
 
     public PlaybackCoordinator(AppData data, IPlaybackService player, SyncHost sync)
     {
@@ -88,6 +87,29 @@ public sealed class PlaybackCoordinator
         Changed?.Invoke();
     }
 
+    /// <summary>The speed a book starts with when it was never listened to; set in the speed panel.</summary>
+    public static double DefaultSpeed
+    {
+        get => PlaybackSpeedPresets.Snap(Preferences.Default.Get(nameof(DefaultSpeed), 1.0));
+        set => Preferences.Default.Set(nameof(DefaultSpeed), PlaybackSpeedPresets.Snap(value));
+    }
+
+    /// <summary>
+    ///     Loads the book that was listened to last, paused, so the app opens where the listener
+    ///     left. Does nothing when a book is open already, for example because the player service
+    ///     kept running while the app's pages were closed.
+    /// </summary>
+    public async Task RestoreAsync()
+    {
+        if (Book != null) return;
+        var books = await _data.LoadBooksAsync();
+        var last = books.FirstOrDefault(candidate => candidate.IsNowPlaying)
+                   ?? books.Where(candidate => candidate.DateLastPlayed != null)
+                       .OrderByDescending(candidate => candidate.DateLastPlayed)
+                       .FirstOrDefault();
+        if (last != null && Book == null) await OpenAsync(last, false);
+    }
+
     public async Task OpenAsync(Audiobook book, bool play)
     {
         if (Book != null && Book.Id != book.Id)
@@ -103,8 +125,9 @@ public sealed class PlaybackCoordinator
         PendingOffer = null;
         book.IsNowPlaying = true;
         // DateLastPlayed is only set while listening: the other devices compare it to decide whose
-        // position is newer, and merely opening a book must not make this device look newer
-        if (book.PlaybackSpeed <= 0) book.PlaybackSpeed = 1;
+        // position is newer, and merely opening a book must not make this device look newer.
+        // A book that was never listened to starts at the listener's default speed.
+        if (book.DateLastPlayed == null || book.PlaybackSpeed <= 0) book.PlaybackSpeed = DefaultSpeed;
 
         var index = Math.Clamp(book.CurrentSourceFileIndex, 0, Math.Max(0, book.SourcePaths.Count - 1));
         book.CurrentSourceFileIndex = index;
@@ -355,22 +378,19 @@ public sealed class PlaybackCoordinator
         Changed?.Invoke();
     }
 
-    private async Task SaveAsync()
+    private Task SaveAsync() => Book is { } book ? SaveAsync(book) : Task.CompletedTask;
+
+    private async Task SaveAsync(Audiobook book)
     {
-        if (Book is not { } book || _saving) return;
-        _saving = true;
         _lastSave = DateTime.UtcNow;
         try
         {
-            await _data.Repository.Audiobooks.UpsertAsync(book);
+            // the values are copied here, on the thread that changes them; the writing happens elsewhere
+            await _data.SavePositionAsync(BookPosition.Of(book));
         }
         catch (Exception e)
         {
             System.Diagnostics.Debug.WriteLine("[Playback] save failed: " + e);
-        }
-        finally
-        {
-            _saving = false;
         }
     }
 }

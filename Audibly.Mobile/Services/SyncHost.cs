@@ -124,7 +124,7 @@ public sealed class SyncHost
     private async Task<IReadOnlyList<LocalBook>> LoadBooksAsync()
     {
         var playing = PlayingBook();
-        var books = (await _data.Repository.Audiobooks.GetAsync()).ToList();
+        var books = await _data.LoadBooksAsync();
         return books.Select(book => ToLocal(playing != null && playing.Id == book.Id ? playing : book)).ToList();
     }
 

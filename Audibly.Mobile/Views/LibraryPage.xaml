@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:Audibly.Mobile.Views"
              x:Class="Audibly.Mobile.Views.LibraryPage"
-             x:DataType="views:LibraryPage"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}"
              Title="Library">
 
     <ContentPage.ToolbarItems>
@@ -11,7 +11,7 @@
         <ToolbarItem AutomationId="FolderButton" Clicked="Folder_Clicked" Text="Folder" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*">
 
         <Label
             x:Name="StatusLabel"
@@ -21,21 +21,19 @@
             Margin="16,8"
             TextColor="{StaticResource Gray500}" />
 
+        <!--  one card per book; tapping it opens the book in the player  -->
         <CollectionView
             x:Name="BookList"
             AutomationId="BookList"
             Grid.Row="1"
-            Margin="8,0"
+            Margin="10,4"
             SelectionMode="None">
             <CollectionView.ItemsLayout>
-                <GridItemsLayout HorizontalItemSpacing="8" Orientation="Vertical" Span="2" VerticalItemSpacing="12" />
+                <LinearItemsLayout ItemSpacing="10" Orientation="Vertical" />
             </CollectionView.ItemsLayout>
             <CollectionView.EmptyView>
                 <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
-                    <Label
-                        FontSize="20"
-                        HorizontalTextAlignment="Center"
-                        Text="No audiobooks yet" />
+                    <Label FontSize="20" HorizontalTextAlignment="Center" Text="No audiobooks yet" />
                     <Label
                         HorizontalTextAlignment="Center"
                         Text="Choose the folder on your phone that holds your audiobooks. A subfolder with several files is one book."
@@ -45,91 +43,60 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="views:BookItem">
-                    <VerticalStackLayout Padding="4" Spacing="4">
-                        <VerticalStackLayout.GestureRecognizers>
+                    <Border
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="0">
+                        <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="Book_Tapped" />
-                        </VerticalStackLayout.GestureRecognizers>
-                        <Border
-                            BackgroundColor="{StaticResource Gray100}"
-                            HeightRequest="170"
-                            StrokeShape="RoundRectangle 8"
-                            StrokeThickness="0">
-                            <Grid>
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="96,*" ColumnSpacing="14">
+                            <Grid BackgroundColor="{StaticResource Gray200}" HeightRequest="120" WidthRequest="96">
                                 <Label
-                                    FontSize="40"
+                                    FontSize="34"
                                     HorizontalOptions="Center"
                                     Text="{Binding Initial}"
-                                    TextColor="{StaticResource Gray400}"
+                                    TextColor="{StaticResource Gray500}"
                                     VerticalOptions="Center" />
                                 <Image Aspect="AspectFill" Source="{Binding Cover}" />
                             </Grid>
-                        </Border>
-                        <Label
-                            FontAttributes="Bold"
-                            FontSize="14"
-                            LineBreakMode="TailTruncation"
-                            MaxLines="2"
-                            Text="{Binding Title}" />
-                        <Label
-                            FontSize="12"
-                            LineBreakMode="TailTruncation"
-                            Text="{Binding Subtitle}"
-                            TextColor="{StaticResource Gray500}" />
-                        <ProgressBar Progress="{Binding Progress}" />
-                    </VerticalStackLayout>
+                            <Grid Grid.Column="1" Padding="0,10,12,10" RowDefinitions="*,Auto" RowSpacing="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label
+                                            FontAttributes="{Binding TitleAttributes}"
+                                            FontSize="18"
+                                            LineBreakMode="TailTruncation"
+                                            MaxLines="2"
+                                            Text="{Binding Title}" />
+                                        <Label
+                                            FontSize="13"
+                                            LineBreakMode="TailTruncation"
+                                            Text="{Binding Subtitle}"
+                                            TextColor="{StaticResource Gray500}" />
+                                    </VerticalStackLayout>
+                                    <!--  the book that is open  -->
+                                    <Ellipse
+                                        Fill="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}"
+                                        Grid.Column="1"
+                                        HeightRequest="9"
+                                        IsVisible="{Binding IsOpen}"
+                                        Margin="8,6,0,0"
+                                        VerticalOptions="Start"
+                                        WidthRequest="9" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Grid.Row="1">
+                                    <Label FontSize="14" Text="{Binding Length}" VerticalOptions="Center" />
+                                    <ProgressBar Grid.Column="1" Progress="{Binding Progress}" VerticalOptions="Center" />
+                                    <Label FontSize="14" Grid.Column="2" Text="{Binding Percent}" VerticalOptions="Center" />
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-
-        <!--  the book that is playing; tap to open the player  -->
-        <Border
-            x:Name="MiniBar"
-            AutomationId="MiniBar"
-            Grid.Row="2"
-            IsVisible="False"
-            Padding="12,8"
-            StrokeThickness="0"
-            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
-            <Border.GestureRecognizers>
-                <TapGestureRecognizer Tapped="MiniBar_Tapped" />
-            </Border.GestureRecognizers>
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label
-                        x:Name="MiniTitle"
-                        AutomationId="MiniTitle"
-                        FontAttributes="Bold"
-                        LineBreakMode="TailTruncation" />
-                    <Label
-                        x:Name="MiniChapter"
-                        FontSize="12"
-                        LineBreakMode="TailTruncation"
-                        TextColor="{StaticResource Gray500}" />
-                </VerticalStackLayout>
-                <Border
-                    x:Name="MiniPlayPause"
-                    AutomationId="MiniPlayPause"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                    Grid.Column="1"
-                    HeightRequest="52"
-                    SemanticProperties.Description="Play"
-                    StrokeShape="Ellipse"
-                    StrokeThickness="0"
-                    WidthRequest="52">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="MiniPlayPause_Clicked" />
-                    </Border.GestureRecognizers>
-                    <Path
-                        x:Name="MiniPlayPauseIcon"
-                        Aspect="Uniform"
-                        Fill="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
-                        HeightRequest="22"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center"
-                        WidthRequest="22" />
-                </Border>
-            </Grid>
-        </Border>
 
     </Grid>
 
