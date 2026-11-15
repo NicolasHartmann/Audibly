@@ -16,6 +16,7 @@ public partial class PlayerPage : ContentPage
     private readonly PlaybackCoordinator _playback;
     private bool _dragging;
     private bool _restored;
+    private bool _restoreDone;
     private bool _settingSpeed;
     private Guid? _shownBook;
 
@@ -63,6 +64,7 @@ public partial class PlayerPage : ContentPage
             System.Diagnostics.Debug.WriteLine("[Player] restore failed: " + e);
         }
 
+        _restoreDone = true;
         Update();
     }
 
@@ -99,7 +101,8 @@ public partial class PlayerPage : ContentPage
     {
         var book = _playback.Book;
         PlayerLayout.IsVisible = book != null;
-        EmptyLayout.IsVisible = book == null;
+        // while the last book is still loading the page stays blank instead of saying "no audiobook"
+        EmptyLayout.IsVisible = book == null && _restoreDone;
         if (book == null) return;
 
         if (_shownBook != book.Id)
