@@ -4,4 +4,5 @@
   <Project Path="Audibly.Models/Audibly.Models.csproj" />
   <Project Path="Audibly.Repository/Audibly.Repository.csproj" />
   <Project Path="Audibly.Stats/Audibly.Stats.csproj" />
+  <Project Path="Audibly.Sync/Audibly.Sync.csproj" />
 </Solution>
