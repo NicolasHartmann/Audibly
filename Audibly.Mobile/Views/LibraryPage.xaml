@@ -21,6 +21,15 @@
             Margin="16,8"
             TextColor="{StaticResource Gray500}" />
 
+        <!--  only on the very first opening; afterwards the list from last time shows at once  -->
+        <ActivityIndicator
+            x:Name="LoadingIndicator"
+            Grid.Row="1"
+            HorizontalOptions="Center"
+            IsVisible="False"
+            Margin="0,48,0,0"
+            VerticalOptions="Start" />
+
         <!--  one card per book; tapping it opens the book in the player  -->
         <CollectionView
             x:Name="BookList"
@@ -86,10 +95,19 @@
                                         VerticalOptions="Start"
                                         WidthRequest="9" />
                                 </Grid>
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Grid.Row="1">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Grid.Row="1">
                                     <Label FontSize="14" Text="{Binding Length}" VerticalOptions="Center" />
                                     <ProgressBar Grid.Column="1" Progress="{Binding Progress}" VerticalOptions="Center" />
                                     <Label FontSize="14" Grid.Column="2" Text="{Binding Percent}" VerticalOptions="Center" />
+                                    <!--  remove from the library, optionally with the files  -->
+                                    <views:IconButton
+                                        AutomationId="BookMenuButton"
+                                        Clicked="BookMenu_Clicked"
+                                        Data="{x:Static views:PlayerIcons.More}"
+                                        Grid.Column="3"
+                                        IconSize="18"
+                                        Margin="-8,-10,-10,-10"
+                                        SemanticProperties.Description="Book options" />
                                 </Grid>
                             </Grid>
                         </Grid>

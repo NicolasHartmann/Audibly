@@ -16,6 +16,8 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
 {
     private const string FolderKey = "LibraryFolderUri";
     private const string FolderNameKey = "LibraryFolderName";
+    private const string IgnoredKey = "LibraryIgnored";
+    private const ActivityFlags ReadWrite = ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantWriteUriPermission;
     internal const int PickFolderRequest = 4711;
 
     private static TaskCompletionSource<Uri?>? _pick;
@@ -48,13 +50,14 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
 
         _pick = new TaskCompletionSource<Uri?>();
         var intent = new Intent(Intent.ActionOpenDocumentTree);
-        intent.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantPersistableUriPermission);
+        // write as well as read: removing a book can also delete its files
+        intent.AddFlags(ReadWrite | ActivityFlags.GrantPersistableUriPermission);
         activity.StartActivityForResult(intent, PickFolderRequest);
         var uri = await _pick.Task;
         if (uri == null) return false;
 
         // without this the permission ends when the app is closed
-        _context.ContentResolver!.TakePersistableUriPermission(uri, ActivityFlags.GrantReadUriPermission);
+        _context.ContentResolver!.TakePersistableUriPermission(uri, ReadWrite);
         Preferences.Default.Set(FolderKey, uri.ToString());
         Preferences.Default.Set(FolderNameKey, DocumentFile.FromTreeUri(_context, uri)?.Name ?? "Audiobooks");
         return true;
@@ -74,10 +77,12 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
         var books = AudiobookImporter.GroupIntoBooks(entries, "root");
 
         int added = 0, known = 0, failed = 0;
+        var ignored = IgnoredLocations();
         foreach (var files in books)
             try
             {
                 var first = files[0].Uri.ToString()!;
+                if (ignored.Contains(first)) continue;
                 if (await data.Repository.Audiobooks.GetByFilePathAsync(first) != null)
                 {
                     known++;
@@ -110,6 +115,107 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
 
         return new ImportSummary(added, known, failed);
     });
+
+    public bool CanDeleteFiles
+    {
+        get
+        {
+            var stored = Preferences.Default.Get<string?>(FolderKey, null);
+            if (stored == null) return false;
+            try
+            {
+                return _context.ContentResolver!.PersistedUriPermissions.Any(permission =>
+                    permission.IsWritePermission && permission.Uri?.ToString() == stored);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+    }
+
+    public Task<int> DeleteFilesAsync(IReadOnlyList<string> locations) => Task.Run(() =>
+    {
+        var failed = 0;
+        DocumentFile? parent = null;
+        foreach (var location in locations)
+            try
+            {
+                var uri = Uri.Parse(location)!;
+                var file = DocumentFile.FromSingleUri(_context, uri);
+                if (file == null || !file.Exists()) continue;
+                parent ??= ParentOf(location);
+                if (!Android.Provider.DocumentsContract.DeleteDocument(_context.ContentResolver!, uri)) failed++;
+            }
+            catch (Exception e)
+            {
+                failed++;
+                System.Diagnostics.Debug.WriteLine("[Delete] " + e);
+            }
+
+        // a book of several files lives in its own folder; an empty one is removed too, never the chosen folder
+        try
+        {
+            if (parent != null && parent.Exists() && parent.ListFiles().Length == 0 && !IsLibraryRoot(parent))
+                parent.Delete();
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine("[Delete] " + e);
+        }
+
+        return failed;
+    });
+
+    public void Ignore(string firstLocation)
+    {
+        var ignored = IgnoredLocations();
+        ignored.Add(firstLocation);
+        Preferences.Default.Set(IgnoredKey, string.Join("\n", ignored));
+    }
+
+    public int IgnoredCount => IgnoredLocations().Count;
+
+    public void ClearIgnored() => Preferences.Default.Remove(IgnoredKey);
+
+    private static HashSet<string> IgnoredLocations() =>
+        Preferences.Default.Get(IgnoredKey, string.Empty)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet();
+
+    private DocumentFile? ParentOf(string location)
+    {
+        // walked down from the chosen folder: only a folder found that way can be listed and deleted
+        var stored = Preferences.Default.Get<string?>(FolderKey, null);
+        if (stored == null) return null;
+        var tree = Uri.Parse(stored)!;
+        var rootId = Android.Provider.DocumentsContract.GetTreeDocumentId(tree);
+        var documentId = Android.Provider.DocumentsContract.GetDocumentId(Uri.Parse(location)!);
+        if (rootId == null || documentId == null || !documentId.StartsWith(rootId + "/", StringComparison.Ordinal))
+            return null;
+
+        var relative = documentId[(rootId.Length + 1)..];
+        var slash = relative.LastIndexOf('/');
+        if (slash <= 0) return null;
+
+        var folder = DocumentFile.FromTreeUri(_context, tree);
+        foreach (var name in relative[..slash].Split('/'))
+        {
+            folder = folder?.FindFile(name);
+            if (folder is not { IsDirectory: true }) return null;
+        }
+
+        return folder;
+    }
+
+    private bool IsLibraryRoot(DocumentFile folder)
+    {
+        var stored = Preferences.Default.Get<string?>(FolderKey, null);
+        if (stored == null) return true;
+        var rootId = Android.Provider.DocumentsContract.GetTreeDocumentId(Uri.Parse(stored)!);
+        var folderId = Android.Provider.DocumentsContract.GetDocumentId(folder.Uri);
+        return rootId == folderId;
+    }
 
     public bool IsAvailable(string location)
     {

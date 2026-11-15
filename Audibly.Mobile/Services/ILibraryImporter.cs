@@ -23,4 +23,25 @@ public interface ILibraryImporter
 
     /// <summary>True when the file behind a stored location can still be opened.</summary>
     bool IsAvailable(string location);
+
+    /// <summary>
+    ///     True when the app may delete files in the audiobook folder. Folders chosen before
+    ///     deleting existed were granted for reading only and have to be chosen again.
+    /// </summary>
+    bool CanDeleteFiles { get; }
+
+    /// <summary>
+    ///     Deletes a book's files from the phone, and its folder when nothing else is left in it.
+    ///     Returns how many files could not be deleted.
+    /// </summary>
+    Task<int> DeleteFilesAsync(IReadOnlyList<string> locations);
+
+    /// <summary>A removed book is not added again by the next scan while its files are still there.</summary>
+    void Ignore(string firstLocation);
+
+    /// <summary>How many removed books the scan currently leaves out.</summary>
+    int IgnoredCount { get; }
+
+    /// <summary>Lets the next scan add removed books again whose files are still in the folder.</summary>
+    void ClearIgnored();
 }

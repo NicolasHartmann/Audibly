@@ -102,12 +102,15 @@ public sealed class PlaybackCoordinator
     public async Task RestoreAsync()
     {
         if (Book != null) return;
-        var books = await _data.LoadBooksAsync();
+        // the light list finds the book; only that one book is read with its chapters
+        var books = await _data.LoadLibraryAsync();
         var last = books.FirstOrDefault(candidate => candidate.IsNowPlaying)
                    ?? books.Where(candidate => candidate.DateLastPlayed != null)
                        .OrderByDescending(candidate => candidate.DateLastPlayed)
                        .FirstOrDefault();
-        if (last != null && Book == null) await OpenAsync(last, false);
+        if (last == null) return;
+        var book = await _data.LoadBookAsync(last.Id);
+        if (book != null && Book == null) await OpenAsync(book, false);
     }
 
     public async Task OpenAsync(Audiobook book, bool play)
@@ -140,6 +143,18 @@ public sealed class PlaybackCoordinator
         await SaveAsync();
         Changed?.Invoke();
         _ = LookForOtherDevicesAsync(book.Id);
+    }
+
+    /// <summary>Stops and unloads the open book when it is the one being removed from the library.</summary>
+    public void Close(Guid bookId)
+    {
+        if (Book?.Id != bookId) return;
+        _stats.OnInterrupted();
+        _player.Stop();
+        Book = null;
+        PendingOffer = null;
+        SleepTimerEnd = null;
+        Changed?.Invoke();
     }
 
     public void PlayPause()

@@ -10,6 +10,9 @@
             <VerticalStackLayout Spacing="6">
                 <Label FontAttributes="Bold" Text="Audiobook folder" />
                 <Label x:Name="FolderLabel" AutomationId="FolderLabel" TextColor="{StaticResource Gray500}" />
+                <!--  books removed from the library stay out of it until this is used  -->
+                <Label x:Name="RemovedLabel" AutomationId="RemovedLabel" TextColor="{StaticResource Gray500}" />
+                <Button x:Name="RestoreRemovedButton" AutomationId="RestoreRemovedButton" Clicked="RestoreRemoved_Clicked" Text="Add removed audiobooks again" />
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="6">

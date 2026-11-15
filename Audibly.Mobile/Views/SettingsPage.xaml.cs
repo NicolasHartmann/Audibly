@@ -60,6 +60,24 @@ public partial class SettingsPage : ContentPage
         }
     }
 
+    private void ShowRemoved()
+    {
+        var count = _importer.IgnoredCount;
+        RemovedLabel.IsVisible = RestoreRemovedButton.IsVisible = count > 0;
+        RemovedLabel.Text = count == 1
+            ? "1 audiobook was removed from the library but its files are still in the folder."
+            : $"{count} audiobooks were removed from the library but their files are still in the folder.";
+    }
+
+    private async void RestoreRemoved_Clicked(object? sender, EventArgs e)
+    {
+        _importer.ClearIgnored();
+        ShowRemoved();
+        await DisplayAlertAsync("Removed audiobooks",
+            "They are added again the next time you tap Rescan in the library, as long as their files are still there.",
+            "OK");
+    }
+
     private void SyncOff_Clicked(object? sender, EventArgs e)
     {
         _sync.TurnOff();
@@ -74,5 +92,6 @@ public partial class SettingsPage : ContentPage
         // the list of other devices is only as fresh as the last read
         _ = _sync.RefreshAsync();
         FolderLabel.Text = _importer.FolderName ?? "No folder chosen yet. Choose one in the Library.";
+        ShowRemoved();
     }
 }

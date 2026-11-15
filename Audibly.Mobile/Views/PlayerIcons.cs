@@ -12,6 +12,10 @@ public static class PlayerIcons
     public static readonly Geometry Play = Parse("M7,3 L7,21 L22,12 Z");
     public static readonly Geometry Pause = Parse("M5,3 H10 V21 H5 Z M14,3 H19 V21 H14 Z");
 
+    // three dots in a column, for the menu of a book in the library
+    public static readonly Geometry More = Parse(
+        "M10,4 A2,2 0 1 0 14,4 A2,2 0 1 0 10,4 Z M10,12 A2,2 0 1 0 14,12 A2,2 0 1 0 10,12 Z M10,20 A2,2 0 1 0 14,20 A2,2 0 1 0 10,20 Z");
+
     public static readonly Geometry Menu = Parse("M3,6 H21 V8 H3 Z M3,11 H21 V13 H3 Z M3,16 H21 V18 H3 Z");
     public static readonly Geometry PreviousChapter = Parse("M19,4 L9,12 L19,20 Z M5,4 H7.5 V20 H5 Z");
     public static readonly Geometry NextChapter = Parse("M5,4 L15,12 L5,20 Z M16.5,4 H19 V20 H16.5 Z");
