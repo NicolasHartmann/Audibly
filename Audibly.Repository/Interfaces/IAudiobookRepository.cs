@@ -14,6 +14,13 @@ public interface IAudiobookRepository
     Task<IEnumerable<Audiobook>> GetAsync();
 
     /// <summary>
+    ///     Saves where an audiobook stands, writing only its own row and the row of its current file.
+    ///     Saving the whole audiobook writes every chapter and file again, which takes seconds for a
+    ///     book of several hundred files.
+    /// </summary>
+    Task SavePlaybackStateAsync(AudiobookPlaybackState state);
+
+    /// <summary>
     ///     Returns all audiobooks with a data field matching the start of the given string.
     /// </summary>
     Task<IEnumerable<Audiobook>> GetAsync(string search);

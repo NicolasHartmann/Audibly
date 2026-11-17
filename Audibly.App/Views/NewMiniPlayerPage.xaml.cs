@@ -385,7 +385,7 @@ public sealed partial class NewMiniPlayerPage : Page
         try
         {
             if (PlayerViewModel.NowPlaying != null)
-                await PlayerViewModel.NowPlaying.SaveAsync();
+                await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
         }
         catch (Exception exception)
         {

@@ -69,7 +69,7 @@ public sealed partial class PlayerControlGrid : UserControl
             PlayerViewModel.CurrentPosition = TimeSpan.FromMilliseconds(newChapter.StartTime);
         }
 
-        await PlayerViewModel.NowPlaying.SaveAsync();
+        await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
     }
 
     private void OpenMiniPlayerButton_OnClick(object sender, RoutedEventArgs e)

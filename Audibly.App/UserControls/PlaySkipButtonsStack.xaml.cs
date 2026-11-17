@@ -74,7 +74,7 @@ public sealed partial class PlaySkipButtonsStack : UserControl
             await PlayerViewModel.OpenSourceFile(PlayerViewModel.NowPlaying.CurrentSourceFileIndex - 1, newChapterIdx);
             PlayerViewModel.CurrentPosition =
                 TimeSpan.FromMilliseconds(PlayerViewModel.NowPlaying.Chapters[newChapterIdx].StartTime);
-            await PlayerViewModel.NowPlaying.SaveAsync();
+            await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
 
             return;
         }
@@ -96,7 +96,7 @@ public sealed partial class PlaySkipButtonsStack : UserControl
         PlayerViewModel.CurrentPosition =
             TimeSpan.FromMilliseconds(PlayerViewModel.NowPlaying.CurrentChapter.StartTime);
 
-        await PlayerViewModel.NowPlaying.SaveAsync();
+        await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
     }
 
     private async void NextChapterButton_Click(object sender, RoutedEventArgs e)
@@ -110,7 +110,7 @@ public sealed partial class PlaySkipButtonsStack : UserControl
             await PlayerViewModel.OpenSourceFile(PlayerViewModel.NowPlaying.CurrentSourceFileIndex + 1, newChapterIdx);
             PlayerViewModel.CurrentPosition =
                 TimeSpan.FromMilliseconds(PlayerViewModel.NowPlaying.Chapters[newChapterIdx].StartTime);
-            await PlayerViewModel.NowPlaying.SaveAsync();
+            await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
 
             return;
         }
@@ -133,7 +133,7 @@ public sealed partial class PlaySkipButtonsStack : UserControl
         PlayerViewModel.CurrentPosition =
             TimeSpan.FromMilliseconds(PlayerViewModel.NowPlaying.CurrentChapter.StartTime);
 
-        await PlayerViewModel.NowPlaying.SaveAsync();
+        await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
     }
 
     private async void SkipBackButton_OnClick(object sender, RoutedEventArgs e)
@@ -142,7 +142,7 @@ public sealed partial class PlaySkipButtonsStack : UserControl
             ? PlayerViewModel.CurrentPosition - _skipBackButtonAmount
             : TimeSpan.Zero;
 
-        await PlayerViewModel.NowPlaying.SaveAsync();
+        await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
     }
 
     private async void SkipForwardButton_OnClick(object sender, RoutedEventArgs e)
@@ -153,6 +153,6 @@ public sealed partial class PlaySkipButtonsStack : UserControl
             ? PlayerViewModel.CurrentPosition + _skipForwardButtonAmount
             : PlayerViewModel.AudioPlayer.Duration;
 
-        await PlayerViewModel.NowPlaying.SaveAsync();
+        await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
     }
 }

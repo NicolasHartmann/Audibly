@@ -1,6 +1,7 @@
 ﻿// Author: rstewa · https://github.com/rstewa
 // Updated: 02/14/2025
 
+using System.Threading;
 using Audibly.Core;
 using System;
 using System.Collections.Generic;
@@ -79,6 +80,38 @@ public class AudiobookViewModel : BindableBase
     /// <summary>
     ///     Saves audiobook data that has been edited.
     /// </summary>
+    private static readonly SemaphoreSlim PlaybackStateSaving = new(1, 1);
+
+    /// <summary>
+    ///     Saves where the book stands (file, position, chapter, progress, speed, volume) on a
+    ///     background thread, writing only two rows. <see cref="SaveAsync" /> writes the whole book
+    ///     with every chapter and file, which takes seconds for a book of several hundred files and
+    ///     froze the app when it ran on every position update.
+    /// </summary>
+    public async Task SavePlaybackStateAsync()
+    {
+        // read here, on the thread that changes these values; written elsewhere
+        var file = CurrentSourceFile;
+        var state = new AudiobookPlaybackState(Model.Id, Model.CurrentSourceFileIndex, file?.CurrentTimeMs ?? 0,
+            Model.CurrentChapterIndex, Model.Progress, Model.IsCompleted, Model.DateLastPlayed, Model.PlaybackSpeed,
+            Model.Volume, Model.IsNowPlaying);
+
+        // one at a time and in order, so an older state never overwrites a newer one
+        await PlaybackStateSaving.WaitAsync();
+        try
+        {
+            await Task.Run(() => App.Repository.Audiobooks.SavePlaybackStateAsync(state));
+        }
+        catch (Exception e)
+        {
+            App.ViewModel.LoggingService.LogError(e);
+        }
+        finally
+        {
+            PlaybackStateSaving.Release();
+        }
+    }
+
     public async Task SaveAsync()
     {
         // if (IsNewAudiobook)

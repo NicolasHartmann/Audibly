@@ -84,6 +84,25 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
             .ToListAsync();
     }
 
+    public async Task SavePlaybackStateAsync(AudiobookPlaybackState state)
+    {
+        await db.Audiobooks
+            .Where(audiobook => audiobook.Id == state.AudiobookId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(audiobook => audiobook.CurrentSourceFileIndex, state.CurrentSourceFileIndex)
+                .SetProperty(audiobook => audiobook.CurrentChapterIndex, state.CurrentChapterIndex)
+                .SetProperty(audiobook => audiobook.Progress, state.Progress)
+                .SetProperty(audiobook => audiobook.IsCompleted, state.IsCompleted)
+                .SetProperty(audiobook => audiobook.DateLastPlayed, state.DateLastPlayed)
+                .SetProperty(audiobook => audiobook.PlaybackSpeed, state.PlaybackSpeed)
+                .SetProperty(audiobook => audiobook.Volume, state.Volume)
+                .SetProperty(audiobook => audiobook.IsNowPlaying, state.IsNowPlaying));
+
+        await db.SourceFiles
+            .Where(file => file.AudiobookId == state.AudiobookId && file.Index == state.CurrentSourceFileIndex)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(file => file.CurrentTimeMs, state.CurrentTimeMs));
+    }
+
     public async Task<Audiobook?> UpsertAsync(Audiobook audiobook)
     {
         var current = await db.Audiobooks

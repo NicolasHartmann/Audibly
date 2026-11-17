@@ -55,6 +55,8 @@ public class PlayerViewModel : BindableBase, IDisposable
     private AudiobookViewModel? _nowPlaying;
 
     private bool _pendingAutoPlay;
+    private static readonly TimeSpan PositionSaveInterval = TimeSpan.FromSeconds(5);
+    private DateTime _lastPositionSave = DateTime.MinValue;
     private bool _readAlongEnabled = ApplicationData.Current.LocalSettings.Values["ReadAlongEnabled"] is true;
     private AlignmentMap? _readAlongDocument;
 
@@ -589,7 +591,7 @@ public class PlayerViewModel : BindableBase, IDisposable
 
         NowPlaying.Volume = volume;
         NowPlaying.IsModified = true;
-        await NowPlaying.SaveAsync();
+        await NowPlaying.SavePlaybackStateAsync();
     }
 
     public async void UpdatePlaybackSpeed(double speed)
@@ -616,7 +618,7 @@ public class PlayerViewModel : BindableBase, IDisposable
 
         NowPlaying.PlaybackSpeed = speed;
         NowPlaying.IsModified = true;
-        await NowPlaying.SaveAsync();
+        await NowPlaying.SavePlaybackStateAsync();
     }
 
     public async Task OpenAudiobook(AudiobookViewModel audiobook)
@@ -629,7 +631,7 @@ public class PlayerViewModel : BindableBase, IDisposable
         {
             NowPlaying.IsNowPlaying = false;
 
-            await NowPlaying.SaveAsync();
+            await NowPlaying.SavePlaybackStateAsync();
 
             // the other devices learn where the book that is being left stands
             _ = App.Sync.PushAsync(true);
@@ -681,7 +683,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             ChapterComboSelectedIndex = NowPlaying.CurrentChapterIndex ?? 0;
             NowPlaying.CurrentChapterTitle = NowPlaying.Chapters[ChapterComboSelectedIndex].Title;
 
-            await NowPlaying.SaveAsync();
+            await NowPlaying.SavePlaybackStateAsync();
         });
 
         OpenAudioSource(TimeSpan.FromMilliseconds(audiobook.CurrentTimeMs), false);
@@ -733,7 +735,7 @@ public class PlayerViewModel : BindableBase, IDisposable
                 var (sourceIndex, positionMs) = PlayerProgress.Locate(
                     book.SourcePaths.Select(file => (double)file.Duration).ToList(), offer.PositionSeconds * 1000);
                 await SeekReadAlongAsync(sourceIndex, positionMs / 1000);
-                await book.SaveAsync();
+                await book.SavePlaybackStateAsync();
             });
         }
         catch (Exception e)
@@ -769,7 +771,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             book.CurrentChapterTitle = book.Chapters[chapterIndex].Title;
         });
 
-        await book.SaveAsync();
+        await book.SavePlaybackStateAsync();
 
         // another audiobook may have been opened while saving
         if (NowPlaying == book)
@@ -832,7 +834,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             CurrentPosition = TimeSpan.FromMilliseconds(book.CurrentChapter.StartTime + sliderValue);
         }
 
-        await book.SaveAsync();
+        await book.SavePlaybackStateAsync();
     }
 
     #endregion
@@ -958,6 +960,8 @@ public class PlayerViewModel : BindableBase, IDisposable
                 _dispatcherQueue.TryEnqueue(() =>
                 {
                     App.ListeningStats.OnInterrupted();
+                    // the position is otherwise only saved every few seconds while playing
+                    if (NowPlaying is { } paused) _ = paused.SavePlaybackStateAsync();
                     _ = App.Sync.PushAsync(true);
                     if (PlayPauseIcon == Symbol.Play) return;
                     PlayPauseIcon = Symbol.Play;
@@ -1032,7 +1036,14 @@ public class PlayerViewModel : BindableBase, IDisposable
                 _ = App.Sync.PushAsync(false);
             }
 
-            await audiobook.SaveAsync();
+            // Every few seconds is enough while listening: pause, seeks, file changes and exit save at
+            // once. Saving on every position update kept the app busy for books with many files.
+            var now = DateTime.UtcNow;
+            if (!isPlaying || now - _lastPositionSave >= PositionSaveInterval)
+            {
+                _lastPositionSave = now;
+                await audiobook.SavePlaybackStateAsync();
+            }
         });
     }
 

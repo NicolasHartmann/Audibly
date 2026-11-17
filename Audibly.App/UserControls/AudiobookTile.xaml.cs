@@ -129,7 +129,7 @@ public sealed partial class AudiobookTile : UserControl
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
         if (audiobook == null) return;
         audiobook.IsCompleted = true;
-        await audiobook.SaveAsync();
+        await audiobook.SavePlaybackStateAsync();
     }
 
     private async void MarkAsIncomplete_OnClick(object sender, RoutedEventArgs e)
@@ -137,7 +137,7 @@ public sealed partial class AudiobookTile : UserControl
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
         if (audiobook == null) return;
         audiobook.IsCompleted = false;
-        await audiobook.SaveAsync();
+        await audiobook.SavePlaybackStateAsync();
     }
 
     private void ExportMetadataToJson_OnClick(object sender, RoutedEventArgs e)

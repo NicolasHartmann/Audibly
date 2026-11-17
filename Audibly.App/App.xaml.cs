@@ -149,7 +149,7 @@ public partial class App : Application
         {
             ListeningStats.FlushBeforeExit();
             Sync.PushBeforeExit();
-            if (PlayerViewModel.NowPlaying != null) await PlayerViewModel.NowPlaying.SaveAsync();
+            if (PlayerViewModel.NowPlaying != null) await PlayerViewModel.NowPlaying.SavePlaybackStateAsync();
             PlayerViewModel.Dispose();
             WindowHelper.CloseAll();
         };
