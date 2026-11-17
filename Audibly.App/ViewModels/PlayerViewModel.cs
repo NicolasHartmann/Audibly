@@ -501,7 +501,35 @@ public class PlayerViewModel : BindableBase, IDisposable
         if (!_chapterSleepTimer.HasReachedEnd(NowPlaying.CurrentSourceFileIndex, positionMs)) return false;
 
         StopForSleepTimer();
+        // at the end of a file the end-of-file handler moves on; here the timer stopped just before it
+        if (!sourceEnded) _ = MoveToNextFileWhenAtItsEndAsync();
         return true;
+    }
+
+    /// <summary>
+    ///     The timer checks ten times a second, so it pauses a moment before the end of a chapter that
+    ///     ends with its file. Playing that moment would only reach the end of the file, so Play would
+    ///     seem to do nothing; the next file is opened right away instead, paused.
+    /// </summary>
+    private async Task MoveToNextFileWhenAtItsEndAsync()
+    {
+        const double nearEndMs = 2000;
+        var book = NowPlaying;
+        if (book == null || book.CurrentSourceFileIndex >= book.SourcePaths.Count - 1) return;
+        var fileMs = book.SourcePaths[book.CurrentSourceFileIndex].Duration * 1000.0;
+        if (fileMs - CurrentPosition.TotalMilliseconds > nearEndMs) return;
+
+        var nextIndex = book.CurrentSourceFileIndex + 1;
+        var nextChapter = book.Chapters.FirstOrDefault(chapter => chapter.ParentSourceFileIndex == nextIndex);
+        if (nextChapter == null) return;
+        try
+        {
+            await OpenSourceFileAsync(nextIndex, nextChapter.Index, null, false);
+        }
+        catch (Exception e)
+        {
+            App.ViewModel.LoggingService.LogError(e);
+        }
     }
 
     private void StopForSleepTimer()
@@ -717,13 +745,13 @@ public class PlayerViewModel : BindableBase, IDisposable
     public Task OpenSourceFile(int index, int chapterIndex) => OpenSourceFileAsync(index, chapterIndex, null);
 
     /// <param name="startMs">Position in the new file to start at; defaults to the chapter's start.</param>
-    private async Task OpenSourceFileAsync(int index, int chapterIndex, double? startMs)
+    private async Task OpenSourceFileAsync(int index, int chapterIndex, double? startMs, bool? play = null)
     {
         var book = NowPlaying;
         if (book == null || book.CurrentSourceFileIndex == index)
             return;
 
-        var autoPlay = _pendingAutoPlay || MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing;
+        var autoPlay = play ?? (_pendingAutoPlay || MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing);
         _pendingAutoPlay = false;
         AudioPlayer.Close();
 
@@ -915,8 +943,11 @@ public class PlayerViewModel : BindableBase, IDisposable
             case MediaPlaybackState.Playing:
                 _dispatcherQueue.TryEnqueue(() =>
                 {
-                    if (sender.PlaybackState != MediaPlaybackState.Playing) return;
+                    // The listener started playback after the sleep timer: its hold on this file ends.
+                    // Cleared before the state check: when only a moment of the file was left, playback
+                    // has already ended again by now, and the end must then lead into the next file.
                     _sleepTimerStoppedSource = null;
+                    if (sender.PlaybackState != MediaPlaybackState.Playing) return;
                     if (PlayPauseIcon == Symbol.Pause) return;
                     PlayPauseIcon = Symbol.Pause;
                 });
