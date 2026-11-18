@@ -18,6 +18,13 @@
   - [ ] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output)
   - [ ] research better approaches online (e.g. SoundTouch settings for speech, WSOLA/Sonic, the Windows playback rate) and compare by listening
 
+- [ ] Make the fork usable for others
+  - [ ] choose an own app name (the Store name "Audibly" belongs to the original listing)
+  - [ ] GitHub release: Windows MSIX with its own identity (installs next to the Store app), signed with an own certificate, plus install instructions for the one-time certificate step
+  - [ ] GitHub release: Android APK signed with an own release key (keep the key safe; switching from the debug key needs one reinstall)
+  - [ ] later: own Microsoft Store listing (individual developer accounts are free; the Store signs the package)
+  - [ ] keep the pull requests to rstewa/Audibly going
+
 # BUGS
 
 - [ ] BUG: when headphones disconnect, the app crashes
