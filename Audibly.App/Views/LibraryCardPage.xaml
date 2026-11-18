@@ -23,6 +23,7 @@
                 FilePath="{x:Bind CurrentSourceFile.FilePath, Mode=OneWay}"
                 Id="{x:Bind Id, Mode=OneWay}"
                 IsCompleted="{x:Bind IsCompleted, Mode=OneWay}"
+                LengthText="{x:Bind LengthAtSpeedText, Mode=OneWay}"
                 Progress="{x:Bind Progress, Mode=OneWay}"
                 SourcePaths="{x:Bind SourcePaths, Mode=OneWay}"
                 SourcePathsCount="{x:Bind SourcePaths.Count, Mode=OneWay}"

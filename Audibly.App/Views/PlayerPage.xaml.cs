@@ -33,6 +33,9 @@ public sealed partial class PlayerPage : Page
 
         Frame.GoBack();
         PlayerViewModel.IsPlayerFullScreen = false;
+        // the maximize button on the small player must offer to maximize again
+        PlayerViewModel.MaximizeMinimizeGlyph = Constants.MaximizeGlyph;
+        PlayerViewModel.MaximizeMinimizeTooltip = Constants.MaximizeTooltip;
         PlayerViewModel.MaximizeMinimizeGlyph = Constants.MaximizeGlyph;
     }
 }

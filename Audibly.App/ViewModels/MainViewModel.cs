@@ -1,6 +1,7 @@
 // Author: rstewa · https://github.com/rstewa
 // Updated: 07/24/2025
 
+using System.IO;
 using Audibly.Core;
 using System;
 using System.Collections.Generic;
@@ -247,6 +248,31 @@ public class MainViewModel : BindableBase
     public event ResetFiltersHandler? ResetFilters;
 
     /// <summary>
+    ///     Books made of several files used to be named after their first file ("Kapitel 1",
+    ///     "Vorspann"). Where the title is still the first chapter's name, the album of the first file
+    ///     names the book instead. Runs once per book: a corrected title no longer matches.
+    /// </summary>
+    private async Task RepairBookTitlesAsync(IReadOnlyList<AudiobookViewModel> books)
+    {
+        foreach (var book in books)
+            try
+            {
+                if (book.SourcePaths.Count < 2 || book.Chapters.Count == 0 || book.Title != book.Chapters[0].Title)
+                    continue;
+                var firstFile = book.SourcePaths[0].FilePath;
+                var album = await Task.Run(() => File.Exists(firstFile) ? new ATL.Track(firstFile).Album : null);
+                if (string.IsNullOrWhiteSpace(album) || album == book.Title) continue;
+
+                await Task.Run(() => App.Repository.Audiobooks.RenameAsync(book.Id, album));
+                await _dispatcherQueue.EnqueueAsync(() => book.Title = album);
+            }
+            catch (Exception e)
+            {
+                LoggingService.LogError(e);
+            }
+    }
+
+    /// <summary>
     ///     Gets the complete list of audiobooks from the database.
     /// </summary>
     public async Task GetAudiobookListAsync(bool firstRun = false)
@@ -270,6 +296,9 @@ public class MainViewModel : BindableBase
                     Audiobooks.Add(audiobookViewModel);
                     AudiobooksForFilter.Add(audiobookViewModel);
                 }
+
+                // not awaited: the library shows at once, corrected titles follow
+                _ = RepairBookTitlesAsync(AudiobooksForFilter.ToList());
 
                 if (firstRun)
                 {

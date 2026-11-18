@@ -103,6 +103,11 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
             .ExecuteUpdateAsync(setters => setters.SetProperty(file => file.CurrentTimeMs, state.CurrentTimeMs));
     }
 
+    public async Task RenameAsync(Guid audiobookId, string title) =>
+        await db.Audiobooks
+            .Where(audiobook => audiobook.Id == audiobookId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(audiobook => audiobook.Title, title));
+
     public async Task<Audiobook?> UpsertAsync(Audiobook audiobook)
     {
         var current = await db.Audiobooks

@@ -69,6 +69,7 @@
         Padding="16"
         PointerEntered="AudiobookTile_OnPointerEntered"
         PointerExited="AudiobookTile_OnPointerExited"
+        Click="ButtonTile_Click"
         RightTapped="ButtonTile_OnRightTapped"
         x:Name="ButtonTile">
         <Grid RowSpacing="16" VerticalAlignment="Stretch">
@@ -133,74 +134,62 @@
                 </Button>
             </Grid>
 
-            <Grid Grid.Row="1">
+            <!--  title over up to two lines, author, then how far along and how long at the book's speed  -->
+            <StackPanel Grid.Row="1" Spacing="4" x:Name="TitleAuthorPanel">
+                <TextBlock
+                    FontSize="{x:Bind ViewModel.TitleFontSize, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    HorizontalAlignment="Left"
+                    MaxLines="2"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="{x:Bind Title, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="Wrap"
+                    ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}"
+                    x:Name="TitleText" />
+                <TextBlock
+                    FontSize="{x:Bind ViewModel.AuthorFontSize, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    HorizontalAlignment="Left"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind Author, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel
-                    Grid.Column="0"
-                    Orientation="Vertical"
-                    RelativePanel.AlignLeftWithPanel="True"
-                    Spacing="4"
-                    x:Name="TitleAuthorPanel">
-                    <TextBlock
-                        FontSize="{x:Bind ViewModel.TitleFontSize, Mode=OneWay}"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        HorizontalAlignment="Left"
-                        MaxWidth="{x:Bind ViewModel.TitleMaxWidth, Mode=OneWay}"
-                        Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{x:Bind Title, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        TextWrapping="NoWrap"
-                        ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}"
-                        x:Name="TitleText" />
-                    <TextBlock
-                        FontSize="{x:Bind ViewModel.AuthorFontSize, Mode=OneWay}"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        HorizontalAlignment="Left"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="{x:Bind Author, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        TextWrapping="NoWrap" />
-                </StackPanel>
-
-                <!--  progress  -->
-                <Grid
-                    Grid.Column="1"
-                    HorizontalAlignment="Right"
-                    Visibility="Collapsed"
-                    x:Name="ProgressGrid">
-                    <ProgressRing
-                        Background="LightGray"
-                        Height="{x:Bind ViewModel.ProgressIndicatorFontSize, Mode=OneWay}"
-                        HorizontalAlignment="Center"
-                        IsIndeterminate="False"
+                <Grid ColumnSpacing="8" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ProgressBar
                         Maximum="100"
                         Minimum="0"
                         Value="{x:Bind Progress, Mode=OneWay}"
                         VerticalAlignment="Center"
-                        Width="{x:Bind ViewModel.ProgressIndicatorFontSize, Mode=OneWay}" />
+                        x:Name="ProgressGrid" />
                     <TextBlock
-                        FontSize="{x:Bind ViewModel.ProgressIndicatorTextFontSize, Mode=OneWay}"
-                        HorizontalAlignment="Center"
-                        Text="{x:Bind Progress, Mode=OneWay}"
-                        VerticalAlignment="Center" />
-                </Grid>
-                <!--  is complete checkmark  -->
-                <Grid
-                    Grid.Column="1"
-                    Visibility="Collapsed"
-                    x:Name="CompletedGrid">
+                        FontSize="{x:Bind ViewModel.AuthorFontSize, Mode=OneWay}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Grid.Column="1"
+                        Text="{x:Bind ProgressText, Mode=OneWay}"
+                        VerticalAlignment="Center"
+                        x:Name="ProgressTextBlock" />
+                    <!--  is complete checkmark  -->
                     <FontIcon
-                        FontSize="{x:Bind ViewModel.ProgressIndicatorFontSize, Mode=OneWay}"
+                        FontSize="{x:Bind ViewModel.AuthorFontSize, Mode=OneWay}"
                         Glyph="&#xEC61;"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center" />
+                        Grid.Column="1"
+                        Visibility="Collapsed"
+                        x:Name="CompletedGrid" />
                 </Grid>
-            </Grid>
+                <TextBlock
+                    FontSize="{x:Bind ViewModel.AuthorFontSize, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind LengthText, Mode=OneWay}"
+                    ToolTipService.ToolTip="Length of the whole book at its playback speed"
+                    x:Name="LengthTextBlock" />
+            </StackPanel>
         </Grid>
     </Button>
 </UserControl>

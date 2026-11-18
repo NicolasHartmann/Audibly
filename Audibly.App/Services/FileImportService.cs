@@ -253,7 +253,11 @@ public class FileImportService : IImportFiles
                 // check if this is the 1st file
                 if (audiobook.SourcePaths.Count == 0)
                 {
-                    audiobook.Title = track.Title;
+                    // in a book of several files the track title is usually the first chapter's
+                    // ("Kapitel 1"); the album names the book
+                    audiobook.Title = paths.Length > 1 && !string.IsNullOrWhiteSpace(track.Album)
+                        ? track.Album
+                        : track.Title;
                     audiobook.Composer = track.Composer;
                     audiobook.Author = track.Artist;
                     audiobook.Description =

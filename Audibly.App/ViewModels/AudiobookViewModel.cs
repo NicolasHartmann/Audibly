@@ -1,6 +1,7 @@
 ﻿// Author: rstewa · https://github.com/rstewa
 // Updated: 02/14/2025
 
+using Audibly.Stats;
 using System.Threading;
 using Audibly.Core;
 using System;
@@ -163,6 +164,7 @@ public class AudiobookViewModel : BindableBase
                 Model.DateLastPlayed = value;
                 IsModified = true;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(LengthAtSpeedText));
             }
         }
     }
@@ -221,6 +223,7 @@ public class AudiobookViewModel : BindableBase
             Model.PlaybackSpeed = value;
             IsModified = true;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(LengthAtSpeedText));
         }
     }
 
@@ -350,7 +353,32 @@ public class AudiobookViewModel : BindableBase
     /// <summary>
     ///     Gets the title of the audiobook.
     /// </summary>
-    public string Title => Model.Title;
+    public string Title
+    {
+        get => Model.Title;
+        set
+        {
+            if (value == Model.Title) return;
+            Model.Title = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    ///     The speed this book plays at: its own once it has been listened to, the default speed for
+    ///     a book that was never started (the player applies that speed when it is first opened).
+    /// </summary>
+    public double ListeningSpeed => DateLastPlayed == null ? UserSettings.PlaybackSpeed : PlaybackSpeed;
+
+    /// <summary>How long the whole book takes at <see cref="ListeningSpeed" />, e.g. "11h 54m · 2.8×".</summary>
+    public string LengthAtSpeedText
+    {
+        get
+        {
+            var speed = ListeningSpeed > 0 ? ListeningSpeed : 1;
+            return $"{DurationFormat.Short(Duration / speed)} · {PlaybackSpeedPresets.Format(speed)}";
+        }
+    }
 
     /// <summary>
     ///     Gets or sets the release date of the audiobook.

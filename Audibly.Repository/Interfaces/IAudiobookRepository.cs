@@ -20,6 +20,9 @@ public interface IAudiobookRepository
     /// </summary>
     Task SavePlaybackStateAsync(AudiobookPlaybackState state);
 
+    /// <summary>Changes only the title of an audiobook.</summary>
+    Task RenameAsync(Guid audiobookId, string title);
+
     /// <summary>
     ///     Returns all audiobooks with a data field matching the start of the given string.
     /// </summary>

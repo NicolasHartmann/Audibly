@@ -1,6 +1,8 @@
 // Author: rstewa · https://github.com/rstewa
 // Updated: 06/09/2025
 
+using Audibly.App.Helpers;
+using Audibly.App.Views;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,7 +31,14 @@ public sealed partial class AudiobookTile : UserControl
     public AudiobookTile()
     {
         InitializeComponent();
+
+        // Two lines are always reserved for the title, so the progress bars of a row line up
+        // whether a title takes one line or two. The zoom setting changes the font size.
+        TitleText.RegisterPropertyChangedCallback(TextBlock.FontSizeProperty, (_, _) => ReserveTwoTitleLines());
+        ReserveTwoTitleLines();
     }
+
+    private void ReserveTwoTitleLines() => TitleText.MinHeight = Math.Ceiling(TitleText.FontSize * 1.43) * 2;
 
     /// <summary>
     ///     Gets the app-wide PlayerViewModel instance.
@@ -59,6 +68,27 @@ public sealed partial class AudiobookTile : UserControl
     {
         BlackOverlayGrid.Visibility = Visibility.Collapsed;
         ButtonTile.Background = new SolidColorBrush(Colors.Transparent); // Revert background to original
+    }
+
+    /// <summary>A click on the book opens it in the large player; its back arrow returns to the library.</summary>
+    private async void ButtonTile_Click(object sender, RoutedEventArgs e)
+    {
+        var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
+        if (audiobook == null) return;
+        try
+        {
+            if (PlayerViewModel.NowPlaying?.Id != audiobook.Id) await PlayerViewModel.OpenAudiobook(audiobook);
+            if (PlayerViewModel.NowPlaying?.Id != audiobook.Id) return;
+
+            PlayerViewModel.IsPlayerFullScreen = true;
+            PlayerViewModel.MaximizeMinimizeGlyph = Helpers.Constants.MinimizeGlyph;
+            PlayerViewModel.MaximizeMinimizeTooltip = Helpers.Constants.MinimizeTooltip;
+            if (App.RootFrame?.Content is not PlayerPage) App.RootFrame?.Navigate(typeof(PlayerPage));
+        }
+        catch (Exception exception)
+        {
+            ViewModel.LoggingService.LogError(exception, true);
+        }
     }
 
     private async void PlayButton_Click(object sender, RoutedEventArgs e)
@@ -203,14 +233,28 @@ public sealed partial class AudiobookTile : UserControl
 
     private static void ProgressPropertyChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not AudiobookTile audiobookTile) return;
-
-        var isCompleted = (bool)audiobookTile.GetValue(IsCompletedProperty);
-        if (isCompleted) return;
-
-        audiobookTile.ProgressGrid.Visibility = (double)e.NewValue < 1 ? Visibility.Collapsed : Visibility.Visible;
-        // audiobookTile.ProgressTextBlock.Text = $"{(double)e.NewValue:P0}";
+        if (d is AudiobookTile audiobookTile) audiobookTile.ProgressText = $"{Math.Clamp(Math.Floor((double)e.NewValue), 0, 100):0}%";
     }
+
+    /// <summary>"57%"; the bar next to it shows the same.</summary>
+    public string ProgressText
+    {
+        get => (string)GetValue(ProgressTextProperty);
+        private set => SetValue(ProgressTextProperty, value);
+    }
+
+    public static readonly DependencyProperty ProgressTextProperty =
+        DependencyProperty.Register(nameof(ProgressText), typeof(string), typeof(AudiobookTile), new PropertyMetadata("0%"));
+
+    /// <summary>Length of the whole book at its playback speed, e.g. "11h 54m · 2.8×".</summary>
+    public string LengthText
+    {
+        get => (string)GetValue(LengthTextProperty);
+        set => SetValue(LengthTextProperty, value);
+    }
+
+    public static readonly DependencyProperty LengthTextProperty =
+        DependencyProperty.Register(nameof(LengthText), typeof(string), typeof(AudiobookTile), new PropertyMetadata(string.Empty));
 
     public bool IsCompleted
     {
@@ -226,7 +270,8 @@ public sealed partial class AudiobookTile : UserControl
     {
         if (d is not AudiobookTile audiobookTile) return;
         var isCompleted = (bool)e.NewValue;
-        audiobookTile.ProgressGrid.Visibility = isCompleted ? Visibility.Collapsed : Visibility.Visible;
+        // a finished book shows a full bar with a check mark instead of the percentage
+        audiobookTile.ProgressTextBlock.Visibility = isCompleted ? Visibility.Collapsed : Visibility.Visible;
         audiobookTile.CompletedGrid.Visibility = isCompleted ? Visibility.Visible : Visibility.Collapsed;
         audiobookTile.MarkAsCompletedButton.Visibility = isCompleted ? Visibility.Collapsed : Visibility.Visible;
         audiobookTile.MarkAsIncompleteButton.Visibility = isCompleted ? Visibility.Visible : Visibility.Collapsed;
