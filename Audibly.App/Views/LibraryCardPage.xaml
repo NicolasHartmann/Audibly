@@ -99,6 +99,12 @@
                 Style="{StaticResource PageTitleTextBlockStyle}"
                 Text="Audiobook Library"
                 x:Name="PageTitle" />
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Margin="20,2,6,0"
+                Style="{StaticResource BodyTextBlockStyle}"
+                Text="{x:Bind ViewModel.LibraryCountText, Mode=OneWay}"
+                x:Name="LibraryCountText" />
             <StackPanel
                 Margin="4,0,0,0"
                 Orientation="Horizontal"

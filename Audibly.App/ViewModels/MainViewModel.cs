@@ -86,6 +86,9 @@ public class MainViewModel : BindableBase
         DefaultPlaybackSpeed = UserSettings.PlaybackSpeed;
         DefaultVolume = UserSettings.Volume;
 
+        // filters and the search change the shown books, so the count text follows
+        Audiobooks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(LibraryCountText));
+
         Task.Run(() => GetAudiobookListAsync(true));
 
         InitializeZoomLevelToTileSizeDictionary();
@@ -103,6 +106,20 @@ public class MainViewModel : BindableBase
     ///     The collection of audiobooks to be used for filtering.
     /// </summary>
     public List<AudiobookViewModel> AudiobooksForFilter { get; } = [];
+
+    /// <summary>
+    ///     How many books the library holds ("12 books"), and how many of them are shown while a
+    ///     filter or search narrows the list ("3 of 12 books").
+    /// </summary>
+    public string LibraryCountText
+    {
+        get
+        {
+            var total = AudiobooksForFilter.Count;
+            var noun = total == 1 ? "book" : "books";
+            return Audiobooks.Count == total ? $"{total} {noun}" : $"{Audiobooks.Count} of {total} {noun}";
+        }
+    }
 
     /// <summary>
     ///     Gets or sets the selected audiobook, or null if no audiobook is selected.
@@ -296,6 +313,8 @@ public class MainViewModel : BindableBase
                     Audiobooks.Add(audiobookViewModel);
                     AudiobooksForFilter.Add(audiobookViewModel);
                 }
+
+                OnPropertyChanged(nameof(LibraryCountText));
 
                 // not awaited: the library shows at once, corrected titles follow
                 _ = RepairBookTitlesAsync(AudiobooksForFilter.ToList());
