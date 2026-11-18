@@ -7,6 +7,10 @@
 - [ ] Genres / tags for audiobooks (filter the library, statistics per genre)
 - [ ] Windows: show the total number of books in the library
   - [ ] helps to check that a library scan found everything, and to compare collections
+- [ ] Windows: easier import of audiobooks made of several files
+  - [ ] import a whole folder at once: every subfolder with audio files becomes one book
+  - [ ] files in natural name order by default; sorting them by hand only as an option
+  - [ ] makes importing a large library easy
 
 # BUGS
 
