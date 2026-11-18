@@ -5,6 +5,8 @@
   - [ ] search the cover online by title and author and choose one
   - [ ] Windows and Android
 - [ ] Genres / tags for audiobooks (filter the library, statistics per genre)
+- [ ] Windows: show the total number of books in the library
+  - [ ] helps to check that a library scan found everything, and to compare collections
 
 # BUGS
 
