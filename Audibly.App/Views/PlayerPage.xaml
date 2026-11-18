@@ -10,7 +10,12 @@
     xmlns:media="using:CommunityToolkit.WinUI.Media"
     xmlns:userControls="using:Audibly.App.UserControls"
     xmlns:winUi="using:CommunityToolkit.WinUI"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:Audibly.App.Helpers.Converters">
+
+    <Page.Resources>
+        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
+    </Page.Resources>
     <!--  ReSharper disable all Xaml.RedundantResource  -->
 
     <Grid>
@@ -86,9 +91,8 @@
                         BorderBrush="Transparent"
                         BorderThickness="0"
                         CornerRadius="{StaticResource OverlayCornerRadius}">
-                        <Border.Background>
-                            <ImageBrush ImageSource="{x:Bind PlayerViewModel.NowPlaying.CoverImagePath, Mode=OneWay}" Stretch="UniformToFill" />
-                        </Border.Background>
+                        <!--  an Image like the library's, which shows the cover reliably  -->
+                        <Image Source="{x:Bind PlayerViewModel.NowPlaying.CoverImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill" />
                     </Border>
                     <winUi:Effects.Shadow>
                         <media:AttachedCardShadow CornerRadius="{StaticResource OverlayCornerRadiusDouble}" Offset="4, 4" />

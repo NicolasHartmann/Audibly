@@ -44,8 +44,10 @@
   tier needs.
 - **Read Along** — follow an EPUB word by word while the audiobook plays
   ([details](docs/read-along.md)).
-- **Better multi-file audiobooks** — no skipped audio when one file ends, and chapters are named after their files
-  when the files share one title tag.
+- **Library** — books show their title and author, a progress bar and the length of the whole book at its
+  playback speed; a click opens the book in the large player.
+- **Better multi-file audiobooks** — named after their album, no skipped audio when one file ends, chapters named
+  after their files when the files share one title tag, and no freezes with books of several hundred files.
 
 ### Android
 
@@ -66,6 +68,14 @@
 
 
 ## Screenshots
+
+### Windows: library and player
+<p align="middle">
+  <img src="images/windows/library.png" width="49%" />
+  <img src="images/windows/player.png" width="49%" />
+</p>
+
+<sub>Each book shows its progress and the length of the whole book at its playback speed. A click opens it in the large player.</sub>
 
 ### Windows: listening statistics
 <p align="middle">
@@ -93,11 +103,6 @@
   <img src="images/android/speed.png" width="30%" />
 </p>
 
-### Original Windows app
-<p align="middle">
-  <img src="images/v2.2.7/audibly_home_page.png" width="49%" />
-  <img src="images/v2.2.7/audibly_player_page.png" width="49%" />
-</p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
