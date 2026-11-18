@@ -1,3 +1,11 @@
+# FORK: PLANNED
+
+- [ ] Change a book's cover afterwards
+  - [ ] pick an image file (or take `cover.jpg` / `folder.jpg` from the book's folder)
+  - [ ] search the cover online by title and author and choose one
+  - [ ] Windows and Android
+- [ ] Genres / tags for audiobooks (filter the library, statistics per genre)
+
 # BUGS
 
 - [ ] BUG: when headphones disconnect, the app crashes
