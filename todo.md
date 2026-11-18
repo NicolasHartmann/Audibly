@@ -11,6 +11,10 @@
   - [ ] import a whole folder at once: every subfolder with audio files becomes one book
   - [ ] files in natural name order by default; sorting them by hand only as an option
   - [ ] makes importing a large library easy
+- [ ] Windows: better sound quality at higher speeds
+  - [ ] the narrator sounds better on Android (ExoPlayer/Sonic) than on Windows (NAudio + SoundTouch)
+  - [ ] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output)
+  - [ ] research better approaches online (e.g. SoundTouch settings for speech, WSOLA/Sonic, the Windows playback rate) and compare by listening
 
 # BUGS
 
