@@ -19,6 +19,9 @@
     <Compile Include="..\Audibly.App\Services\Audio\*.cs" Link="Audio\%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="Metadata\Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Audibly.Core\Audibly.Core.csproj" />
   </ItemGroup>
 </Project>
