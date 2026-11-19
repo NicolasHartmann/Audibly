@@ -37,6 +37,7 @@ public sealed class AudibleJsonTests
         var details = AudibleJson.ParseDetails(Fixtures.Read("audnexus-panem2.json"));
 
         Assert.Equal("B008CND4RS", details.Asin);
+        Assert.Equal("Gefährliche Liebe", details.Title);
         Assert.Equal("Die Tribute von Panem", details.Series);
         Assert.Equal("2", details.SeriesPart);
         Assert.Equal("Maria Koschny", details.Narrator);

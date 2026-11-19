@@ -118,7 +118,9 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
                 .SetProperty(audiobook => audiobook.SeriesPart, metadata.SeriesPart)
                 .SetProperty(audiobook => audiobook.Genres, metadata.Genres)
                 .SetProperty(audiobook => audiobook.ReleaseDate, metadata.ReleaseDate)
-                .SetProperty(audiobook => audiobook.Asin, metadata.Asin));
+                .SetProperty(audiobook => audiobook.Asin, metadata.Asin)
+                .SetProperty(audiobook => audiobook.Title,
+                    audiobook => string.IsNullOrWhiteSpace(metadata.Title) ? audiobook.Title : metadata.Title));
 
     public async Task<Audiobook?> UpsertAsync(Audiobook audiobook)
     {

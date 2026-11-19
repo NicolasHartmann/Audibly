@@ -8,6 +8,7 @@ namespace Audibly.Core.Metadata;
 /// <summary>The fields "Look up online" can change, in the order the dialog lists them.</summary>
 public enum MetadataField
 {
+    Title,
     Narrator,
     Series,
     SeriesPart,
@@ -34,7 +35,9 @@ public static class MetadataComparison
             var old = Display(current, field);
             var @new = Display(foundOnly, field);
             var canApply = !string.IsNullOrWhiteSpace(@new);
-            return new FieldChange(field, old, @new, canApply, canApply && old.Trim() != @new.Trim());
+            // a new title is only taken when ticked by hand: Audible often adds "Das Hörspiel" or similar
+            var different = old.Trim() != @new.Trim();
+            return new FieldChange(field, old, @new, canApply, canApply && different && field != MetadataField.Title);
         }).ToList();
     }
 
@@ -51,11 +54,13 @@ public static class MetadataComparison
             Pick(MetadataField.SeriesPart, current.SeriesPart, found.SeriesPart),
             Pick(MetadataField.Genres, current.Genres, genres),
             chosen.Contains(MetadataField.ReleaseDate) && found.ReleaseDate != null ? found.ReleaseDate : current.ReleaseDate,
-            string.IsNullOrWhiteSpace(found.Asin) ? current.Asin : found.Asin);
+            string.IsNullOrWhiteSpace(found.Asin) ? current.Asin : found.Asin,
+            Pick(MetadataField.Title, current.Title, found.Title));
     }
 
     private static string Display(BookMetadata book, MetadataField field) => field switch
     {
+        MetadataField.Title => book.Title ?? string.Empty,
         MetadataField.Narrator => book.Narrator ?? string.Empty,
         MetadataField.Series => book.Series ?? string.Empty,
         MetadataField.SeriesPart => book.SeriesPart ?? string.Empty,

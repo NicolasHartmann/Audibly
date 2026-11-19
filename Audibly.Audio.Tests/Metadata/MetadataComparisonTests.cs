@@ -9,8 +9,8 @@ public sealed class MetadataComparisonTests
     private static readonly BookMetadata Nothing = new(null, null, null, null, null, null, null);
 
     private static BookDetails Found(string? narrator = null, string? series = null, IReadOnlyList<string>? genres = null,
-        DateTime? releaseDate = null, string? description = null) =>
-        new("B1", description, narrator, series, null, genres ?? [], releaseDate);
+        DateTime? releaseDate = null, string? description = null, string? title = null) =>
+        new("B1", description, narrator, series, null, genres ?? [], releaseDate, title);
 
     private static FieldChange Row(IReadOnlyList<FieldChange> rows, MetadataField field) =>
         rows.Single(row => row.Field == field);
@@ -21,7 +21,7 @@ public sealed class MetadataComparisonTests
         var rows = MetadataComparison.Compare(Nothing, Found());
 
         Assert.Equal(
-            [MetadataField.Narrator, MetadataField.Series, MetadataField.SeriesPart, MetadataField.Genres,
+            [MetadataField.Title, MetadataField.Narrator, MetadataField.Series, MetadataField.SeriesPart, MetadataField.Genres,
              MetadataField.ReleaseDate, MetadataField.Description],
             rows.Select(row => row.Field));
     }
@@ -77,6 +77,28 @@ public sealed class MetadataComparisonTests
         Assert.Equal("A, B", row.Old);
         Assert.Equal("A, C", row.New);
         Assert.True(row.ApplyByDefault);
+    }
+
+    [Fact]
+    public void Different_title_is_not_checked_by_default()
+    {
+        var row = Row(MetadataComparison.Compare(Nothing with { Title = "Kapitel 1" }, Found(title: "Gefährliche Liebe")),
+            MetadataField.Title);
+
+        Assert.True(row.CanApply);
+        Assert.False(row.ApplyByDefault);
+        Assert.Equal("Kapitel 1", row.Old);
+        Assert.Equal("Gefährliche Liebe", row.New);
+    }
+
+    [Fact]
+    public void Apply_renames_only_when_title_chosen()
+    {
+        var current = Nothing with { Title = "Kapitel 1" };
+        var found = Found(title: "Gefährliche Liebe", narrator: "N");
+
+        Assert.Equal("Kapitel 1", MetadataComparison.Apply(current, found, new HashSet<MetadataField> { MetadataField.Narrator }).Title);
+        Assert.Equal("Gefährliche Liebe", MetadataComparison.Apply(current, found, new HashSet<MetadataField> { MetadataField.Title }).Title);
     }
 
     [Fact]

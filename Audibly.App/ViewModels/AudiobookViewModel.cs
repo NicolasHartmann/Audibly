@@ -341,6 +341,7 @@ public class AudiobookViewModel : BindableBase
         Model.Genres = metadata.Genres;
         Model.ReleaseDate = metadata.ReleaseDate;
         Model.Asin = metadata.Asin;
+        if (!string.IsNullOrWhiteSpace(metadata.Title)) Title = metadata.Title;
         OnPropertyChanged(nameof(Description));
         OnPropertyChanged(nameof(Narrator));
         OnPropertyChanged(nameof(Series));

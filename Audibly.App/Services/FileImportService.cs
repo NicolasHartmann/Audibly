@@ -167,9 +167,12 @@ public class FileImportService : IImportFiles
 
         if (audiobook != null)
         {
-            var existingAudioBook = await App.Repository.Audiobooks.GetByTitleAuthorComposerAsync(audiobook.Title,
-                audiobook.Author,
-                audiobook.Composer);
+            // by file first: a book renamed with "Look up online" no longer matches its file tags
+            var existingAudioBook =
+                await App.Repository.Audiobooks.GetByFilePathAsync(paths[0]) ??
+                await App.Repository.Audiobooks.GetByTitleAuthorComposerAsync(audiobook.Title,
+                    audiobook.Author,
+                    audiobook.Composer);
             if (existingAudioBook != null)
             {
                 // log the error
@@ -345,7 +348,9 @@ public class FileImportService : IImportFiles
         {
             var track = new Track(path);
 
+            // by file first: a book renamed with "Look up online" no longer matches its file tags
             var existingAudioBook =
+                await App.Repository.Audiobooks.GetByFilePathAsync(path) ??
                 await App.Repository.Audiobooks.GetByTitleAuthorComposerAsync(track.Title, track.Artist,
                     track.Composer);
             if (existingAudioBook != null)

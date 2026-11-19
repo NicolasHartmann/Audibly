@@ -25,4 +25,5 @@ public sealed record BookDetails(
     string? Series,
     string? SeriesPart,
     IReadOnlyList<string> Genres,
-    DateTime? ReleaseDate);
+    DateTime? ReleaseDate,
+    string? Title = null);

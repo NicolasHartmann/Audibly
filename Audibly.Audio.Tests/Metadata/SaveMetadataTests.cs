@@ -49,9 +49,22 @@ public sealed class SaveMetadataTests : IDisposable
         Assert.Equal(new DateTime(2010, 11, 4), book.ReleaseDate);
         Assert.Equal("B004IZ4WFW", book.Asin);
         Assert.Equal("C", book.Composer);
-        Assert.Equal("T", book.Title);
+        Assert.Equal("T", book.Title); // no title given: the title stays
         Assert.Single(book.SourcePaths);
         Assert.Single(book.Chapters);
+    }
+
+    [Fact]
+    public async Task SaveMetadata_renames_when_title_given()
+    {
+        await using (var db = new AudiblyContext(_options))
+            await new SqlAudiobookRepository(db).SaveMetadataAsync(_bookId,
+                new BookMetadata("old", null, null, null, null, null, null, "New title"));
+
+        await using var check = new AudiblyContext(_options);
+        var book = await check.Audiobooks.SingleAsync();
+        Assert.Equal("New title", book.Title);
+        Assert.Equal("C", book.Composer);
     }
 
     [Fact]
