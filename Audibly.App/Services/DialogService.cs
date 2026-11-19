@@ -88,8 +88,10 @@ public static class DialogService
                     Content = new TextBlock { Text = content, TextWrapping = TextWrapping.Wrap },
                     PrimaryButtonText = primaryButtonText,
                     CloseButtonText = closeButtonText,
-                    // a key pressed just as the dialog appears must not pick the answer that changes something
-                    DefaultButton = ContentDialogButton.Close,
+                    // the answer that changes something looks like the main choice (blue), but is not the
+                    // default button: a key pressed just as the dialog appears must not pick it
+                    PrimaryButtonStyle = (Style)Application.Current.Resources["AccentButtonStyle"],
+                    DefaultButton = ContentDialogButton.None,
                     XamlRoot = App.Window.Content.XamlRoot,
                     RequestedTheme = ThemeHelper.ActualTheme
                 };
