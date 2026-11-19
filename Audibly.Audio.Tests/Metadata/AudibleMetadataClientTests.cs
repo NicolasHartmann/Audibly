@@ -89,6 +89,33 @@ public sealed class AudibleMetadataClientTests
             new AudibleMetadataClient(new HttpClient(handler)).GetDetailsAsync(hit, default));
     }
 
+    [Theory]
+    [InlineData("{\"asin\":\"X\",\"narrators\":[\"Name\"],\"genres\":[\"Fantasy\"],\"seriesPrimary\":\"S\"}")]
+    public async Task Details_with_odd_fields_leaves_them_empty(string json)
+    {
+        var handler = new FakeHandler(new() { ["api.audnex.us"] = _ => Ok(json) });
+        var hit = new AudibleHit("X", "de", "", "", "", null, null, 1, null, null, null);
+
+        var details = await new AudibleMetadataClient(new HttpClient(handler)).GetDetailsAsync(hit, default);
+
+        Assert.Null(details.Narrator);
+        Assert.Empty(details.Genres);
+        Assert.Null(details.Series);
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"text\"")]
+    [InlineData("null")]
+    public async Task Details_with_unexpected_shape_throws_lookup_exception(string json)
+    {
+        var handler = new FakeHandler(new() { ["api.audnex.us"] = _ => Ok(json) });
+        var hit = new AudibleHit("X", "de", "", "", "", null, null, 1, null, null, null);
+
+        await Assert.ThrowsAsync<MetadataLookupException>(() =>
+            new AudibleMetadataClient(new HttpClient(handler)).GetDetailsAsync(hit, default));
+    }
+
     private static HttpResponseMessage Ok(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json) };
 
     private sealed class FakeHandler(Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>> byHost)

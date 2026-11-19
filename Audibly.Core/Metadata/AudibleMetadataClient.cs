@@ -43,8 +43,8 @@ public sealed class AudibleMetadataClient(HttpClient http)
                 throw new MetadataLookupException("No details found for this book.");
             return AudibleJson.ParseDetails(await response.Content.ReadAsStringAsync(ct));
         }
-        catch (Exception e) when (e is HttpRequestException or JsonException ||
-                                  (e is OperationCanceledException && !ct.IsCancellationRequested))
+        // anything but the caller cancelling, including an answer of an unexpected shape, is a failed lookup
+        catch (Exception e) when (e is not MetadataLookupException && !ct.IsCancellationRequested)
         {
             throw new MetadataLookupException("The book details could not be loaded.", e);
         }
