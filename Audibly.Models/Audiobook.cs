@@ -33,6 +33,20 @@ public class Audiobook : DbObject, IEquatable<Audiobook>
 
     public List<ChapterInfo> Chapters { get; set; } = [];
 
+    // filled in from the internet ("Look up online"); Composer stays as the file tags say, because
+    // it is part of the duplicate check on import
+    public string? Narrator { get; set; }
+    public string? Series { get; set; }
+
+    /// <summary>Text, because Audible also numbers parts like "1-3" or "2.5".</summary>
+    public string? SeriesPart { get; set; }
+
+    /// <summary>One genre per line; broad genres first, then finer ones.</summary>
+    public string? Genres { get; set; }
+
+    /// <summary>Audible's id of the book the details came from.</summary>
+    public string? Asin { get; set; }
+
     public bool Equals(Audiobook? other)
     {
         if (ReferenceEquals(null, other)) return false;

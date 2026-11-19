@@ -23,5 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Audibly.Core\Audibly.Core.csproj" />
+    <ProjectReference Include="..\Audibly.Repository\Audibly.Repository.csproj" />
   </ItemGroup>
 </Project>

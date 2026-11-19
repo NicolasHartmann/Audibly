@@ -108,6 +108,18 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
             .Where(audiobook => audiobook.Id == audiobookId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(audiobook => audiobook.Title, title));
 
+    public async Task SaveMetadataAsync(Guid audiobookId, BookMetadata metadata) =>
+        await db.Audiobooks
+            .Where(audiobook => audiobook.Id == audiobookId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(audiobook => audiobook.Description, metadata.Description ?? string.Empty)
+                .SetProperty(audiobook => audiobook.Narrator, metadata.Narrator)
+                .SetProperty(audiobook => audiobook.Series, metadata.Series)
+                .SetProperty(audiobook => audiobook.SeriesPart, metadata.SeriesPart)
+                .SetProperty(audiobook => audiobook.Genres, metadata.Genres)
+                .SetProperty(audiobook => audiobook.ReleaseDate, metadata.ReleaseDate)
+                .SetProperty(audiobook => audiobook.Asin, metadata.Asin));
+
     public async Task<Audiobook?> UpsertAsync(Audiobook audiobook)
     {
         var current = await db.Audiobooks

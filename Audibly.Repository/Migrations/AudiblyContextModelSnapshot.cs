@@ -15,12 +15,15 @@ namespace Audibly.Repository.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
 
             modelBuilder.Entity("Audibly.Models.Audiobook", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Asin")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Author")
@@ -51,11 +54,17 @@ namespace Audibly.Repository.Migrations
                     b.Property<long>("Duration")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Genres")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsNowPlaying")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Narrator")
+                        .HasColumnType("TEXT");
 
                     b.Property<double>("PlaybackSpeed")
                         .HasColumnType("REAL");
@@ -64,6 +73,12 @@ namespace Audibly.Repository.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<DateTime?>("ReleaseDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Series")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SeriesPart")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ThumbnailPath")

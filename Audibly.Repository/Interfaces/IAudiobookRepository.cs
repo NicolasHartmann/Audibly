@@ -23,6 +23,9 @@ public interface IAudiobookRepository
     /// <summary>Changes only the title of an audiobook.</summary>
     Task RenameAsync(Guid audiobookId, string title);
 
+    /// <summary>Changes only the details "Look up online" fills in, not the files or chapters.</summary>
+    Task SaveMetadataAsync(Guid audiobookId, BookMetadata metadata);
+
     /// <summary>
     ///     Returns all audiobooks with a data field matching the start of the given string.
     /// </summary>
