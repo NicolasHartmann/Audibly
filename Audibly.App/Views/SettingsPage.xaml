@@ -2,6 +2,7 @@
     mc:Ignorable="d"
     x:Class="Audibly.App.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:core="using:Audibly.Core"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:developerTools="using:CommunityToolkit.WinUI.DeveloperTools"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -84,22 +85,53 @@
                     </toolkit:SettingsExpander.HeaderIcon>
                     <toolkit:SettingsExpander.Items>
                         <toolkit:SettingsCard Header="Default playback speed">
-                            <StackPanel Orientation="Horizontal" Spacing="16">
-                                <Slider
-                                    AutomationProperties.AutomationId="playbackSpeedSlider"
-                                    Style="{StaticResource PlaybackSpeedSliderStyle}"
-                                    ToolTipService.ToolTip="Playback speed"
-                                    Value="{x:Bind ViewModel.DefaultPlaybackSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PlaybackSpeedIndexConverter}}"
-                                    x:Name="playbackSpeed" />
-
-                                <TextBox
-                                    HorizontalContentAlignment="Center"
-                                    IsReadOnly="True"
-                                    Text="{x:Bind sys:String.Format('{0:0.##}×', ViewModel.DefaultPlaybackSpeed), Mode=OneWay}"
-                                    TextAlignment="Center"
-                                    VerticalContentAlignment="Center"
-                                    Width="64"
-                                    x:Name="playbackSpeedTextBox" />
+                            <StackPanel Spacing="8">
+                                <StackPanel
+                                    HorizontalAlignment="Right"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <!--  the slider needs a width: inside a horizontal StackPanel it shrinks to its thumb  -->
+                                    <Slider
+                                        AutomationProperties.AutomationId="playbackSpeedSlider"
+                                        Style="{StaticResource PlaybackSpeedSliderStyle}"
+                                        TickPlacement="None"
+                                        ToolTipService.ToolTip="Playback speed"
+                                        Value="{x:Bind ViewModel.DefaultPlaybackSpeed, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PlaybackSpeedIndexConverter}}"
+                                        VerticalAlignment="Center"
+                                        Width="220"
+                                        x:Name="playbackSpeed" />
+                                    <Button
+                                        AutomationProperties.Name="Slower"
+                                        Click="DefaultSpeedSlower_Click"
+                                        Content="−"
+                                        Width="40" />
+                                    <TextBlock
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        Text="{x:Bind core:PlaybackSpeedPresets.Format(ViewModel.DefaultPlaybackSpeed), Mode=OneWay}"
+                                        TextAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Width="56" />
+                                    <Button
+                                        AutomationProperties.Name="Faster"
+                                        Click="DefaultSpeedFaster_Click"
+                                        Content="+"
+                                        Width="40" />
+                                </StackPanel>
+                                <ItemsControl HorizontalAlignment="Right" ItemsSource="{x:Bind QuickPicks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="views:SpeedPick">
+                                            <Button
+                                                Click="DefaultSpeedQuickPick_Click"
+                                                Content="{x:Bind Label}"
+                                                MinWidth="52" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
                         </toolkit:SettingsCard>
                         <toolkit:SettingsCard Header="Default volume">

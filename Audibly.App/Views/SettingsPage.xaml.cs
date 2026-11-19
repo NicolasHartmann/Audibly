@@ -38,6 +38,21 @@ public sealed partial class SettingsPage : Page
     /// </summary>
     public MainViewModel ViewModel => App.ViewModel;
 
+    /// <summary>The quick-pick speeds under the default speed slider.</summary>
+    public SpeedPick[] QuickPicks { get; } =
+        PlaybackSpeedPresets.QuickPicks.Select(speed => new SpeedPick(speed, PlaybackSpeedPresets.Format(speed))).ToArray();
+
+    private void DefaultSpeedSlower_Click(object sender, RoutedEventArgs e) =>
+        ViewModel.DefaultPlaybackSpeed -= PlaybackSpeedPresets.Step;
+
+    private void DefaultSpeedFaster_Click(object sender, RoutedEventArgs e) =>
+        ViewModel.DefaultPlaybackSpeed += PlaybackSpeedPresets.Step;
+
+    private void DefaultSpeedQuickPick_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is SpeedPick pick) ViewModel.DefaultPlaybackSpeed = pick.Speed;
+    }
+
     public static string Version => Constants.Version;
 
     private void OnSettingsPageLoaded(object sender, RoutedEventArgs e)
@@ -250,4 +265,11 @@ public sealed partial class SettingsPage : Page
         Frame.Navigate(typeof(LibraryCardPage));
         _ = Task.Run(async () => await ViewModel.SyncLibraryAsync(showProgressDialog: true));
     }
+}
+
+/// <summary>One quick-pick button: the speed and how it is written.</summary>
+public sealed class SpeedPick(double speed, string label)
+{
+    public double Speed { get; } = speed;
+    public string Label { get; } = label;
 }
