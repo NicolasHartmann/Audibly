@@ -6,6 +6,7 @@
   - [ ] Windows and Android
 - [x] Windows: fill in a book's metadata from the internet (description, genres, series and part, narrator, release date)
   - [x] the genres become the starting point for tagging (next item)
+  - [x] also change the book's title (never ticked by default)
 - [ ] Genres / tags for audiobooks (filter the library, statistics per genre)
 - [x] Windows: show the total number of books in the library
   - [x] helps to check that a library scan found everything, and to compare collections
@@ -17,8 +18,8 @@
   - [ ] the narrator sounds better on Android (ExoPlayer/Sonic) than on Windows (NAudio + SoundTouch)
   - [ ] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output)
   - [ ] research better approaches online (e.g. SoundTouch settings for speech, WSOLA/Sonic, the Windows playback rate) and compare by listening
-- [ ] Windows: swap the buttons in the "Continue where you left off?" dialog
-  - [ ] the big blue (primary) button should be "Continue there", the plain one "Stay here"
+- [x] Windows: swap the buttons in the "Continue where you left off?" dialog
+  - [x] the big blue (primary) button should be "Continue there", the plain one "Stay here"
 
 - [ ] Make the fork usable for others
   - [ ] choose an own app name (the Store name "Audibly" belongs to the original listing)
