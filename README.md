@@ -19,6 +19,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#whats-new-in-this-fork">What's new in this fork</a></li>
+    <li><a href="#changelog">Changelog</a></li>
     <li><a href="#screenshots">Screenshots</a></li>
     <li><a href="#sync-between-devices">Sync between devices</a></li>
     <li><a href="#building">Building</a></li>
@@ -45,7 +46,9 @@
 - **Read Along** — follow an EPUB word by word while the audiobook plays
   ([details](docs/read-along.md)).
 - **Library** — books show their title and author, a progress bar and the length of the whole book at its
-  playback speed; a click opens the book in the large player.
+  playback speed; a click opens the book in the large player. The library shows how many books it holds.
+- **Book details from the internet** — "Look up online…" in a book's menu finds it on Audible and fills in narrator,
+  series and part, genres, release date and description; you choose field by field what to take over.
 - **Better multi-file audiobooks** — named after their album, no skipped audio when one file ends, chapters named
   after their files when the files share one title tag, and no freezes with books of several hundred files.
 
@@ -62,6 +65,73 @@
 
 - **Sync** — continue on another device at the same place; listening statistics count all devices together.
   See [Sync between devices](#sync-between-devices).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+## Changelog
+
+Changes in this fork compared with the original Audibly 2.2.10 (released 8 July 2026), newest first. The changes of
+the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
+
+### 19 November 2026
+
+- **Windows: book details from the internet.** "Look up online…" in a book's menu searches Audible (German and US
+  shop) and shows the hits with cover, narrator, series, length, year and language. After you pick the right edition,
+  it lists the current and the found value of each field: narrator, series and part, genres, release date and
+  description. Only ticked fields are saved, and an empty value never replaces an existing one. The genres are the
+  basis for tags later.
+
+### 18 November 2026
+
+- **Windows: new library tiles.** Each book shows its title, author, a progress bar and its length at its playback
+  speed. A click opens it in the large player.
+- **Windows:** the library shows how many books it holds.
+- **Windows:** the large player shows the cover again.
+
+### 15–17 November 2026
+
+- **Sync between Windows and Android** through a folder that a cloud service such as Google Drive or OneDrive keeps
+  in sync. Opening a book on another device offers to continue where you stopped and never jumps without asking.
+  Listening statistics and trophies count all devices together.
+- **Android:** the player is the home screen, laid out like a classic audiobook player. The library is faster, and
+  books can be removed with or without their files.
+- **Windows: fixes**
+  - Long audiobooks with hundreds of files no longer freeze the app while playing.
+  - After the end-of-chapter sleep timer, a single Play continues with the next chapter.
+  - The sync question no longer hides behind another dialog.
+
+### 14 November 2026
+
+- **Android app (new).**
+  - Background playback with the media notification, lock screen and headset controls.
+  - Imports a folder from the phone.
+  - Library, player and settings, with chapter list, sleep timer and speed.
+  - Shares the library logic with the Windows app.
+- **Listening statistics:** listening time and the time saved by faster playback, per day, month and year.
+- **Trophies:** 14 achievements with bronze, silver and gold tiers.
+- **Progress over the whole title:** the progress bar can cover the chapter or the whole book, and the time display can
+  show elapsed/total, the time remaining at the current speed, or percent.
+- **Multi-file audiobooks:** chapters are named after their files when all files carry the same title tag.
+- **Read Along:** the marker follows the narration on every frame and no longer skips words.
+
+### 13 November 2026
+
+- **Playback speed control:** the speed is shown as a number in the player. A flyout offers −/+ in 0.05× steps, a
+  slider from 0.5× to 4×, quick picks and "use as default". The narrator's pitch is preserved.
+- **Fix:** multi-file audiobooks no longer skip part of the next chapter when one file ends.
+- **Mini player:** the progress row stays visible when the Read Along captions are hidden.
+
+### 1–6 November 2026
+
+- **Read Along (new):** follow an EPUB word by word while the audiobook plays.
+  - The alignment is computed locally (Storyteller), on the GPU where available.
+  - EPUB 2 books are upgraded automatically.
+  - Preparation shows its progress, and errors can be copied.
+  - Captions can appear above the mini player.
+- **Improved speed and mini-player controls.**
+- **Local installs** use the normal Audibly name and app icon.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
