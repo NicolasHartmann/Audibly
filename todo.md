@@ -4,8 +4,8 @@
   - [ ] pick an image file (or take `cover.jpg` / `folder.jpg` from the book's folder)
   - [ ] search the cover online by title and author and choose one
   - [ ] Windows and Android
-- [ ] Fill in a book's metadata from the internet (description, genres, series and part, narrator, release date)
-  - [ ] the genres become the starting point for tagging (next item)
+- [x] Windows: fill in a book's metadata from the internet (description, genres, series and part, narrator, release date)
+  - [x] the genres become the starting point for tagging (next item)
 - [ ] Genres / tags for audiobooks (filter the library, statistics per genre)
 - [x] Windows: show the total number of books in the library
   - [x] helps to check that a library scan found everything, and to compare collections
