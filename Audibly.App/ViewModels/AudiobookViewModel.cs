@@ -320,9 +320,33 @@ public class AudiobookViewModel : BindableBase
     public string Author => Model.Author;
 
     /// <summary>
-    ///     Gets or sets the composer of the audiobook
+    ///     The narrator found online, otherwise the composer from the file tags.
     /// </summary>
-    public string Narrator => Model.Composer;
+    public string Narrator => string.IsNullOrWhiteSpace(Model.Narrator) ? Model.Composer : Model.Narrator;
+
+    /// <summary>The series and the book's part in it, e.g. "Die Tribute von Panem 2".</summary>
+    public string Series => $"{Model.Series} {Model.SeriesPart}".Trim();
+
+    /// <summary>The genres, comma-separated.</summary>
+    public string Genres => string.Join(", ",
+        (Model.Genres ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    /// <summary>Takes over details saved by "Look up online" and updates what shows them.</summary>
+    public void ApplyMetadata(BookMetadata metadata)
+    {
+        Model.Description = metadata.Description ?? string.Empty;
+        Model.Narrator = metadata.Narrator;
+        Model.Series = metadata.Series;
+        Model.SeriesPart = metadata.SeriesPart;
+        Model.Genres = metadata.Genres;
+        Model.ReleaseDate = metadata.ReleaseDate;
+        Model.Asin = metadata.Asin;
+        OnPropertyChanged(nameof(Description));
+        OnPropertyChanged(nameof(Narrator));
+        OnPropertyChanged(nameof(Series));
+        OnPropertyChanged(nameof(Genres));
+        OnPropertyChanged(nameof(ReleaseDate));
+    }
 
     /// <summary>
     ///     Gets or sets the description of the audiobook.

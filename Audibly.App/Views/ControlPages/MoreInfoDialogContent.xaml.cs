@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using Audibly.App.Extensions;
 using Audibly.App.ViewModels;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -26,4 +27,7 @@ public sealed partial class MoreInfoDialogContent : Page
         Description = audiobookViewModel.Description.FormatText();
         InitializeComponent();
     }
+
+    public Visibility HasText(string? text) =>
+        string.IsNullOrWhiteSpace(text) ? Visibility.Collapsed : Visibility.Visible;
 }

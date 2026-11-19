@@ -283,6 +283,42 @@ public static class DialogService
         });
     }
 
+    /// <summary>
+    ///     Looks a book up on Audible and saves the details the user chose. Nothing changes when the
+    ///     dialog is cancelled or saving fails.
+    /// </summary>
+    internal static async Task ShowLookUpOnlineDialogAsync(AudiobookViewModel book)
+    {
+        var xamlRoot = GetXamlRoot();
+        if (xamlRoot == null) return;
+
+        await _dispatcherQueue.EnqueueAsync(async () =>
+        {
+            var dialog = new LookUpOnlineDialog(book)
+            {
+                XamlRoot = xamlRoot,
+                RequestedTheme = ThemeHelper.ActualTheme
+            };
+            await dialog.ShowOneAtATimeAsync();
+            if (dialog.Result is not { } metadata) return;
+
+            try
+            {
+                await Task.Run(() => App.Repository.Audiobooks.SaveMetadataAsync(book.Id, metadata));
+                book.ApplyMetadata(metadata);
+            }
+            catch (Exception e)
+            {
+                ViewModel.LoggingService.LogError(e);
+                ViewModel.EnqueueNotification(new Notification
+                {
+                    Message = "The book details could not be saved.",
+                    Severity = InfoBarSeverity.Error
+                });
+            }
+        });
+    }
+
     internal static async Task ShowProgressDialogAsync(string title, CancellationTokenSource? cts,
         bool showCancelButton = true)
     {

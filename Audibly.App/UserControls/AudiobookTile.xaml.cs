@@ -154,6 +154,16 @@ public sealed partial class AudiobookTile : UserControl
         await DialogService.ShowMoreInfoDialogAsync(audiobook);
     }
 
+    private async void LookUpOnline_OnClick(object sender, RoutedEventArgs e)
+    {
+        var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
+        if (audiobook == null) return;
+
+        MenuFlyout.Hide();
+
+        await DialogService.ShowLookUpOnlineDialogAsync(audiobook);
+    }
+
     private async void MarkAsCompleted_OnClick(object sender, RoutedEventArgs e)
     {
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);

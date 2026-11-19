@@ -88,6 +88,34 @@
                 <Run Text="{x:Bind AudiobookViewModel.Narrator}" />
             </TextBlock>
 
+            <!--  series text block  -->
+            <TextBlock
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap"
+                ToolTipService.ToolTip="{x:Bind AudiobookViewModel.Series, Mode=OneWay}"
+                Visibility="{x:Bind HasText(AudiobookViewModel.Series)}"
+                x:Name="SeriesText">
+                <Run FontWeight="Bold">Series:</Run>
+                <Run Text="{x:Bind AudiobookViewModel.Series}" />
+            </TextBlock>
+
+            <!--  genres text block  -->
+            <TextBlock
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource BodyTextBlockStyle}"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap"
+                ToolTipService.ToolTip="{x:Bind AudiobookViewModel.Genres, Mode=OneWay}"
+                Visibility="{x:Bind HasText(AudiobookViewModel.Genres)}"
+                x:Name="GenresText">
+                <Run FontWeight="Bold">Genres:</Run>
+                <Run Text="{x:Bind AudiobookViewModel.Genres}" />
+            </TextBlock>
+
             <!--  number of source files text block  -->
             <TextBlock
                 FontSize="14"

@@ -37,6 +37,11 @@
                     <FontIcon Glyph="&#xE946;" />
                 </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
+            <MenuFlyoutItem Click="LookUpOnline_OnClick" Text="Look up online…">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE774;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
             <MenuFlyoutItem
                 Click="MarkAsCompleted_OnClick"
                 Text="Mark as Completed"
