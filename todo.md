@@ -2,7 +2,7 @@
 
 - [ ] Change a book's cover afterwards
   - [ ] pick an image file (or take `cover.jpg` / `folder.jpg` from the book's folder)
-  - [ ] search the cover online by title and author and choose one
+  - [x] search the cover online by title and author and choose one (Windows: "Look up online…")
   - [ ] Windows and Android
 - [x] Windows: fill in a book's metadata from the internet (description, genres, series and part, narrator, release date)
   - [x] the genres become the starting point for tagging (next item)
