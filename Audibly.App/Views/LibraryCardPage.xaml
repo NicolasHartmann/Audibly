@@ -22,6 +22,7 @@
                 Author="{x:Bind Author, Mode=OneWay}"
                 FilePath="{x:Bind CurrentSourceFile.FilePath, Mode=OneWay}"
                 Id="{x:Bind Id, Mode=OneWay}"
+                IsSelected="{x:Bind IsSelected, Mode=OneWay}"
                 IsCompleted="{x:Bind IsCompleted, Mode=OneWay}"
                 LengthText="{x:Bind LengthAtSpeedText, Mode=OneWay}"
                 Progress="{x:Bind Progress, Mode=OneWay}"
@@ -130,7 +131,7 @@
                         x:Name="FilterButton">
                         <Button.Flyout>
                             <!--  create custom filter checkbox flyout  -->
-                            <Flyout Placement="BottomEdgeAlignedLeft">
+                            <Flyout Opening="FilterFlyout_Opening" Placement="BottomEdgeAlignedLeft">
                                 <StackPanel Orientation="Vertical">
                                     <CheckBox
                                         Checked="SelectAllFiltersCheckBox_OnChecked"
@@ -157,9 +158,34 @@
                                         Margin="24,0,0,0"
                                         Unchecked="CompletedFilterCheckBox_OnUnchecked"
                                         x:Name="CompletedFilterCheckBox" />
+                                    <TextBlock
+                                        Margin="0,12,0,4"
+                                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                                        Text="Tags"
+                                        Visibility="Collapsed"
+                                        x:Name="TagFilterHeader" />
+                                    <ScrollViewer MaxHeight="320">
+                                        <StackPanel Margin="24,0,0,0" x:Name="TagFilterPanel" />
+                                    </ScrollViewer>
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
+                    </AppBarButton>
+                    <AppBarToggleButton
+                        IsChecked="{x:Bind ViewModel.IsSelectionMode, Mode=TwoWay}"
+                        Label="Select"
+                        ToolTipService.ToolTip="Mark several books, e.g. to tag them together">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE762;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarButton
+                        Click="EditSelectedTags_Click"
+                        Label="{x:Bind ViewModel.EditTagsLabel, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsSelectionMode, Mode=OneWay}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8EC;" />
+                        </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
                         Click="{x:Bind RefreshButton_OnClick}"

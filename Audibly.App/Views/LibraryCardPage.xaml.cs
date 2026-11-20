@@ -2,6 +2,8 @@
 // Updated: 03/11/2025
 
 using System;
+using System.Linq;
+using TagList = Audibly.Core.Tags.TagList;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -50,6 +52,9 @@ public sealed partial class LibraryCardPage : Page
     public const string ImportFromJsonFileText = "Import audiobooks from an Audibly export file (.audibly)";
 
     private readonly HashSet<AudioBookFilter> _activeFilters = new();
+
+    // tags ticked in the filter flyout; a book needs one of them
+    private readonly HashSet<string> _tickedTags = new(StringComparer.CurrentCultureIgnoreCase);
     private readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
     public LibraryCardPage()
@@ -127,6 +132,8 @@ public sealed partial class LibraryCardPage : Page
     public async Task ResetAudiobookListAsync()
     {
         _activeFilters.Clear();
+        _tickedTags.Clear();
+        SetCheckedState();
 
         // unchecked all the filter flyout items
         InProgressFilterCheckBox.IsChecked = false;
@@ -147,6 +154,14 @@ public sealed partial class LibraryCardPage : Page
 
         foreach (var audiobook in ViewModel.AudiobooksForFilter)
         {
+            if (!TagList.Matches(audiobook.Tags, _tickedTags)) continue;
+            // only tags ticked: every status counts
+            if (_activeFilters.Count == 0)
+            {
+                matches.Add(audiobook);
+                continue;
+            }
+
             if (_activeFilters.Contains(AudioBookFilter.InProgress) && audiobook.Progress > 0 && !audiobook.IsCompleted)
                 matches.Add(audiobook);
             if (_activeFilters.Contains(AudioBookFilter.NotStarted) && audiobook.Progress == 0 && !audiobook.IsCompleted)
@@ -163,7 +178,7 @@ public sealed partial class LibraryCardPage : Page
     /// </summary>
     private async Task FilterAudiobookList()
     {
-        if (_activeFilters.Count == 0)
+        if (_activeFilters.Count == 0 && _tickedTags.Count == 0)
         {
             await ResetAudiobookListAsync();
             return;
@@ -178,6 +193,26 @@ public sealed partial class LibraryCardPage : Page
         });
     }
 
+    private async void EditSelectedTags_Click(object sender, RoutedEventArgs e) =>
+        await DialogService.ShowEditTagsDialogAsync(ViewModel.SelectedBooks);
+
+    /// <summary>Builds the tag boxes each time the filter opens, so new tags show up.</summary>
+    private void FilterFlyout_Opening(object sender, object e)
+    {
+        TagFilterPanel.Children.Clear();
+        var books = ViewModel.AudiobooksForFilter;
+        var tags = TagList.AllTags(books.Select(book => book.Model.Tags));
+        TagFilterHeader.Visibility = tags.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        foreach (var tag in tags)
+        {
+            var count = books.Count(book => TagList.Matches(book.Tags, [tag]));
+            var box = new CheckBox { Content = $"{tag} ({count})", Tag = tag, IsChecked = _tickedTags.Contains(tag) };
+            box.Checked += async (_, _) => { _tickedTags.Add(tag); SetCheckedState(); await FilterAudiobookList(); };
+            box.Unchecked += async (_, _) => { _tickedTags.Remove(tag); SetCheckedState(); await FilterAudiobookList(); };
+            TagFilterPanel.Children.Add(box);
+        }
+    }
+
     private void SetCheckedState()
     {
         // Controls are null the first time this is called, so we just 
@@ -187,7 +222,8 @@ public sealed partial class LibraryCardPage : Page
         // check if any of the filters are checked and change the appbar button background color
         if (InProgressFilterCheckBox.IsChecked == true ||
             NotStartedFilterCheckBox.IsChecked == true ||
-            CompletedFilterCheckBox.IsChecked == true)
+            CompletedFilterCheckBox.IsChecked == true ||
+            _tickedTags.Count > 0)
         {
             FilterButton.BorderBrush = new SolidColorBrush((Color)Application.Current.Resources["SystemAccentColor"]);
             FilterButton.BorderThickness = new Thickness(2);

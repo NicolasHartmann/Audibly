@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -128,6 +128,18 @@ public sealed partial class StatsPage : Page
         };
         Chart.AverageSeconds = average;
         Chart.Periods = periods;
+        ShowTags(periods.Count > 0 ? periods[0].Start : null);
+    }
+
+    private void ShowTags(DateOnly? from)
+    {
+        var tagsByBook = App.ViewModel.AudiobooksForFilter.ToDictionary(book => book.Id, book => book.Tags);
+        var totals = StatsSummary.ByTag(_data, tagsByBook, from);
+        var most = totals.Count == 0 ? 1 : Math.Max(1, totals[0].ListenedSeconds);
+        TagTotalsList.ItemsSource = totals
+            .Select(total => new TagTotalRow(total.Tag, Math.Max(2, 240 * total.ListenedSeconds / most),
+                DurationFormat.Short(total.ListenedSeconds)))
+            .ToList();
     }
 
     private void PeriodSelector_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
@@ -146,4 +158,12 @@ public sealed partial class StatsPage : Page
         Grid.SetColumnSpan(CurrentCard, stacked ? 2 : 1);
         Grid.SetColumnSpan(TotalCard, stacked ? 2 : 1);
     }
+}
+
+/// <summary>One row of "By tag": the tag, its bar and its listening time.</summary>
+public sealed class TagTotalRow(string tag, double barWidth, string duration)
+{
+    public string Tag { get; } = tag;
+    public double BarWidth { get; } = barWidth;
+    public string Duration { get; } = duration;
 }

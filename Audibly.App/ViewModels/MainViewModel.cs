@@ -107,6 +107,35 @@ public class MainViewModel : BindableBase
     /// </summary>
     public List<AudiobookViewModel> AudiobooksForFilter { get; } = [];
 
+    private bool _isSelectionMode;
+
+    /// <summary>
+    ///     While on, a click on a book marks it instead of opening it. Turning it off clears the marks.
+    /// </summary>
+    public bool IsSelectionMode
+    {
+        get => _isSelectionMode;
+        set
+        {
+            if (!Set(ref _isSelectionMode, value)) return;
+            if (!value)
+                foreach (var book in AudiobooksForFilter) book.IsSelected = false;
+            OnPropertyChanged(nameof(SelectedBooks));
+            OnPropertyChanged(nameof(EditTagsLabel));
+        }
+    }
+
+    public List<AudiobookViewModel> SelectedBooks => AudiobooksForFilter.Where(book => book.IsSelected).ToList();
+
+    public string EditTagsLabel => $"Edit tags ({SelectedBooks.Count})";
+
+    /// <summary>Call after a book was marked or unmarked.</summary>
+    public void OnSelectionChanged()
+    {
+        OnPropertyChanged(nameof(SelectedBooks));
+        OnPropertyChanged(nameof(EditTagsLabel));
+    }
+
     /// <summary>
     ///     How many books the library holds ("12 books"), and how many of them are shown while a
     ///     filter or search narrows the list ("3 of 12 books").

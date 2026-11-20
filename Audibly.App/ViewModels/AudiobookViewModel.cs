@@ -4,6 +4,7 @@
 using Audibly.Stats;
 using System.Threading;
 using Audibly.Core;
+using Audibly.Core.Tags;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -348,6 +349,7 @@ public class AudiobookViewModel : BindableBase
         Model.Series = metadata.Series;
         Model.SeriesPart = metadata.SeriesPart;
         Model.Genres = metadata.Genres;
+        Model.Tags = metadata.Tags;
         Model.ReleaseDate = metadata.ReleaseDate;
         Model.Asin = metadata.Asin;
         if (!string.IsNullOrWhiteSpace(metadata.Title)) Title = metadata.Title;
@@ -355,7 +357,27 @@ public class AudiobookViewModel : BindableBase
         OnPropertyChanged(nameof(Narrator));
         OnPropertyChanged(nameof(Series));
         OnPropertyChanged(nameof(Genres));
+        OnPropertyChanged(nameof(Tags));
         OnPropertyChanged(nameof(ReleaseDate));
+    }
+
+    /// <summary>The book's own tags.</summary>
+    public IReadOnlyList<string> Tags => TagList.Parse(Model.Tags);
+
+    /// <summary>Takes over saved tags and updates what shows them.</summary>
+    public void ApplyTags(string? tags)
+    {
+        Model.Tags = tags;
+        OnPropertyChanged(nameof(Tags));
+    }
+
+    private bool _isSelected;
+
+    /// <summary>Marked in the library's selection mode.</summary>
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => Set(ref _isSelected, value);
     }
 
     /// <summary>

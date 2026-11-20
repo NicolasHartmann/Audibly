@@ -75,6 +75,13 @@ public sealed partial class AudiobookTile : UserControl
     {
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
         if (audiobook == null) return;
+        if (ViewModel.IsSelectionMode)
+        {
+            audiobook.IsSelected = !audiobook.IsSelected;
+            ViewModel.OnSelectionChanged();
+            return;
+        }
+
         try
         {
             if (PlayerViewModel.NowPlaying?.Id != audiobook.Id) await PlayerViewModel.OpenAudiobook(audiobook);
@@ -154,6 +161,18 @@ public sealed partial class AudiobookTile : UserControl
         await DialogService.ShowMoreInfoDialogAsync(audiobook);
     }
 
+    private async void EditTags_OnClick(object sender, RoutedEventArgs e)
+    {
+        var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
+        if (audiobook == null) return;
+
+        MenuFlyout.Hide();
+
+        // a marked book in selection mode edits all marked books
+        var books = ViewModel.IsSelectionMode && audiobook.IsSelected ? ViewModel.SelectedBooks : [audiobook];
+        await DialogService.ShowEditTagsDialogAsync(books);
+    }
+
     private async void LookUpOnline_OnClick(object sender, RoutedEventArgs e)
     {
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
@@ -221,6 +240,15 @@ public sealed partial class AudiobookTile : UserControl
 
     public static readonly DependencyProperty AuthorProperty =
         DependencyProperty.Register(nameof(Author), typeof(string), typeof(AudiobookTile), new PropertyMetadata(null));
+
+    public bool IsSelected
+    {
+        get => (bool)GetValue(IsSelectedProperty);
+        set => SetValue(IsSelectedProperty, value);
+    }
+
+    public static readonly DependencyProperty IsSelectedProperty =
+        DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(AudiobookTile), new PropertyMetadata(false));
 
     public object Source
     {

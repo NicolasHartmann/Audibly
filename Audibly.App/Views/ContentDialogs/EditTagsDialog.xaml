@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    CloseButtonText="Cancel"
+    DefaultButton="None"
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    PrimaryButtonText="Save"
+    x:Class="Audibly.App.Views.ContentDialogs.EditTagsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:local="using:Audibly.App.Views.ContentDialogs"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel MinWidth="420" Spacing="12">
+        <AutoSuggestBox
+            PlaceholderText="Add tag…"
+            QueryIcon="Add"
+            QuerySubmitted="TagBox_QuerySubmitted"
+            TextChanged="TagBox_TextChanged"
+            x:Name="TagBox" />
+        <TextBlock
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="No tags yet."
+            x:Name="EmptyText" />
+        <ScrollViewer MaxHeight="360">
+            <ItemsControl x:Name="TagRows">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:TagRow">
+                        <Grid ColumnSpacing="8" Opacity="{x:Bind Opacity}" Padding="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{x:Bind Tag}" VerticalAlignment="Center" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Grid.Column="1"
+                                Text="{x:Bind Info}"
+                                VerticalAlignment="Center" />
+                            <Button
+                                AutomationProperties.Name="Remove tag"
+                                Click="Remove_Click"
+                                Content="✕"
+                                Grid.Column="2"
+                                Tag="{x:Bind Tag}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </StackPanel>
+</ContentDialog>

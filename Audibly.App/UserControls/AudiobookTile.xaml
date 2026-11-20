@@ -37,6 +37,11 @@
                     <FontIcon Glyph="&#xE946;" />
                 </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
+            <MenuFlyoutItem Click="EditTags_OnClick" Text="Edit tags…">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8EC;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
             <MenuFlyoutItem Click="LookUpOnline_OnClick" Text="Look up online…">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE774;" />
@@ -100,6 +105,23 @@
                 <winUi:Effects.Shadow>
                     <media:AttachedCardShadow CornerRadius="{StaticResource OverlayCornerRadiusDouble}" Offset="4, 4" />
                 </winUi:Effects.Shadow>
+            </Border>
+
+            <!--  mark in selection mode  -->
+            <Border
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                CornerRadius="12"
+                Grid.Row="0"
+                Height="24"
+                HorizontalAlignment="Right"
+                Margin="6"
+                VerticalAlignment="Top"
+                Visibility="{x:Bind IsSelected, Mode=OneWay}"
+                Width="24">
+                <FontIcon
+                    FontSize="14"
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Glyph="&#xE73E;" />
             </Border>
 
             <!--  Play Button and Black Overlay  -->

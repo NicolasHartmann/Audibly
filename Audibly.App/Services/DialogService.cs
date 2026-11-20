@@ -2,6 +2,9 @@
 // Updated: 07/29/2025
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Audibly.Core.Tags;
 using System.Threading;
 using System.Threading.Tasks;
 using Audibly.App.Extensions;
@@ -323,6 +326,41 @@ public static class DialogService
             }
 
             if (dialog.CoverUrl is { } coverUrl) await ReplaceCoverAsync(book, coverUrl);
+        });
+    }
+
+    /// <summary>
+    ///     Edits the tags of one or many books and saves them in one go. Nothing changes when the dialog
+    ///     is cancelled or saving fails.
+    /// </summary>
+    internal static async Task ShowEditTagsDialogAsync(IReadOnlyList<AudiobookViewModel> books)
+    {
+        var xamlRoot = GetXamlRoot();
+        if (xamlRoot == null || books.Count == 0) return;
+
+        await _dispatcherQueue.EnqueueAsync(async () =>
+        {
+            var known = TagList.AllTags(ViewModel.AudiobooksForFilter.Select(book => book.Model.Tags));
+            var dialog = new EditTagsDialog(books, known) { XamlRoot = xamlRoot, RequestedTheme = ThemeHelper.ActualTheme };
+            await dialog.ShowOneAtATimeAsync();
+            if (dialog.Added is not { } added || dialog.Removed is not { } removed) return;
+
+            var tagsByBook = books.ToDictionary(book => book.Id,
+                book => TagList.Format(TagList.Add(TagList.Remove(book.Tags, removed), added, known)));
+            try
+            {
+                await Task.Run(() => App.Repository.Audiobooks.SetTagsAsync(tagsByBook));
+                foreach (var book in books) book.ApplyTags(tagsByBook[book.Id]);
+            }
+            catch (Exception e)
+            {
+                ViewModel.LoggingService.LogError(e);
+                ViewModel.EnqueueNotification(new Notification
+                {
+                    Message = "The tags could not be saved.",
+                    Severity = InfoBarSeverity.Error
+                });
+            }
         });
     }
 
