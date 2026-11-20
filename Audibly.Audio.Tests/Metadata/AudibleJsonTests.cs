@@ -38,6 +38,7 @@ public sealed class AudibleJsonTests
 
         Assert.Equal("B008CND4RS", details.Asin);
         Assert.Equal("Gefährliche Liebe", details.Title);
+        Assert.StartsWith("https://", details.ImageUrl);
         Assert.Equal("Die Tribute von Panem", details.Series);
         Assert.Equal("2", details.SeriesPart);
         Assert.Equal("Maria Koschny", details.Narrator);

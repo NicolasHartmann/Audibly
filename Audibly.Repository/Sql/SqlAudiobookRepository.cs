@@ -108,6 +108,13 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
             .Where(audiobook => audiobook.Id == audiobookId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(audiobook => audiobook.Title, title));
 
+    public async Task SetCoverAsync(Guid audiobookId, string coverImagePath, string thumbnailPath) =>
+        await db.Audiobooks
+            .Where(audiobook => audiobook.Id == audiobookId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(audiobook => audiobook.CoverImagePath, coverImagePath)
+                .SetProperty(audiobook => audiobook.ThumbnailPath, thumbnailPath));
+
     public async Task SaveMetadataAsync(Guid audiobookId, BookMetadata metadata) =>
         await db.Audiobooks
             .Where(audiobook => audiobook.Id == audiobookId)

@@ -9,6 +9,9 @@ namespace Audibly.Core.Metadata;
 public enum MetadataField
 {
     Title,
+
+    /// <summary>The cover image; its found value is the image's address, downloaded by the app on Apply.</summary>
+    Cover,
     Narrator,
     Series,
     SeriesPart,
@@ -26,12 +29,23 @@ public sealed record FieldChange(MetadataField Field, string Old, string New, bo
 /// </summary>
 public static class MetadataComparison
 {
-    public static IReadOnlyList<FieldChange> Compare(BookMetadata current, BookDetails found)
+    /// <param name="hasOwnCover">
+    ///     False while the book shows the default cover: then a found cover is ticked by default. An own
+    ///     cover is only replaced when ticked by hand.
+    /// </param>
+    public static IReadOnlyList<FieldChange> Compare(BookMetadata current, BookDetails found, bool hasOwnCover = true)
     {
         var all = Enum.GetValues<MetadataField>();
         var foundOnly = Apply(new BookMetadata(null, null, null, null, null, null, null), found, all.ToHashSet());
         return all.Select(field =>
         {
+            if (field == MetadataField.Cover)
+            {
+                var image = found.ImageUrl ?? string.Empty;
+                var hasImage = !string.IsNullOrWhiteSpace(image);
+                return new FieldChange(field, string.Empty, image, hasImage, hasImage && !hasOwnCover);
+            }
+
             var old = Display(current, field);
             var @new = Display(foundOnly, field);
             var canApply = !string.IsNullOrWhiteSpace(@new);
@@ -61,6 +75,7 @@ public static class MetadataComparison
     private static string Display(BookMetadata book, MetadataField field) => field switch
     {
         MetadataField.Title => book.Title ?? string.Empty,
+        MetadataField.Cover => string.Empty,
         MetadataField.Narrator => book.Narrator ?? string.Empty,
         MetadataField.Series => book.Series ?? string.Empty,
         MetadataField.SeriesPart => book.SeriesPart ?? string.Empty,

@@ -68,6 +68,20 @@ public sealed class SaveMetadataTests : IDisposable
     }
 
     [Fact]
+    public async Task SetCover_writes_only_the_cover_paths()
+    {
+        await using (var db = new AudiblyContext(_options))
+            await new SqlAudiobookRepository(db).SetCoverAsync(_bookId, @"C:\covers\CoverImage.png", @"C:\covers\Thumbnail.jpeg");
+
+        await using var check = new AudiblyContext(_options);
+        var book = await check.Audiobooks.SingleAsync();
+        Assert.Equal(@"C:\covers\CoverImage.png", book.CoverImagePath);
+        Assert.Equal(@"C:\covers\Thumbnail.jpeg", book.ThumbnailPath);
+        Assert.Equal("T", book.Title);
+        Assert.Equal("old", book.Description);
+    }
+
+    [Fact]
     public async Task Migration_keeps_existing_books()
     {
         await using var check = new AudiblyContext(_options);

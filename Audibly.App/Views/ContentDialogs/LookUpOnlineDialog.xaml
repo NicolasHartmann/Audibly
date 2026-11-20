@@ -120,7 +120,8 @@
                                 TextTrimming="CharacterEllipsis"
                                 TextWrapping="Wrap"
                                 ToolTipService.ToolTip="{x:Bind Old}"
-                                VerticalAlignment="Center" />
+                                VerticalAlignment="Center"
+                                Visibility="{x:Bind IsText}" />
                             <TextBlock
                                 Grid.Column="2"
                                 MaxLines="3"
@@ -128,7 +129,25 @@
                                 TextTrimming="CharacterEllipsis"
                                 TextWrapping="Wrap"
                                 ToolTipService.ToolTip="{x:Bind New}"
-                                VerticalAlignment="Center" />
+                                VerticalAlignment="Center"
+                                Visibility="{x:Bind IsText}" />
+                            <!--  cover row: the current and the found cover as small pictures  -->
+                            <Image
+                                Grid.Column="1"
+                                Height="96"
+                                HorizontalAlignment="Left"
+                                Source="{x:Bind OldImage}"
+                                Stretch="Uniform"
+                                Visibility="{x:Bind IsCover}"
+                                Width="96" />
+                            <Image
+                                Grid.Column="2"
+                                Height="96"
+                                HorizontalAlignment="Left"
+                                Source="{x:Bind NewImage}"
+                                Stretch="Uniform"
+                                Visibility="{x:Bind IsCover}"
+                                Width="96" />
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

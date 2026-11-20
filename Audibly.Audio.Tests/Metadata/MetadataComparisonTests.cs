@@ -9,8 +9,8 @@ public sealed class MetadataComparisonTests
     private static readonly BookMetadata Nothing = new(null, null, null, null, null, null, null);
 
     private static BookDetails Found(string? narrator = null, string? series = null, IReadOnlyList<string>? genres = null,
-        DateTime? releaseDate = null, string? description = null, string? title = null) =>
-        new("B1", description, narrator, series, null, genres ?? [], releaseDate, title);
+        DateTime? releaseDate = null, string? description = null, string? title = null, string? image = null) =>
+        new("B1", description, narrator, series, null, genres ?? [], releaseDate, title, image);
 
     private static FieldChange Row(IReadOnlyList<FieldChange> rows, MetadataField field) =>
         rows.Single(row => row.Field == field);
@@ -21,7 +21,7 @@ public sealed class MetadataComparisonTests
         var rows = MetadataComparison.Compare(Nothing, Found());
 
         Assert.Equal(
-            [MetadataField.Title, MetadataField.Narrator, MetadataField.Series, MetadataField.SeriesPart, MetadataField.Genres,
+            [MetadataField.Title, MetadataField.Cover, MetadataField.Narrator, MetadataField.Series, MetadataField.SeriesPart, MetadataField.Genres,
              MetadataField.ReleaseDate, MetadataField.Description],
             rows.Select(row => row.Field));
     }
@@ -99,6 +99,30 @@ public sealed class MetadataComparisonTests
 
         Assert.Equal("Kapitel 1", MetadataComparison.Apply(current, found, new HashSet<MetadataField> { MetadataField.Narrator }).Title);
         Assert.Equal("Gefährliche Liebe", MetadataComparison.Apply(current, found, new HashSet<MetadataField> { MetadataField.Title }).Title);
+    }
+
+    [Fact]
+    public void Cover_is_checked_only_for_a_book_without_own_cover()
+    {
+        var found = Found(image: "https://m.media-amazon.com/images/I/x.jpg");
+
+        var withoutCover = Row(MetadataComparison.Compare(Nothing, found, hasOwnCover: false), MetadataField.Cover);
+        var withCover = Row(MetadataComparison.Compare(Nothing, found, hasOwnCover: true), MetadataField.Cover);
+
+        Assert.True(withoutCover.CanApply);
+        Assert.True(withoutCover.ApplyByDefault);
+        Assert.Equal("https://m.media-amazon.com/images/I/x.jpg", withoutCover.New);
+        Assert.True(withCover.CanApply);
+        Assert.False(withCover.ApplyByDefault);
+    }
+
+    [Fact]
+    public void Cover_without_image_cannot_be_applied()
+    {
+        var row = Row(MetadataComparison.Compare(Nothing, Found(), hasOwnCover: false), MetadataField.Cover);
+
+        Assert.False(row.CanApply);
+        Assert.False(row.ApplyByDefault);
     }
 
     [Fact]

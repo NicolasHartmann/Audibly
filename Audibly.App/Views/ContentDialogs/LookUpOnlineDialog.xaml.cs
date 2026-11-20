@@ -21,9 +21,13 @@ namespace Audibly.App.Views.ContentDialogs;
 /// </summary>
 public sealed partial class LookUpOnlineDialog : ContentDialog
 {
-    private static readonly AudibleMetadataClient Client = new(new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
+    /// <summary>Also used to download the chosen cover after Apply.</summary>
+    internal static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    private static readonly AudibleMetadataClient Client = new(Http);
 
     private readonly BookMetadata _current;
+    private readonly string _currentCover;
     private readonly CancellationTokenSource _closing = new();
     private BookDetails? _details;
     private int _search;
@@ -32,6 +36,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
     {
         InitializeComponent();
         _current = BookMetadata.From(book.Model);
+        _currentCover = book.ThumbnailPath;
         SearchBox.Text = $"{book.Title} {book.Author}".Trim();
         Opened += async (_, _) => await SearchAsync();
         Closed += (_, _) => _closing.Cancel();
@@ -39,6 +44,17 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
 
     /// <summary>The details to save, or null when the user cancelled.</summary>
     public BookMetadata? Result { get; private set; }
+
+    /// <summary>The address of the cover to download and use, or null when the cover was not ticked.</summary>
+    public string? CoverUrl { get; private set; }
+
+    /// <summary>
+    ///     True when the book has a cover of its own. A book without one shows the default cover, whose
+    ///     path is the image in the app package.
+    /// </summary>
+    public static bool HasOwnCover(string? coverImagePath) =>
+        !string.IsNullOrWhiteSpace(coverImagePath) &&
+        !coverImagePath.EndsWith("DefaultCoverImage.png", StringComparison.OrdinalIgnoreCase);
 
     private async Task SearchAsync()
     {
@@ -71,6 +87,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
             var chosen = ((IEnumerable<FieldItem>)FieldList.ItemsSource)
                 .Where(item => item.IsChecked == true).Select(item => item.Field).ToHashSet();
             Result = MetadataComparison.Apply(_current, _details, chosen);
+            CoverUrl = chosen.Contains(MetadataField.Cover) ? _details.ImageUrl : null;
             return;
         }
 
@@ -83,7 +100,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
         try
         {
             _details = await Client.GetDetailsAsync(selected.Hit, _closing.Token);
-            ShowFields(MetadataComparison.Compare(_current, _details));
+            ShowFields(MetadataComparison.Compare(_current, _details, HasOwnCover(_currentCover)));
         }
         catch (MetadataLookupException e)
         {
@@ -116,7 +133,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
 
     private void ShowFields(IReadOnlyList<FieldChange> changes)
     {
-        FieldList.ItemsSource = changes.Select(change => new FieldItem(change)).ToList();
+        FieldList.ItemsSource = changes.Select(change => new FieldItem(change, _currentCover)).ToList();
         SearchBar.Visibility = Visibility.Collapsed;
         HitList.Visibility = Visibility.Collapsed;
         FieldPanel.Visibility = Visibility.Visible;
@@ -168,8 +185,13 @@ public sealed class HitItem(AudibleHit hit)
 }
 
 /// <summary>One field of step 2: current and found value and whether to take it over.</summary>
-public sealed class FieldItem(FieldChange change)
+public sealed class FieldItem(FieldChange change, string currentCover)
 {
+    public bool IsCover => change.Field == MetadataField.Cover;
+    public bool IsText => !IsCover;
+    public BitmapImage? OldImage { get; } = change.Field == MetadataField.Cover ? Picture(currentCover) : null;
+    public BitmapImage? NewImage { get; } = change.Field == MetadataField.Cover ? Picture(change.New) : null;
+
     public MetadataField Field => change.Field;
     public string Old => change.Old;
     public string New => change.New;
@@ -182,4 +204,7 @@ public sealed class FieldItem(FieldChange change)
         MetadataField.ReleaseDate => "Release date",
         _ => change.Field.ToString()
     };
+
+    private static BitmapImage? Picture(string? source) =>
+        Uri.TryCreate(source, UriKind.Absolute, out var uri) ? new BitmapImage(uri) { DecodePixelWidth = 192 } : null;
 }

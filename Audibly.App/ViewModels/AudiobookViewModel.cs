@@ -331,6 +331,15 @@ public class AudiobookViewModel : BindableBase
     public string Genres => string.Join(", ",
         (Model.Genres ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
+    /// <summary>Takes over a new cover and updates what shows it.</summary>
+    public void ApplyCover(string coverImagePath, string thumbnailPath)
+    {
+        Model.CoverImagePath = coverImagePath;
+        Model.ThumbnailPath = thumbnailPath;
+        OnPropertyChanged(nameof(CoverImagePath));
+        OnPropertyChanged(nameof(ThumbnailPath));
+    }
+
     /// <summary>Takes over details saved by "Look up online" and updates what shows them.</summary>
     public void ApplyMetadata(BookMetadata metadata)
     {

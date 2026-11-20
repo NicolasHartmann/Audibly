@@ -319,8 +319,45 @@ public static class DialogService
                     Message = "The book details could not be saved.",
                     Severity = InfoBarSeverity.Error
                 });
+                return;
             }
+
+            if (dialog.CoverUrl is { } coverUrl) await ReplaceCoverAsync(book, coverUrl);
         });
+    }
+
+    /// <summary>
+    ///     Downloads a cover and makes it the book's cover. It goes into a new folder, so the library
+    ///     shows it at once instead of a cached copy of the old file; the old folder is removed only when
+    ///     it is the book's own folder in the app data, never the default cover in the app package.
+    /// </summary>
+    private static async Task ReplaceCoverAsync(AudiobookViewModel book, string coverUrl)
+    {
+        try
+        {
+            var bytes = await LookUpOnlineDialog.Http.GetByteArrayAsync(coverUrl);
+            var folder = $"cover-{book.Id:N}-{DateTime.UtcNow:yyyyMMddHHmmss}";
+            var (cover, thumbnail) = await ViewModel.AppDataService.WriteCoverImageAsync(folder, bytes);
+            if (string.IsNullOrEmpty(cover)) throw new InvalidOperationException("The cover could not be written.");
+
+            var oldCover = book.CoverImagePath;
+            await Task.Run(() => App.Repository.Audiobooks.SetCoverAsync(book.Id, cover, thumbnail));
+            book.ApplyCover(cover, thumbnail);
+
+            var appData = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+            if (LookUpOnlineDialog.HasOwnCover(oldCover) &&
+                oldCover.StartsWith(appData + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                await ViewModel.AppDataService.DeleteCoverImageAsync(oldCover);
+        }
+        catch (Exception e)
+        {
+            ViewModel.LoggingService.LogError(e);
+            ViewModel.EnqueueNotification(new Notification
+            {
+                Message = "The cover could not be downloaded. The book keeps its old cover.",
+                Severity = InfoBarSeverity.Error
+            });
+        }
     }
 
     internal static async Task ShowProgressDialogAsync(string title, CancellationTokenSource? cts,

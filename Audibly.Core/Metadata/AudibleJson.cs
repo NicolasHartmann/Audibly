@@ -80,7 +80,8 @@ public static partial class AudibleJson
             series is { } b ? String(b, "position") : null,
             genres.Distinct().ToList(),
             Date(String(book, "releaseDate")),
-            String(book, "title"));
+            String(book, "title"),
+            String(book, "image"));
     }
 
     /// <summary>Turns Audible's description HTML into plain text with blank lines between paragraphs.</summary>
