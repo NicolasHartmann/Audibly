@@ -120,8 +120,7 @@ public class MainViewModel : BindableBase
             if (!Set(ref _isSelectionMode, value)) return;
             if (!value)
                 foreach (var book in AudiobooksForFilter) book.IsSelected = false;
-            OnPropertyChanged(nameof(SelectedBooks));
-            OnPropertyChanged(nameof(EditTagsLabel));
+            OnSelectionChanged();
         }
     }
 
@@ -129,11 +128,14 @@ public class MainViewModel : BindableBase
 
     public string EditTagsLabel => $"Edit tags ({SelectedBooks.Count})";
 
+    public bool HasSelection => SelectedBooks.Count > 0;
+
     /// <summary>Call after a book was marked or unmarked.</summary>
     public void OnSelectionChanged()
     {
         OnPropertyChanged(nameof(SelectedBooks));
         OnPropertyChanged(nameof(EditTagsLabel));
+        OnPropertyChanged(nameof(HasSelection));
     }
 
     /// <summary>
@@ -372,6 +374,8 @@ public class MainViewModel : BindableBase
                 }
 
                 IsLoading = false;
+                // the books were rebuilt, so the old marks are gone
+                OnSelectionChanged();
             });
         }
         catch (Exception ex)

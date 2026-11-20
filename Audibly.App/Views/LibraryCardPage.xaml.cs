@@ -63,6 +63,8 @@ public sealed partial class LibraryCardPage : Page
 
         // subscribe to page loaded event
         Loaded += LibraryCardPage_Loaded;
+        // leaving the library ends the selection, so a click opens a book again on return
+        Unloaded += (_, _) => ViewModel.IsSelectionMode = false;
         ViewModel.ResetFilters += ViewModelOnResetFilters;
     }
 
@@ -79,6 +81,9 @@ public sealed partial class LibraryCardPage : Page
     private void ViewModelOnResetFilters()
     {
         SelectAllFiltersCheckBox.IsChecked = false;
+        // the list is rebuilt unfiltered, so the ticked tags no longer apply
+        _tickedTags.Clear();
+        SetCheckedState();
     }
 
     private async void LibraryCardPage_Loaded(object sender, RoutedEventArgs e)

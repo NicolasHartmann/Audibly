@@ -181,6 +181,7 @@
                     </AppBarToggleButton>
                     <AppBarButton
                         Click="EditSelectedTags_Click"
+                        IsEnabled="{x:Bind ViewModel.HasSelection, Mode=OneWay}"
                         Label="{x:Bind ViewModel.EditTagsLabel, Mode=OneWay}"
                         Visibility="{x:Bind ViewModel.IsSelectionMode, Mode=OneWay}">
                         <AppBarButton.Icon>

@@ -102,6 +102,13 @@ public sealed partial class AudiobookTile : UserControl
     {
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
         if (audiobook == null) return;
+        // in selection mode the whole tile marks the book, its Play button included
+        if (ViewModel.IsSelectionMode)
+        {
+            audiobook.IsSelected = !audiobook.IsSelected;
+            ViewModel.OnSelectionChanged();
+            return;
+        }
         await _dispatcherQueue.EnqueueAsync(async () =>
         {
             await PlayerViewModel.OpenAudiobook(audiobook);
