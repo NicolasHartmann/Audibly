@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Audibly.Core.Tags;
 using Audibly.Models;
 
 namespace Audibly.Core.Metadata;
@@ -15,7 +16,9 @@ public enum MetadataField
     Narrator,
     Series,
     SeriesPart,
-    Genres,
+
+    /// <summary>The book's own tags; found genres are added to them, never replace them.</summary>
+    Tags,
     ReleaseDate,
     Description
 }
@@ -46,6 +49,14 @@ public static class MetadataComparison
                 return new FieldChange(field, string.Empty, image, hasImage, hasImage && !hasOwnCover);
             }
 
+            if (field == MetadataField.Tags)
+            {
+                var own = TagList.Parse(current.Tags);
+                var merged = TagList.Add(own, found.Genres, []);
+                return new FieldChange(field, string.Join(", ", own), string.Join(", ", merged),
+                    found.Genres.Count > 0, merged.Count > own.Count);
+            }
+
             var old = Display(current, field);
             var @new = Display(foundOnly, field);
             var canApply = !string.IsNullOrWhiteSpace(@new);
@@ -60,16 +71,17 @@ public static class MetadataComparison
         string? Pick(MetadataField field, string? old, string? @new) =>
             chosen.Contains(field) && !string.IsNullOrWhiteSpace(@new) ? @new : old;
 
-        var genres = found.Genres.Count > 0 ? string.Join("\n", found.Genres) : null;
+        var takeTags = chosen.Contains(MetadataField.Tags) && found.Genres.Count > 0;
         return new BookMetadata(
             Pick(MetadataField.Description, current.Description, found.Description),
             Pick(MetadataField.Narrator, current.Narrator, found.Narrator),
             Pick(MetadataField.Series, current.Series, found.Series),
             Pick(MetadataField.SeriesPart, current.SeriesPart, found.SeriesPart),
-            Pick(MetadataField.Genres, current.Genres, genres),
+            takeTags ? string.Join("\n", found.Genres) : current.Genres,
             chosen.Contains(MetadataField.ReleaseDate) && found.ReleaseDate != null ? found.ReleaseDate : current.ReleaseDate,
             string.IsNullOrWhiteSpace(found.Asin) ? current.Asin : found.Asin,
-            Pick(MetadataField.Title, current.Title, found.Title));
+            Pick(MetadataField.Title, current.Title, found.Title),
+            takeTags ? TagList.Format(TagList.Add(TagList.Parse(current.Tags), found.Genres, [])) : current.Tags);
     }
 
     private static string Display(BookMetadata book, MetadataField field) => field switch
@@ -79,8 +91,6 @@ public static class MetadataComparison
         MetadataField.Narrator => book.Narrator ?? string.Empty,
         MetadataField.Series => book.Series ?? string.Empty,
         MetadataField.SeriesPart => book.SeriesPart ?? string.Empty,
-        MetadataField.Genres => string.Join(", ",
-            (book.Genres ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)),
         MetadataField.ReleaseDate => book.ReleaseDate?.ToShortDateString() ?? string.Empty,
         MetadataField.Description => book.Description ?? string.Empty,
         _ => string.Empty

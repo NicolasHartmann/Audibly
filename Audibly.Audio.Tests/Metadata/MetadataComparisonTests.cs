@@ -21,7 +21,7 @@ public sealed class MetadataComparisonTests
         var rows = MetadataComparison.Compare(Nothing, Found());
 
         Assert.Equal(
-            [MetadataField.Title, MetadataField.Cover, MetadataField.Narrator, MetadataField.Series, MetadataField.SeriesPart, MetadataField.Genres,
+            [MetadataField.Title, MetadataField.Cover, MetadataField.Narrator, MetadataField.Series, MetadataField.SeriesPart, MetadataField.Tags,
              MetadataField.ReleaseDate, MetadataField.Description],
             rows.Select(row => row.Field));
     }
@@ -69,14 +69,23 @@ public sealed class MetadataComparisonTests
     }
 
     [Fact]
-    public void Genres_are_shown_comma_separated()
+    public void Tags_row_shows_union()
     {
-        var row = Row(MetadataComparison.Compare(Nothing with { Genres = "A\nB" }, Found(genres: ["A", "C"])),
-            MetadataField.Genres);
+        var row = Row(MetadataComparison.Compare(Nothing with { Tags = "Hörspiel" }, Found(genres: ["Fantasy"])),
+            MetadataField.Tags);
 
-        Assert.Equal("A, B", row.Old);
-        Assert.Equal("A, C", row.New);
+        Assert.Equal("Hörspiel", row.Old);
+        Assert.Equal("Hörspiel, Fantasy", row.New);
         Assert.True(row.ApplyByDefault);
+    }
+
+    [Fact]
+    public void Tags_row_not_checked_when_nothing_new()
+    {
+        var row = Row(MetadataComparison.Compare(Nothing with { Tags = "Fantasy" }, Found(genres: ["fantasy"])),
+            MetadataField.Tags);
+
+        Assert.False(row.ApplyByDefault);
     }
 
     [Fact]
@@ -149,11 +158,22 @@ public sealed class MetadataComparisonTests
     }
 
     [Fact]
-    public void Apply_stores_genres_one_per_line()
+    public void Apply_tags_keeps_own_tags()
     {
-        var result = MetadataComparison.Apply(Nothing, Found(genres: ["A", "B"]),
-            new HashSet<MetadataField> { MetadataField.Genres });
+        var result = MetadataComparison.Apply(Nothing with { Tags = "Hörspiel" }, Found(genres: ["Fantasy"]),
+            new HashSet<MetadataField> { MetadataField.Tags });
 
-        Assert.Equal("A\nB", result.Genres);
+        Assert.Equal("Hörspiel\nFantasy", result.Tags);
+        Assert.Equal("Fantasy", result.Genres);
+    }
+
+    [Fact]
+    public void Apply_without_tags_keeps_everything()
+    {
+        var result = MetadataComparison.Apply(Nothing with { Tags = "Hörspiel", Genres = "Old" }, Found(genres: ["Fantasy"]),
+            new HashSet<MetadataField>());
+
+        Assert.Equal("Hörspiel", result.Tags);
+        Assert.Equal("Old", result.Genres);
     }
 }
