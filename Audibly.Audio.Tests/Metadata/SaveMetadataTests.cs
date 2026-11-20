@@ -2,6 +2,8 @@ using Audibly.Models;
 using Audibly.Repository.Sql;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Xunit;
 
 namespace Audibly.Audio.Tests.Metadata;
@@ -79,6 +81,59 @@ public sealed class SaveMetadataTests : IDisposable
         Assert.Equal(@"C:\covers\Thumbnail.jpeg", book.ThumbnailPath);
         Assert.Equal("T", book.Title);
         Assert.Equal("old", book.Description);
+    }
+
+    [Fact]
+    public async Task SetTags_changes_only_given_books()
+    {
+        Guid other;
+        await using (var db = new AudiblyContext(_options))
+        {
+            var book = new Audiobook
+            {
+                Title = "T2", Author = "A", Composer = "C", Description = "", CoverImagePath = "", ThumbnailPath = "",
+                Tags = "Keep", SourcePaths = [], Chapters = []
+            };
+            db.Audiobooks.Add(book);
+            await db.SaveChangesAsync();
+            other = book.Id;
+        }
+
+        await using (var db = new AudiblyContext(_options))
+            await new SqlAudiobookRepository(db).SetTagsAsync(new Dictionary<Guid, string?> { [_bookId] = "Krimi" });
+
+        await using var check = new AudiblyContext(_options);
+        Assert.Equal("Krimi", (await check.Audiobooks.SingleAsync(b => b.Id == _bookId)).Tags);
+        Assert.Equal("Keep", (await check.Audiobooks.SingleAsync(b => b.Id == other)).Tags);
+    }
+
+    [Fact]
+    public async Task SaveMetadata_writes_tags()
+    {
+        await using (var db = new AudiblyContext(_options))
+            await new SqlAudiobookRepository(db).SaveMetadataAsync(_bookId,
+                new BookMetadata("old", null, null, null, null, null, null, Tags: "A\nB"));
+
+        await using var check = new AudiblyContext(_options);
+        Assert.Equal("A\nB", (await check.Audiobooks.SingleAsync()).Tags);
+    }
+
+    [Fact]
+    public void Migration_copies_genres_to_tags()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<AudiblyContext>().UseSqlite(connection).Options;
+        using var db = new AudiblyContext(options);
+        db.GetService<IMigrator>().Migrate("20261119174948_AddBookDetails");
+        db.Database.ExecuteSqlRaw(
+            "INSERT INTO Audiobooks (Id, Author, Composer, CurrentSourceFileIndex, Description, Duration, CoverImagePath, " +
+            "ThumbnailPath, IsNowPlaying, PlaybackSpeed, Progress, Title, Volume, IsCompleted, Genres) VALUES " +
+            "('8f9a5d1e-0000-0000-0000-000000000001', 'A', 'C', 0, '', 0, '', '', 0, 1, 0, 'T', 1, 0, 'Fantasy\nEpic')");
+
+        db.Database.Migrate();
+
+        Assert.Equal("Fantasy\nEpic", db.Audiobooks.AsNoTracking().Single().Tags);
     }
 
     [Fact]

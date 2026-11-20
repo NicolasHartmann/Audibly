@@ -44,6 +44,9 @@ public class Audiobook : DbObject, IEquatable<Audiobook>
     /// <summary>One genre per line; broad genres first, then finer ones.</summary>
     public string? Genres { get; set; }
 
+    /// <summary>The user's own tags, one per line (see Audibly.Core.Tags.TagList).</summary>
+    public string? Tags { get; set; }
+
     /// <summary>Audible's id of the book the details came from.</summary>
     public string? Asin { get; set; }
 

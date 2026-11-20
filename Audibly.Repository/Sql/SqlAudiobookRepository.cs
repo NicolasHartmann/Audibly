@@ -108,6 +108,14 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
             .Where(audiobook => audiobook.Id == audiobookId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(audiobook => audiobook.Title, title));
 
+    public async Task SetTagsAsync(IReadOnlyDictionary<Guid, string?> tagsByBook)
+    {
+        foreach (var (id, tags) in tagsByBook)
+            await db.Audiobooks
+                .Where(audiobook => audiobook.Id == id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(audiobook => audiobook.Tags, tags));
+    }
+
     public async Task SetCoverAsync(Guid audiobookId, string coverImagePath, string thumbnailPath) =>
         await db.Audiobooks
             .Where(audiobook => audiobook.Id == audiobookId)
@@ -127,7 +135,9 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
                 .SetProperty(audiobook => audiobook.ReleaseDate, metadata.ReleaseDate)
                 .SetProperty(audiobook => audiobook.Asin, metadata.Asin)
                 .SetProperty(audiobook => audiobook.Title,
-                    audiobook => string.IsNullOrWhiteSpace(metadata.Title) ? audiobook.Title : metadata.Title));
+                    audiobook => string.IsNullOrWhiteSpace(metadata.Title) ? audiobook.Title : metadata.Title)
+                .SetProperty(audiobook => audiobook.Tags,
+                    audiobook => metadata.Tags == null ? audiobook.Tags : metadata.Tags));
 
     public async Task<Audiobook?> UpsertAsync(Audiobook audiobook)
     {

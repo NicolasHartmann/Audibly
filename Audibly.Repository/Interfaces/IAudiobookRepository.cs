@@ -26,6 +26,9 @@ public interface IAudiobookRepository
     /// <summary>Changes only the details "Look up online" fills in, not the files or chapters.</summary>
     Task SaveMetadataAsync(Guid audiobookId, BookMetadata metadata);
 
+    /// <summary>Changes only the tags of the given books, in one call.</summary>
+    Task SetTagsAsync(IReadOnlyDictionary<Guid, string?> tagsByBook);
+
     /// <summary>Changes only where the book's cover and its thumbnail are stored.</summary>
     Task SetCoverAsync(Guid audiobookId, string coverImagePath, string thumbnailPath);
 

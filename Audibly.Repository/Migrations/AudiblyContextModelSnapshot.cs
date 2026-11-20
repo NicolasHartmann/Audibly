@@ -81,6 +81,9 @@ namespace Audibly.Repository.Migrations
                     b.Property<string>("SeriesPart")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Tags")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ThumbnailPath")
                         .IsRequired()
                         .HasColumnType("TEXT");

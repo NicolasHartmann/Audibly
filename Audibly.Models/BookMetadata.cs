@@ -9,8 +9,9 @@ public sealed record BookMetadata(
     string? Genres,
     DateTime? ReleaseDate,
     string? Asin,
-    string? Title = null)
+    string? Title = null,
+    string? Tags = null)
 {
     public static BookMetadata From(Audiobook book) =>
-        new(book.Description, book.Narrator, book.Series, book.SeriesPart, book.Genres, book.ReleaseDate, book.Asin, book.Title);
+        new(book.Description, book.Narrator, book.Series, book.SeriesPart, book.Genres, book.ReleaseDate, book.Asin, book.Title, book.Tags);
 }
