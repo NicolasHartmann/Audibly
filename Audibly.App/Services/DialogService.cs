@@ -67,12 +67,12 @@ public static class DialogService
     }
 
     /// <summary>
-    ///     A question with two answers. True for the primary button, false for the close button or a
-    ///     dismissed dialog, and null when the dialog could not be shown at all, so that "not asked"
-    ///     is never mistaken for "no".
+    ///     A question with two answers. True for the accept button, false for the decline button or a
+    ///     dismissed dialog (Escape), and null when the dialog could not be shown at all, so that
+    ///     "not asked" is never mistaken for "no".
     /// </summary>
     internal static async Task<bool?> ShowChoiceDialogAsync(string title, string content,
-        string primaryButtonText, string closeButtonText)
+        string acceptButtonText, string declineButtonText)
     {
         var xamlRoot = GetXamlRoot();
         if (xamlRoot == null) return null;
@@ -86,11 +86,13 @@ public static class DialogService
                 {
                     Title = title,
                     Content = new TextBlock { Text = content, TextWrapping = TextWrapping.Wrap },
-                    PrimaryButtonText = primaryButtonText,
-                    CloseButtonText = closeButtonText,
+                    // decline on the left, accept on the right: a ContentDialog orders its buttons
+                    // primary, secondary, close
+                    PrimaryButtonText = declineButtonText,
+                    SecondaryButtonText = acceptButtonText,
                     // the answer that changes something looks like the main choice (blue), but is not the
                     // default button: a key pressed just as the dialog appears must not pick it
-                    PrimaryButtonStyle = (Style)Application.Current.Resources["AccentButtonStyle"],
+                    SecondaryButtonStyle = (Style)Application.Current.Resources["AccentButtonStyle"],
                     DefaultButton = ContentDialogButton.None,
                     XamlRoot = App.Window.Content.XamlRoot,
                     RequestedTheme = ThemeHelper.ActualTheme
@@ -101,7 +103,7 @@ public static class DialogService
                 // progress dialog kept the queue). Waiting only briefly lets the caller ask again later.
                 var (shown, result) = await DialogManager.TryOneAtATimeAsync(async () => await dialog.ShowAsync(),
                     TimeSpan.FromSeconds(5));
-                if (shown) choice = result == ContentDialogResult.Primary;
+                if (shown) choice = result == ContentDialogResult.Secondary;
             });
         }
         catch (Exception e)
