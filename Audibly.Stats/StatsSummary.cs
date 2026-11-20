@@ -7,9 +7,31 @@ public sealed record Totals(double ListenedSeconds, double SavedSeconds);
 /// <summary>Listening within one day, month or year; <see cref="Start" /> is its first day.</summary>
 public sealed record PeriodTotal(string Label, DateOnly Start, double ListenedSeconds);
 
+/// <summary>Listening time of all books with one tag.</summary>
+public sealed record TagTotal(string Tag, double ListenedSeconds);
+
 public static class StatsSummary
 {
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
+
+    /// <summary>Where books without a tag, or no longer in the library, are counted.</summary>
+    public const string NoTag = "No tag";
+
+    /// <summary>
+    ///     Listening time per tag since <paramref name="from" />, most first. A book with two tags counts in
+    ///     both, so the rows can add up to more than the total.
+    /// </summary>
+    public static IReadOnlyList<TagTotal> ByTag(StatsData data,
+        IReadOnlyDictionary<Guid, IReadOnlyList<string>> tagsByBook, DateOnly? from = null) =>
+        data.Slices
+            .Where(slice => from == null || slice.Day >= from)
+            .SelectMany(slice => tagsByBook.TryGetValue(slice.AudiobookId, out var tags) && tags.Count > 0
+                ? tags.Select(tag => (Tag: tag, slice.ListenedSeconds))
+                : [(Tag: NoTag, slice.ListenedSeconds)])
+            .GroupBy(entry => entry.Tag, StringComparer.CurrentCultureIgnoreCase)
+            .Select(group => new TagTotal(group.First().Tag, group.Sum(entry => entry.ListenedSeconds)))
+            .OrderByDescending(total => total.ListenedSeconds)
+            .ToList();
 
     public static Totals Total(StatsData data) => Sum(data.Slices);
 
