@@ -25,6 +25,7 @@
 - [ ] Make the fork usable for others
   - [ ] choose an own app name (the Store name "Audibly" belongs to the original listing)
   - [ ] GitHub release: Windows MSIX with its own identity (installs next to the Store app), signed with an own certificate, plus install instructions for the one-time certificate step
+    - [x] own self-signed certificate created (CN=NicolasHartmann, valid until 2036; kept outside the repo)
   - [ ] GitHub release: Android APK signed with an own release key (keep the key safe; switching from the debug key needs one reinstall)
   - [ ] later: own Microsoft Store listing (individual developer accounts are free; the Store signs the package)
   - [ ] keep the pull requests to rstewa/Audibly going
