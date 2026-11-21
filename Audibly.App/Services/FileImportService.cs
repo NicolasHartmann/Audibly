@@ -16,6 +16,7 @@ using Audibly.App.Extensions;
 using Audibly.App.Helpers;
 using Audibly.App.Services.Interfaces;
 using Audibly.App.ViewModels;
+using Audibly.Core.Import;
 using Audibly.Models;
 using AutoMapper;
 using Microsoft.UI.Xaml.Controls;
@@ -37,43 +38,19 @@ public class FileImportService : IImportFiles
 
     public event IImportFiles.ImportCompletedHandler? ImportCompleted;
 
-    // TODO: need a better way of checking if a file is one we have already imported
     public async Task ImportDirectoryAsync(string path, CancellationToken cancellationToken,
-        Func<int, int, string, bool, Task> progressCallback, bool notifyUser = true)
+        Func<int, int, string, BookImportStatus, Task> progressCallback)
     {
-        var didFail = false;
-
-        var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
-            .Where(file => file.EndsWith(".m4b", StringComparison.OrdinalIgnoreCase) ||
-                           file.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase) ||
-                           file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        var numberOfFiles = files.Count;
-
-        var filesList = files.AsList();
-
-        foreach (var file in files)
+        var books = await Task.Run(() => AudiobookImporter.ScanDirectory(path, cancellationToken), cancellationToken);
+        for (var index = 0; index < books.Count; index++)
         {
-            // Check if cancellation was requested
             cancellationToken.ThrowIfCancellationRequested();
 
-            var audiobook = await CreateAudiobook(file, notifyUser: notifyUser);
+            var files = books[index];
+            var folderName = files.Count > 1 ? Path.GetFileName(Path.GetDirectoryName(files[0])) : null;
+            var (title, status) = await ImportBookAsync(files, cancellationToken, folderName);
 
-            if (audiobook == null) didFail = true;
-
-            if (audiobook != null)
-            {
-                // insert the audiobook into the database
-                var result = await App.Repository.Audiobooks.UpsertAsync(audiobook);
-                if (result == null) didFail = true;
-            }
-
-            var title = audiobook?.Title ?? Path.GetFileNameWithoutExtension(file);
-
-            // report progress
-            await progressCallback(filesList.IndexOf(file), numberOfFiles, title, didFail);
-
-            didFail = false;
+            await progressCallback(index + 1, books.Count, title, status);
         }
 
         ImportCompleted?.Invoke();
@@ -153,55 +130,16 @@ public class FileImportService : IImportFiles
     public async Task ImportFromMultipleFilesAsync(string[] paths, CancellationToken cancellationToken,
         Func<int, int, string, bool, Task> progressCallback)
     {
-        var didFail = false;
-
-        // todo: need to see if we can call progressCallback from the CreateAudiobook function
-        var numberOfFiles = 1; // paths.Length;
-
-        // Check if cancellation was requested
         cancellationToken.ThrowIfCancellationRequested();
-
-        var audiobook = await CreateAudiobookFromMultipleFiles(paths);
-
-        if (audiobook == null) didFail = true;
-
-        if (audiobook != null)
-        {
-            // by file first: a book renamed with "Look up online" no longer matches its file tags
-            var existingAudioBook =
-                await App.Repository.Audiobooks.GetByFilePathAsync(paths[0]) ??
-                await App.Repository.Audiobooks.GetByTitleAuthorComposerAsync(audiobook.Title,
-                    audiobook.Author,
-                    audiobook.Composer);
-            if (existingAudioBook != null)
+        var (title, status) = await ImportBookAsync(paths, cancellationToken);
+        if (status == BookImportStatus.AlreadyInLibrary)
+            App.ViewModel.EnqueueNotification(new Notification
             {
-                // log the error
-                App.ViewModel.LoggingService.LogError(new Exception("Audiobook already exists in the database"));
-                App.ViewModel.EnqueueNotification(new Notification
-                {
-                    Message = $"Audiobook is already in the library: {existingAudioBook.Title}",
-                    Severity = InfoBarSeverity.Warning
-                });
+                Message = $"Audiobook is already in the library: {title}",
+                Severity = InfoBarSeverity.Warning
+            });
 
-                didFail = true;
-
-                await progressCallback(numberOfFiles, numberOfFiles, audiobook.Title, didFail);
-
-                ImportCompleted?.Invoke();
-
-                return;
-            }
-
-            // insert the audiobook into the database
-            var result = await App.Repository.Audiobooks.UpsertAsync(audiobook);
-            if (result == null) didFail = true;
-        }
-
-        var title = audiobook?.Title ?? Path.GetFileNameWithoutExtension(paths.First());
-
-        // report progress
-        await progressCallback(numberOfFiles, numberOfFiles, title, didFail);
-
+        await progressCallback(1, 1, title, status != BookImportStatus.Imported);
         ImportCompleted?.Invoke();
     }
 
@@ -234,112 +172,140 @@ public class FileImportService : IImportFiles
 
     #endregion
 
-    private static async Task<Audiobook?> CreateAudiobookFromMultipleFiles(string[] paths)
+    private static async Task<(string Title, BookImportStatus Status)> ImportBookAsync(
+        IReadOnlyList<string> paths, CancellationToken cancellationToken, string? folderName = null)
     {
+        var fallbackTitle = folderName ?? Path.GetFileNameWithoutExtension(paths[0]);
+        var repository = App.Repository.Audiobooks;
+
+        // Check the path first because "Look up online" can change the book's title after import.
+        var existing = await repository.GetByFilePathAsync(paths[0]);
+        if (existing != null) return (existing.Title, BookImportStatus.AlreadyInLibrary);
+
+        ImportedBook imported;
         try
         {
-            var audiobook = new Audiobook
+            imported = await Task.Run(() => ReadAudiobook(paths, folderName, cancellationToken), cancellationToken);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            App.ViewModel.LoggingService.LogError(e, true);
+            return (fallbackTitle, BookImportStatus.Failed);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var audiobook = imported.Audiobook;
+        existing = await repository.GetByTitleAuthorComposerAsync(audiobook.Title, audiobook.Author, audiobook.Composer);
+        if (existing != null) return (existing.Title, BookImportStatus.AlreadyInLibrary);
+
+        var hash = $"{audiobook.Title}{audiobook.Author}{audiobook.Composer}".GetSha256Hash();
+        (audiobook.CoverImagePath, audiobook.ThumbnailPath) =
+            await App.ViewModel.AppDataService.WriteCoverImageAsync(hash, imported.CoverImage);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return (audiobook.Title, await SaveImportedBookAsync(audiobook)
+            ? BookImportStatus.Imported : BookImportStatus.Failed);
+    }
+
+    private static async Task<bool> SaveImportedBookAsync(Audiobook audiobook)
+    {
+        var repository = App.Repository.Audiobooks;
+        var saved = await repository.UpsertAsync(audiobook);
+        // Upsert can also return the input when an existing book has the same title and author.
+        return saved != null && (await repository.GetByFilePathAsync(audiobook.SourcePaths[0].FilePath))?.Id == audiobook.Id;
+    }
+
+    private static ImportedBook ReadAudiobook(IReadOnlyList<string> paths, string? folderName,
+        CancellationToken cancellationToken)
+    {
+        var audiobook = new Audiobook
+        {
+            CurrentSourceFileIndex = 0,
+            SourcePaths = [],
+            PlaybackSpeed = 1.0,
+            Volume = 1.0,
+            IsCompleted = false
+        };
+
+        byte[]? imageBytes = null;
+        var sourceFileIndex = 0;
+        var chapterIndex = 0;
+        foreach (var path in paths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var track = new Track(path);
+            var trackTitle = string.IsNullOrWhiteSpace(track.Title) ? Path.GetFileNameWithoutExtension(path) : track.Title;
+
+            // check if this is the 1st file
+            if (audiobook.SourcePaths.Count == 0)
             {
-                CurrentSourceFileIndex = 0,
-                SourcePaths = [],
-                PlaybackSpeed = 1.0,
-                Volume = 1.0,
-                IsCompleted = false
-            };
+                // in a book of several files the track title is usually the first chapter's
+                // ("Kapitel 1"); the album names the book
+                audiobook.Title = paths.Count > 1 && !string.IsNullOrWhiteSpace(track.Album)
+                    ? track.Album
+                    : folderName ?? trackTitle;
+                audiobook.Composer = track.Composer;
+                audiobook.Author = track.Artist;
+                audiobook.Description =
+                    track.Description.IsNullOrEmpty()
+                        ? track.Comment.IsNullOrEmpty()
+                            ? track.AdditionalFields.TryGetValue("\u00A9des", out var value) ? value : track.Comment
+                            : track.Comment
+                        : track.Description;
+                audiobook.ReleaseDate = track.Date;
 
-            var sourceFileIndex = 0;
-            var chapterIndex = 0;
-            foreach (var path in paths)
-            {
-                var track = new Track(path);
-
-                // check if this is the 1st file
-                if (audiobook.SourcePaths.Count == 0)
-                {
-                    // in a book of several files the track title is usually the first chapter's
-                    // ("Kapitel 1"); the album names the book
-                    audiobook.Title = paths.Length > 1 && !string.IsNullOrWhiteSpace(track.Album)
-                        ? track.Album
-                        : track.Title;
-                    audiobook.Composer = track.Composer;
-                    audiobook.Author = track.Artist;
-                    audiobook.Description =
-                        track.Description.IsNullOrEmpty()
-                            ? track.Comment.IsNullOrEmpty()
-                                ? track.AdditionalFields.TryGetValue("\u00A9des", out var value) ? value : track.Comment
-                                : track.Comment
-                            : track.Description;
-                    audiobook.ReleaseDate = track.Date;
-                }
-
-                var sourceFile = new SourceFile
-                {
-                    Index = sourceFileIndex++,
-                    FilePath = path,
-                    Duration = track.Duration,
-                    CurrentTimeMs = 0
-                };
-
-                audiobook.SourcePaths.Add(sourceFile);
-
-                // read in the chapters
-                foreach (var ch in track.Chapters)
-                {
-                    var tmp = _mapper.Map<ChapterInfo>(ch);
-                    tmp.Index = chapterIndex++;
-                    tmp.ParentSourceFileIndex = sourceFile.Index;
-                    audiobook.Chapters.Add(tmp);
-                }
-
-                if (track.Chapters.Count == 0)
-                    // create a single chapter for the entire book
-                    audiobook.Chapters.Add(new ChapterInfo
-                    {
-                        StartTime = 0,
-                        EndTime = Convert.ToUInt32(audiobook.SourcePaths[sourceFileIndex - 1].Duration * 1000),
-                        StartOffset = 0,
-                        EndOffset = 0,
-                        UseOffset = false,
-                        Title = track.Title,
-                        Index = chapterIndex++,
-                        ParentSourceFileIndex = sourceFile.Index
-                    });
+                // Read the cover from the first file.
+                imageBytes = track.EmbeddedPictures.FirstOrDefault()?.PictureData;
             }
 
-            // files that share one title tag would all show the same chapter name
-            var chapterTitles = FileChapterTitles.Resolve(
-                audiobook.Chapters.Select(chapter => (chapter.ParentSourceFileIndex, (string?)chapter.Title)).ToList(),
-                paths);
-            for (var i = 0; i < audiobook.Chapters.Count; i++) audiobook.Chapters[i].Title = chapterTitles[i];
+            var sourceFile = new SourceFile
+            {
+                Index = sourceFileIndex++,
+                FilePath = path,
+                Duration = track.Duration,
+                CurrentTimeMs = 0
+            };
 
-            // get duration of the entire audiobook
-            audiobook.Duration = audiobook.SourcePaths.Sum(x => x.Duration);
+            audiobook.SourcePaths.Add(sourceFile);
 
-            // save the cover image somewhere
-            var imageBytes = new Track(paths.First()).EmbeddedPictures.FirstOrDefault()?.PictureData;
+            // read in the chapters
+            foreach (var ch in track.Chapters)
+            {
+                var tmp = _mapper.Map<ChapterInfo>(ch);
+                tmp.Index = chapterIndex++;
+                tmp.ParentSourceFileIndex = sourceFile.Index;
+                audiobook.Chapters.Add(tmp);
+            }
 
-            // generate hash from title, author, and composer
-            var hash = $"{audiobook.Title}{audiobook.Author}{audiobook.Composer}".GetSha256Hash();
-
-            // todo: do i want to write the metadata to a json file here?
-            // write the metadata to a json file
-            // await App.ViewModel.AppDataService.WriteMetadataAsync(dir, track);
-
-            (audiobook.CoverImagePath, audiobook.ThumbnailPath) =
-                await App.ViewModel.AppDataService.WriteCoverImageAsync(hash, imageBytes);
-
-            // combine the chapters from all the files
-            // audiobook.Chapters = audiobook.SourcePaths.SelectMany(x => x.Chapters).ToList();
-            audiobook.CurrentChapterIndex = 0;
-
-            return audiobook;
+            if (track.Chapters.Count == 0)
+                // create a single chapter for the entire book
+                audiobook.Chapters.Add(new ChapterInfo
+                {
+                    StartTime = 0,
+                    EndTime = Convert.ToUInt32(audiobook.SourcePaths[sourceFileIndex - 1].Duration * 1000),
+                    StartOffset = 0,
+                    EndOffset = 0,
+                    UseOffset = false,
+                    Title = trackTitle,
+                    Index = chapterIndex++,
+                    ParentSourceFileIndex = sourceFile.Index
+                });
         }
-        catch (Exception e)
-        {
-            // log the error
-            App.ViewModel.LoggingService.LogError(e, true);
-            return null;
-        }
+
+        // files that share one title tag would all show the same chapter name
+        var chapterTitles = FileChapterTitles.Resolve(
+            audiobook.Chapters.Select(chapter => (chapter.ParentSourceFileIndex, (string?)chapter.Title)).ToList(),
+            paths);
+        for (var i = 0; i < audiobook.Chapters.Count; i++) audiobook.Chapters[i].Title = chapterTitles[i];
+
+        // get duration of the entire audiobook
+        audiobook.Duration = audiobook.SourcePaths.Sum(x => x.Duration);
+
+        // combine the chapters from all the files
+        // audiobook.Chapters = audiobook.SourcePaths.SelectMany(x => x.Chapters).ToList();
+        audiobook.CurrentChapterIndex = 0;
+
+        return new ImportedBook(audiobook, imageBytes);
     }
 
     private static async Task<Audiobook?> CreateAudiobook(string path, ImportedAudiobook? importedAudiobook = null, bool notifyUser = true)

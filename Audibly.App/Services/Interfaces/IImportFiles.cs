@@ -9,6 +9,13 @@ using Windows.Storage;
 
 namespace Audibly.App.Services.Interfaces;
 
+public enum BookImportStatus
+{
+    Imported,
+    AlreadyInLibrary,
+    Failed
+}
+
 public interface IImportFiles
 {
     public delegate void ImportCompletedHandler();
@@ -16,7 +23,7 @@ public interface IImportFiles
     public event ImportCompletedHandler ImportCompleted;
 
     Task ImportDirectoryAsync(string path, CancellationToken cancellationToken,
-        Func<int, int, string, bool, Task> progressCallback, bool notifyUser = true);
+        Func<int, int, string, BookImportStatus, Task> progressCallback);
 
     Task ImportFileAsync(string path, CancellationToken cancellationToken,
         Func<int, int, string, bool, Task> progressCallback);

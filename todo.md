@@ -10,10 +10,10 @@
 - [x] Windows: genres / tags for audiobooks (own tags, bulk edit, filter the library, statistics per tag)
 - [x] Windows: show the total number of books in the library
   - [x] helps to check that a library scan found everything, and to compare collections
-- [ ] Windows: easier import of audiobooks made of several files
-  - [ ] import a whole folder at once: every subfolder with audio files becomes one book
-  - [ ] files in natural name order by default; sorting them by hand only as an option
-  - [ ] makes importing a large library easy
+- [x] Windows: easier import of audiobooks made of several files
+  - [x] import a whole folder at once: every subfolder with audio files becomes one book
+  - [x] files in natural name order by default; sorting them by hand only as an option
+  - [x] makes importing a large library easy
 - [ ] Windows: better sound quality at higher speeds
   - [ ] the narrator sounds better on Android (ExoPlayer/Sonic) than on Windows (NAudio + SoundTouch)
   - [ ] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output)

@@ -84,6 +84,11 @@
                 Text="{x:Bind views:LibraryCardPage.ImportAudiobookWithMultipleFilesText}" />
 
             <userControls:CustomHyperlinkButton
+                ButtonClick="{x:Bind ViewModel.ImportAudiobookWithCustomFileOrderAsync}"
+                Icon="&#xE8CB;"
+                Text="{x:Bind views:LibraryCardPage.ImportAudiobookWithCustomFileOrderText}" />
+
+            <userControls:CustomHyperlinkButton
                 ButtonClick="{x:Bind ViewModel.ImportFromUserSelectedJsonFileAsync}"
                 Icon="&#xE896;"
                 Text="{x:Bind views:LibraryCardPage.ImportFromJsonFileText}" />
@@ -215,6 +220,10 @@
                                         <FontIcon Glyph="&#xE838;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutItem
+                                    Click="{x:Bind ViewModel.ImportAudiobookWithCustomFileOrderAsync}"
+                                    Icon="Sort"
+                                    Text="{x:Bind views:LibraryCardPage.ImportAudiobookWithCustomFileOrderText}" />
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem
                                     Click="{x:Bind ViewModel.ImportFromUserSelectedJsonFileAsync}"

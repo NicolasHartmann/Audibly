@@ -44,10 +44,12 @@ public sealed partial class LibraryCardPage : Page
     public const string ImportAudiobookText = "Import an audiobook + optional EPUB";
 
     public const string ImportAudiobooksFromDirectoryText =
-        "Import all audiobooks in a directory (recursively). Single-file audiobooks only (.m4b, .m4a, .mp3)";
+        "Import a folder of audiobooks (one book per subfolder, loose files individually)";
 
     public const string ImportAudiobookWithMultipleFilesText =
-        "Import an audiobook made up of multiple files (.m4b, .m4a, .mp3)";
+        "Import one audiobook from multiple files (name order)";
+
+    public const string ImportAudiobookWithCustomFileOrderText = "Import one audiobook and arrange files manually";
 
     public const string ImportFromJsonFileText = "Import audiobooks from an Audibly export file (.audibly)";
 

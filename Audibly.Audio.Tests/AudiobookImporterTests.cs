@@ -164,4 +164,49 @@ public sealed class AudiobookImporterTests : IDisposable
         Assert.Contains(books, book => book.SequenceEqual(["one"]));
         Assert.Contains(books, book => book.SequenceEqual(["deep"]));
     }
+
+    [Fact]
+    public void DirectoryScanFindsOneBookPerAudioFolderAndKeepsLooseFilesSeparate()
+    {
+        var loose = CreateFile("Standalone.M4B");
+        var looseSecond = CreateFile("Standalone 2.m4a");
+        var partTen = CreateFile("Series/Book/Part 10.mp3");
+        var partTwo = CreateFile("Series/Book/Part 2.MP3");
+        var nestedBook = CreateFile("Series/Book/Another Book/single.m4a");
+        CreateFile("Series/Book/cover.jpg");
+        Directory.CreateDirectory(Path.Combine(_folder, "Empty"));
+
+        var books = AudiobookImporter.ScanDirectory(_folder, CancellationToken.None);
+
+        Assert.Equal(4, books.Count);
+        Assert.Contains(books, book => book.SequenceEqual([loose]));
+        Assert.Contains(books, book => book.SequenceEqual([looseSecond]));
+        Assert.Contains(books, book => book.SequenceEqual([partTwo, partTen]));
+        Assert.Contains(books, book => book.SequenceEqual([nestedBook]));
+    }
+
+    [Fact]
+    public void CancelledDirectoryScanStopsBeforeLookingForFiles()
+    {
+        var missingDirectory = Path.Combine(_folder, "missing");
+        Assert.Throws<OperationCanceledException>(() =>
+            AudiobookImporter.ScanDirectory(missingDirectory, new CancellationToken(true)));
+    }
+
+    [Fact]
+    public void SelectedFilesSortByFileNameAcrossFolders()
+    {
+        string[] paths = ["A/Part 10.mp3", "B/part 2.MP3", "A/Part 1.mp3"];
+
+        Assert.Equal([paths[2], paths[1], paths[0]],
+            AudiobookImporter.OrderByNaturalFileName(paths, Path.GetFileName));
+    }
+
+    private string CreateFile(string relativePath)
+    {
+        var path = Path.GetFullPath(relativePath, _folder);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllBytes(path, []);
+        return path;
+    }
 }

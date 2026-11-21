@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using ATL;
 using Audibly.Models;
 using ChapterInfo = Audibly.Models.ChapterInfo;
@@ -17,7 +18,7 @@ public sealed record AudioFileSource(string Location, string FileName, Func<Stre
 /// <summary>An audiobook read from its files, not saved yet, with the cover found in the first file.</summary>
 public sealed record ImportedBook(Audiobook Audiobook, byte[]? CoverImage);
 
-/// <summary>Builds audiobooks from audio files without touching a database or the file system.</summary>
+/// <summary>Finds and builds audiobooks from audio files without saving them to a library.</summary>
 public static class AudiobookImporter
 {
     private static readonly string[] AudioExtensions = [".m4b", ".mp3", ".m4a"];
@@ -107,6 +108,23 @@ public static class AudiobookImporter
         return new ImportedBook(audiobook, cover);
     }
 
+    /// <summary>Scans a file system directory and groups its supported audio files into books.</summary>
+    public static IReadOnlyList<IReadOnlyList<string>> ScanDirectory(string path, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var root = Path.GetFullPath(path);
+        var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories);
+        return GroupIntoBooks(files.Select(file =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return (Path.GetDirectoryName(file)!, Path.GetFileName(file), file);
+        }), root);
+    }
+
+    /// <summary>Orders files by name, comparing numeric parts by value.</summary>
+    public static IOrderedEnumerable<T> OrderByNaturalFileName<T>(IEnumerable<T> files, Func<T, string?> getFileName) =>
+        files.OrderBy(getFileName, NaturalOrder.Instance);
+
     /// <summary>
     ///     Splits the audio files of a folder tree into books: every folder below the root that
     ///     contains audio files is one book, in natural file name order ("2" before "10"); every
@@ -120,14 +138,14 @@ public static class AudiobookImporter
             .ToList();
         var books = new List<IReadOnlyList<T>>();
 
-        foreach (var entry in audio.Where(entry => SameFolder(entry.Folder, rootFolder))
-                     .OrderBy(entry => entry.FileName, NaturalOrder.Instance))
+        foreach (var entry in OrderByNaturalFileName(audio.Where(entry => SameFolder(entry.Folder, rootFolder)),
+                     entry => entry.FileName))
             books.Add([entry.File]);
 
         foreach (var folder in audio.Where(entry => !SameFolder(entry.Folder, rootFolder))
                      .GroupBy(entry => entry.Folder, StringComparer.OrdinalIgnoreCase)
                      .OrderBy(group => group.Key, NaturalOrder.Instance))
-            books.Add(folder.OrderBy(entry => entry.FileName, NaturalOrder.Instance)
+            books.Add(OrderByNaturalFileName(folder, entry => entry.FileName)
                 .Select(entry => entry.File).ToList());
 
         return books;
@@ -144,7 +162,7 @@ public static class AudiobookImporter
     }
 
     /// <summary>Compares names so that numbers inside them sort by value.</summary>
-    private sealed class NaturalOrder : IComparer<string>
+    private sealed class NaturalOrder : IComparer<string?>
     {
         public static readonly NaturalOrder Instance = new();
 

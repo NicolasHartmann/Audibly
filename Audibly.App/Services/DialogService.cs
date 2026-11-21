@@ -205,10 +205,11 @@ public static class DialogService
 
             var contentDialog = new ContentDialog
             {
-                Title = "Put Selected Files in Order (Drag and Drop)",
+                Title = "Arrange audiobook files (drag to reorder)",
                 Content = selectFilesDialog,
-                PrimaryButtonText = "OK",
+                PrimaryButtonText = "Import",
                 CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = App.Window.Content.XamlRoot,
                 MinWidth = selectFilesDialog.ActualWidth,
                 RequestedTheme = ThemeHelper.ActualTheme
