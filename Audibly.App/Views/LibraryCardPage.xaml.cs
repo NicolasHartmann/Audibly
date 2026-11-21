@@ -203,6 +203,9 @@ public sealed partial class LibraryCardPage : Page
     private async void EditSelectedTags_Click(object sender, RoutedEventArgs e) =>
         await DialogService.ShowEditTagsDialogAsync(ViewModel.SelectedBooks);
 
+    private async void RemoveSelected_Click(object sender, RoutedEventArgs e) =>
+        await ViewModel.RemoveSelectedBooksAsync();
+
     /// <summary>Builds the tag boxes each time the filter opens, so new tags show up.</summary>
     private void FilterFlyout_Opening(object sender, object e)
     {

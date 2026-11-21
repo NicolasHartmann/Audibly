@@ -131,12 +131,69 @@ public class MainViewModel : BindableBase
 
     public bool HasSelection => SelectedBooks.Count > 0;
 
+    public string RemoveSelectedLabel => $"Remove ({SelectedBooks.Count})";
+
     /// <summary>Call after a book was marked or unmarked.</summary>
     public void OnSelectionChanged()
     {
         OnPropertyChanged(nameof(SelectedBooks));
         OnPropertyChanged(nameof(EditTagsLabel));
         OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(RemoveSelectedLabel));
+    }
+
+    /// <summary>
+    ///     Removes the marked books from the library after asking once. Their audio files stay on
+    ///     disk; only the library entries, positions and the covers the app made are deleted.
+    /// </summary>
+    public async Task RemoveSelectedBooksAsync()
+    {
+        var books = SelectedBooks;
+        if (books.Count == 0) return;
+
+        var what = books.Count == 1 ? $"\"{books[0].Title}\"" : $"{books.Count} books";
+        var answer = await DialogService.ShowConfirmationDialogAsync("Remove from library?",
+            $"{what} will be removed from the library, together with their positions. The audio files stay on disk.",
+            "Remove", "Cancel");
+        if (answer != ContentDialogResult.Primary) return;
+
+        await _dispatcherQueue.EnqueueAsync(() =>
+        {
+            if (App.PlayerViewModel.NowPlaying is { } playing && books.Any(book => book.Id == playing.Id))
+            {
+                App.PlayerViewModel.AudioPlayer.Pause();
+                playing.IsNowPlaying = false;
+                App.PlayerViewModel.NowPlaying = null;
+            }
+
+            if (SelectedAudiobook != null && books.Contains(SelectedAudiobook)) SelectedAudiobook = null;
+            IsLoading = true;
+        });
+
+        var failed = 0;
+        foreach (var book in books)
+            try
+            {
+                await App.Repository.Audiobooks.DeleteAsync(book.Id);
+                await AppDataService.DeleteCoverImageAsync(book.CoverImagePath);
+            }
+            catch (Exception e)
+            {
+                failed++;
+                LoggingService.LogError(e);
+            }
+
+        await _dispatcherQueue.EnqueueAsync(() => IsSelectionMode = false);
+        await GetAudiobookListAsync();
+
+        var removed = books.Count - failed;
+        EnqueueNotification(new Notification
+        {
+            Message = failed == 0
+                ? $"{removed} {(removed == 1 ? "book" : "books")} removed from the library."
+                : $"{removed} removed, {failed} could not be removed.",
+            Severity = failed == 0 ? InfoBarSeverity.Success : InfoBarSeverity.Warning
+        });
     }
 
     /// <summary>

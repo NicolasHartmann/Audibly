@@ -179,7 +179,7 @@
                     <AppBarToggleButton
                         IsChecked="{x:Bind ViewModel.IsSelectionMode, Mode=TwoWay}"
                         Label="Select"
-                        ToolTipService.ToolTip="Mark several books, e.g. to tag them together">
+                        ToolTipService.ToolTip="Mark several books to tag or remove them together">
                         <AppBarToggleButton.Icon>
                             <FontIcon Glyph="&#xE762;" />
                         </AppBarToggleButton.Icon>
@@ -191,6 +191,16 @@
                         Visibility="{x:Bind ViewModel.IsSelectionMode, Mode=OneWay}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xE8EC;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        Click="RemoveSelected_Click"
+                        IsEnabled="{x:Bind ViewModel.HasSelection, Mode=OneWay}"
+                        Label="{x:Bind ViewModel.RemoveSelectedLabel, Mode=OneWay}"
+                        ToolTipService.ToolTip="Remove the marked books from the library (the files stay on disk)"
+                        Visibility="{x:Bind ViewModel.IsSelectionMode, Mode=OneWay}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE74D;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
