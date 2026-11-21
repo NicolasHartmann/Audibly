@@ -15,7 +15,7 @@ internal sealed class PitchPreservingMediaSource : IDisposable
 {
     private readonly object _gate = new();
     private readonly MediaFoundationReader _reader;
-    private readonly TempoSampleProvider _samples;
+    private readonly ITempoSampleProvider _samples;
     private readonly IWaveProvider _pcm;
     private readonly MediaStreamSource _stream;
     private long _outputFrames;
@@ -31,7 +31,7 @@ internal sealed class PitchPreservingMediaSource : IDisposable
         try
         {
             Duration = _reader.TotalTime;
-            _samples = new TempoSampleProvider(_reader.ToSampleProvider(), speed);
+            _samples = TimeStretching.Create(_reader.ToSampleProvider(), speed);
             _pcm = new SampleToWaveProvider16(_samples);
             var format = _pcm.WaveFormat;
             _stream = new MediaStreamSource(new AudioStreamDescriptor(

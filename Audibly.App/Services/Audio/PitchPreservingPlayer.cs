@@ -64,6 +64,14 @@ public sealed class PitchPreservingPlayer : IDisposable
         }
     }
 
+    /// <summary>Reopens the current file at the audible position, for example after the time stretching changed.</summary>
+    public void Reload()
+    {
+        if (_source != null)
+            ReplaceSource(_source.FilePath, _speed, Position, IsOpening ? _resumeAfterOpen :
+                MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing);
+    }
+
     public void Open(string filePath, TimeSpan position, bool autoPlay = false) =>
         ReplaceSource(filePath, _speed, position, autoPlay);
 

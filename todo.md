@@ -16,8 +16,9 @@
   - [x] makes importing a large library easy
 - [ ] Windows: better sound quality at higher speeds
   - [ ] the narrator sounds better on Android (ExoPlayer/Sonic) than on Windows (NAudio + SoundTouch)
-  - [ ] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output)
-  - [ ] research better approaches online (e.g. SoundTouch settings for speech, WSOLA/Sonic, the Windows playback rate) and compare by listening
+  - [x] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output): decoding (Media Foundation) and output (MediaPlayer, 16-bit PCM at the file's rate) are lossless; the difference is the time stretching
+  - [x] Sonic (the speech method ExoPlayer uses) ported to C# and now the default; Settings → Player → Speed processing switches between Sonic and SoundTouch while a book plays
+  - [ ] compare by listening; if Sonic is better, the todo can be closed
 - [x] Windows: swap the buttons in the "Continue where you left off?" dialog
   - [x] the big blue (primary) button should be "Continue there", the plain one "Stay here"
 

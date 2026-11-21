@@ -5,7 +5,7 @@ using SoundTouch;
 namespace Audibly.App.Services.Audio;
 
 /// <summary>Changes tempo without changing pitch or the output sample rate.</summary>
-internal sealed class TempoSampleProvider : ISampleProvider
+internal sealed class TempoSampleProvider : ITempoSampleProvider
 {
     private readonly ISampleProvider _source;
     private readonly SoundTouchProcessor _processor;

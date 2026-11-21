@@ -77,6 +77,7 @@ public class PlayerViewModel : BindableBase, IDisposable
 
     public PlayerViewModel()
     {
+        TimeStretching.UseSonic = UserSettings.UseSonicTimeStretching;
         AudioPlayer = new PitchPreservingPlayer(action => _dispatcherQueue.TryEnqueue(() => action()));
         InitializeAudioPlayer();
     }

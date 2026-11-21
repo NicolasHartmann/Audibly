@@ -151,6 +151,24 @@ public static class UserSettings
         set => ApplicationData.Current.LocalSettings.Values["PlaybackSpeed"] = value;
     }
 
+    /// <summary>Speech time stretching (Sonic) at other speeds; false uses SoundTouch.</summary>
+    public static bool UseSonicTimeStretching
+    {
+        get
+        {
+            try
+            {
+                return ApplicationData.Current.LocalSettings.Values["UseSonicTimeStretching"] is not false;
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                return true;
+            }
+        }
+        set => ApplicationData.Current.LocalSettings.Values["UseSonicTimeStretching"] = value;
+    }
+
     public static bool IsSidebarCollapsed
     {
         get

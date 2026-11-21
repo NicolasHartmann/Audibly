@@ -11,6 +11,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.System;
 using Audibly.App.Helpers;
+using Audibly.App.Services.Audio;
 using Audibly.App.Services;
 using Audibly.App.ViewModels;
 using CommunityToolkit.WinUI;
@@ -73,6 +74,7 @@ public sealed partial class SettingsPage : Page
 
         ProgressScopeChoice.SelectedIndex = (int)App.PlayerViewModel.ProgressScope;
         TimeDisplayChoice.SelectedIndex = (int)App.PlayerViewModel.TimeDisplay;
+        TimeStretchingChoice.SelectedIndex = TimeStretching.UseSonic ? 0 : 1;
 
         // Loaded can come again for the same page; never subscribe twice
         App.Sync.Changed -= ShowSyncState;
@@ -166,6 +168,17 @@ public sealed partial class SettingsPage : Page
     {
         if (ProgressScopeChoice.SelectedIndex >= 0)
             App.PlayerViewModel.ProgressScope = (PlayerProgressScope)ProgressScopeChoice.SelectedIndex;
+    }
+
+    private void TimeStretching_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (TimeStretchingChoice.SelectedIndex < 0) return;
+        var useSonic = TimeStretchingChoice.SelectedIndex == 0;
+        if (useSonic == TimeStretching.UseSonic) return;
+        TimeStretching.UseSonic = useSonic;
+        UserSettings.UseSonicTimeStretching = useSonic;
+        // the book that is playing switches at once, so both can be compared by listening
+        App.PlayerViewModel.AudioPlayer.Reload();
     }
 
     private void TimeDisplay_SelectionChanged(object sender, SelectionChangedEventArgs e)

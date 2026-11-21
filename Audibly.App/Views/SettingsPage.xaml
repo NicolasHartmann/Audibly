@@ -188,6 +188,16 @@
                                 <RadioButton Content="Percent" />
                             </RadioButtons>
                         </toolkit:SettingsCard>
+                        <toolkit:SettingsCard Description="How the voice is sped up or slowed down. Speech keeps narrators clear at high speeds (the same method as on Android)." Header="Speed processing">
+                            <RadioButtons
+                                AutomationProperties.AutomationId="TimeStretchingChoice"
+                                MaxColumns="2"
+                                SelectionChanged="TimeStretching_SelectionChanged"
+                                x:Name="TimeStretchingChoice">
+                                <RadioButton Content="Speech (Sonic)" />
+                                <RadioButton Content="Music (SoundTouch)" />
+                            </RadioButtons>
+                        </toolkit:SettingsCard>
                     </toolkit:SettingsExpander.Items>
                 </toolkit:SettingsExpander>
 
