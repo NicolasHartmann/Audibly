@@ -14,11 +14,11 @@
   - [x] import a whole folder at once: every subfolder with audio files becomes one book
   - [x] files in natural name order by default; sorting them by hand only as an option
   - [x] makes importing a large library easy
-- [ ] Windows: better sound quality at higher speeds
-  - [ ] the narrator sounds better on Android (ExoPlayer/Sonic) than on Windows (NAudio + SoundTouch)
+- [x] Windows: better sound quality at higher speeds
+  - [x] the narrator sounds better on Android (ExoPlayer/Sonic) than on Windows (NAudio + SoundTouch)
   - [x] analyse the whole chain (decoding, sample rate, time stretching and its settings, buffering, output): decoding (Media Foundation) and output (MediaPlayer, 16-bit PCM at the file's rate) are lossless; the difference is the time stretching
   - [x] Sonic (the speech method ExoPlayer uses) ported to C# and now the default; Settings → Player → Speed processing switches between Sonic and SoundTouch while a book plays
-  - [ ] compare by listening; if Sonic is better, the todo can be closed
+  - [x] compared by listening (2026-11-21): Sonic is clearly better, especially at the ends of words
 - [x] Windows: swap the buttons in the "Continue where you left off?" dialog
   - [x] the big blue (primary) button should be "Continue there", the plain one "Stay here"
 
