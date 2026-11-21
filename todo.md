@@ -23,10 +23,15 @@
   - [x] the big blue (primary) button should be "Continue there", the plain one "Stay here"
 
 - [ ] Make the fork usable for others
-  - [ ] choose an own app name (the Store name "Audibly" belongs to the original listing)
+  - [x] choose an own app name: "Audibly Fork" for now (package NicolasHartmann.AudiblyFork)
   - [ ] GitHub release: Windows MSIX with its own identity (installs next to the Store app), signed with an own certificate, plus install instructions for the one-time certificate step
     - [x] own self-signed certificate created (CN=NicolasHartmann, valid until 2036; kept outside the repo)
+    - [x] signed MSIX built with tools/build-release.ps1; install steps in the README
+    - [ ] upload as a GitHub release
+    - [ ] crash reports still go to the original author's Sentry: own DSN or switch off
   - [ ] GitHub release: Android APK signed with an own release key (keep the key safe; switching from the debug key needs one reinstall)
+    - [x] release key created and signed APK built
+    - [ ] upload as a GitHub release
   - [ ] later: own Microsoft Store listing (individual developer accounts are free; the Store signs the package)
   - [ ] keep the pull requests to rstewa/Audibly going
 
