@@ -99,6 +99,10 @@ public partial class App : Application
     public static ListeningStatsService ListeningStats { get; } =
         new(ApplicationData.Current.LocalFolder.Path + @"\stats.db");
 
+    /// <summary>The last places per book where the listener paused or jumped away.</summary>
+    public static Audibly.Core.PositionHistory PositionHistory { get; } =
+        new(ApplicationData.Current.LocalFolder.Path + @"\position-history.json");
+
     /// <summary>
     ///     Exchanges positions and listening time with the listener's other devices through a
     ///     folder they chose; does nothing while no folder is set.

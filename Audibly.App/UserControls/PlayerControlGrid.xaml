@@ -276,6 +276,19 @@
                     </Button>
                     <!--#endregion TimerButton-->
 
+                    <!--#region HistoryButton-->
+                    <Button
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ToolTipService.ToolTip="Back to where you stopped"
+                        x:Name="HistoryButton">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE81C;" />
+                        <Button.Flyout>
+                            <MenuFlyout Opening="HistoryFlyout_Opening" x:Name="HistoryFlyout" />
+                        </Button.Flyout>
+                    </Button>
+                    <!--#endregion HistoryButton-->
+
                     <!--#region Maximize/Minimize Button-->
                     <Button
                         BorderThickness="0"

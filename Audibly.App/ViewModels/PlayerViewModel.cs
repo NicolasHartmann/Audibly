@@ -57,6 +57,11 @@ public class PlayerViewModel : BindableBase, IDisposable
     private bool _pendingAutoPlay;
     private static readonly TimeSpan PositionSaveInterval = TimeSpan.FromSeconds(5);
     private DateTime _lastPositionSave = DateTime.MinValue;
+
+    // the last position seen while listening, to notice jumps and remember where they started
+    private Guid _lastPositionBook;
+    private double _lastBookPositionMs = -1;
+    private string _lastChapterTitle = string.Empty;
     private bool _readAlongEnabled = ApplicationData.Current.LocalSettings.Values["ReadAlongEnabled"] is true;
     private AlignmentMap? _readAlongDocument;
 
@@ -989,6 +994,10 @@ public class PlayerViewModel : BindableBase, IDisposable
                 _dispatcherQueue.TryEnqueue(() =>
                 {
                     App.ListeningStats.OnInterrupted();
+                    // pausing marks a place to come back to
+                    if (NowPlaying is { } stopped && _lastPositionBook == stopped.Id && _lastBookPositionMs >= 0)
+                        App.PositionHistory.Add(stopped.Id,
+                            new StopPoint(_lastBookPositionMs, _lastChapterTitle, DateTime.UtcNow));
                     // the position is otherwise only saved every few seconds while playing
                     if (NowPlaying is { } paused) _ = paused.SavePlaybackStateAsync();
                     _ = App.Sync.PushAsync(true);
@@ -998,6 +1007,38 @@ public class PlayerViewModel : BindableBase, IDisposable
 
                 break;
         }
+    }
+
+    /// <summary>A jump of more than a minute (chapter skip, progress bar, …) remembers where it started.</summary>
+    private void NotePosition(AudiobookViewModel book, TimeSpan position)
+    {
+        var bookPositionMs = PlayerProgress.BookPositionMs(book.SourcePaths.Select(file => (double)file.Duration),
+            book.CurrentSourceFileIndex, position.TotalMilliseconds);
+        if (_lastPositionBook == book.Id && _lastBookPositionMs >= 0 &&
+            Math.Abs(bookPositionMs - _lastBookPositionMs) > PositionHistory.JumpMs)
+            App.PositionHistory.Add(book.Id, new StopPoint(_lastBookPositionMs, _lastChapterTitle, DateTime.UtcNow));
+
+        _lastPositionBook = book.Id;
+        _lastBookPositionMs = bookPositionMs;
+        _lastChapterTitle = book.CurrentChapterTitle ?? string.Empty;
+    }
+
+    /// <summary>The remembered places of the open book, newest first.</summary>
+    public System.Collections.Generic.IReadOnlyList<StopPoint> StopPoints => NowPlaying is { } book ? App.PositionHistory.For(book.Id) : [];
+
+    /// <summary>Goes back to a remembered place; the place being left is remembered in turn.</summary>
+    public async Task GoToStopPointAsync(StopPoint point)
+    {
+        if (NowPlaying is not { } book) return;
+        if (_lastPositionBook == book.Id && _lastBookPositionMs >= 0)
+            App.PositionHistory.Add(book.Id, new StopPoint(_lastBookPositionMs, _lastChapterTitle, DateTime.UtcNow));
+        // the jump itself must not be noted a second time
+        _lastBookPositionMs = -1;
+
+        var (sourceIndex, positionMs) = PlayerProgress.Locate(
+            book.SourcePaths.Select(file => (double)file.Duration).ToList(), point.PositionMs);
+        await SeekReadAlongAsync(sourceIndex, positionMs / 1000);
+        await book.SavePlaybackStateAsync();
     }
 
     private void PlaybackSession_PositionChanged(MediaPlaybackSession sender, object args)
@@ -1036,6 +1077,8 @@ public class PlayerViewModel : BindableBase, IDisposable
                 App.ListeningStats.OnInterrupted();
                 return;
             }
+
+            NotePosition(audiobook, position);
 
             // statistics only count steady playback; a paused player that moves is a seek
             var isPlaying = MediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing;

@@ -124,6 +124,31 @@ public sealed partial class PlayerControlGrid : UserControl
         PlayerViewModel.UpdateVolume(slider.Value);
     }
 
+    /// <summary>Lists the places of the open book where the listener paused or jumped away.</summary>
+    private void HistoryFlyout_Opening(object sender, object e)
+    {
+        HistoryFlyout.Items.Clear();
+        var points = PlayerViewModel.StopPoints;
+        if (points.Count == 0)
+        {
+            HistoryFlyout.Items.Add(new MenuFlyoutItem
+                { Text = "No places yet. Pausing or skipping ahead remembers where you were.", IsEnabled = false });
+            return;
+        }
+
+        HistoryFlyout.Items.Add(new MenuFlyoutItem { Text = "Go back to", IsEnabled = false });
+        foreach (var point in points)
+        {
+            var item = new MenuFlyoutItem
+            {
+                Text = $"{Audibly.Core.PlayerProgress.Elapsed(point.PositionMs)}  ·  {point.Chapter}  ·  " +
+                       Audibly.App.Services.SyncHost.When(point.SavedUtc, DateTime.Now)
+            };
+            item.Click += async (_, _) => await PlayerViewModel.GoToStopPointAsync(point);
+            HistoryFlyout.Items.Add(item);
+        }
+    }
+
     private void TimerButton_OnClick(object sender, RoutedEventArgs e)
     {
         // todo

@@ -176,6 +176,7 @@ public class MainViewModel : BindableBase
             {
                 await App.Repository.Audiobooks.DeleteAsync(book.Id);
                 await AppDataService.DeleteCoverImageAsync(book.CoverImagePath);
+                App.PositionHistory.Remove(book.Id);
             }
             catch (Exception e)
             {
@@ -478,6 +479,7 @@ public class MainViewModel : BindableBase
                 });
 
             await App.Repository.Audiobooks.DeleteAsync(SelectedAudiobook.Id);
+            App.PositionHistory.Remove(SelectedAudiobook.Id);
             await App.ViewModel.AppDataService.DeleteCoverImageAsync(SelectedAudiobook.CoverImagePath);
 
             await GetAudiobookListAsync();
