@@ -68,6 +68,11 @@ public partial class App : Application
         });
 
         UnhandledException += OnUnhandledException;
+        // crashes on background threads (audio callbacks) otherwise leave no trace in the log
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception exception) ViewModel.LoggingService.LogError(exception, true);
+        };
         InitializeComponent();
     }
 

@@ -26,6 +26,9 @@ public sealed class PitchPreservingPlayer : IDisposable
 
     public MediaPlayer MediaPlayer { get; } = new();
     public bool IsOpening { get; private set; }
+
+    /// <summary>True once the current source has opened; a later failure is then not a broken file.</summary>
+    public bool HasOpened { get; private set; }
     public TimeSpan Duration => _source?.Duration ?? TimeSpan.Zero;
 
     public TimeSpan Position
@@ -70,6 +73,7 @@ public sealed class PitchPreservingPlayer : IDisposable
         var previous = _source;
         MediaPlayer.Pause();
         IsOpening = true;
+        HasOpened = false;
         _isSeeking = false;
         _source = replacement;
         _pendingPosition = TimeSpan.FromTicks(Math.Clamp(position.Ticks, 0, replacement.Duration.Ticks));
@@ -87,6 +91,7 @@ public sealed class PitchPreservingPlayer : IDisposable
         {
             if (_disposed || _source == null || !ReferenceEquals(openedSource, _source.Source)) return;
             IsOpening = false;
+            HasOpened = true;
             Position = _pendingPosition;
             if (_resumeAfterOpen) MediaPlayer.Play();
         });
@@ -132,6 +137,7 @@ public sealed class PitchPreservingPlayer : IDisposable
     {
         Pause();
         IsOpening = false;
+        HasOpened = false;
         _isSeeking = false;
         var previous = _source;
         _source = null;

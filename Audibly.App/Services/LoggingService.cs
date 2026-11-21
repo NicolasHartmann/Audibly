@@ -23,7 +23,7 @@ public class LoggingService(string logFilePath) : IloggingService
     {
         if (logToSentry) SentrySdk.CaptureException(e);
 
-        var logMessage = $"ERROR: {DateTime.Now}: {e.Message}";
+        var logMessage = $"ERROR: {DateTime.Now}: {e.GetType().Name}: {e.Message}{Environment.NewLine}{e.StackTrace}";
         File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
     }
 

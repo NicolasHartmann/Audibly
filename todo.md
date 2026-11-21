@@ -31,6 +31,8 @@
 # BUGS
 
 - [ ] BUG: when headphones disconnect, the app crashes
+  - [x] Windows: a file that played and then fails is reopened paused at its position instead of closing the book; media failures and crashes on background threads are now logged with details
+  - [ ] test by unplugging headphones; if it still crashes, send Audibly.log (LocalState)
 
 # IN PROGRESS
 

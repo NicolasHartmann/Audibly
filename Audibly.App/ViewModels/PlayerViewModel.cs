@@ -917,10 +917,38 @@ public class PlayerViewModel : BindableBase, IDisposable
     private void AudioPlayer_MediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
     {
         var failedSource = sender.Source;
+        var details = $"{args.Error} 0x{args.ExtendedErrorCode?.HResult:X8} {args.ErrorMessage}";
         _dispatcherQueue.TryEnqueue(() =>
         {
-            if (!_disposed && ReferenceEquals(failedSource, MediaPlayer.Source)) ReportMediaFailure();
+            if (_disposed || !ReferenceEquals(failedSource, MediaPlayer.Source)) return;
+            App.ViewModel.LoggingService.Log($"Media failed: {details}");
+            if (!TryRecoverFromOutputFailure()) ReportMediaFailure();
         });
+    }
+
+    private DateTime _lastOutputRecovery = DateTime.MinValue;
+
+    /// <summary>
+    ///     A file that played and then fails lost its audio output (for example headphones were
+    ///     unplugged). Reopens it paused at the last position instead of closing the book.
+    /// </summary>
+    private bool TryRecoverFromOutputFailure()
+    {
+        if (NowPlaying is not { } book || !AudioPlayer.HasOpened) return false;
+        // a file that keeps failing right after reopening is treated as broken
+        if (DateTime.UtcNow - _lastOutputRecovery < TimeSpan.FromSeconds(5)) return false;
+        _lastOutputRecovery = DateTime.UtcNow;
+
+        PlayPauseIcon = Symbol.Play;
+        App.ListeningStats.OnInterrupted();
+        _ = book.SavePlaybackStateAsync();
+        OpenAudioSource(TimeSpan.FromMilliseconds(book.CurrentTimeMs), false);
+        App.ViewModel.EnqueueNotification(new Notification
+        {
+            Message = "The audio output changed. Playback was paused.",
+            Severity = InfoBarSeverity.Informational
+        });
+        return true;
     }
 
     private void ReportMediaFailure()
