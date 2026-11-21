@@ -18,6 +18,7 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
+    <li><a href="#install">Install</a></li>
     <li><a href="#whats-new-in-this-fork">What's new in this fork</a></li>
     <li><a href="#changelog">Changelog</a></li>
     <li><a href="#screenshots">Screenshots</a></li>
@@ -30,6 +31,33 @@
 </details>
 
 
+
+## Install
+
+The fork is released as **Audibly Fork** on the [Releases page](https://github.com/NicolasHartmann/Audibly/releases).
+It installs next to the Store version of Audibly and keeps its own library.
+
+### Windows 10/11 (x64)
+
+The package is signed with the fork's own certificate, which Windows does not know yet. Trust it once:
+
+1. Download `AudiblyFork.cer` and the `.msix` file from the release.
+2. Right-click `AudiblyFork.cer` → **Install Certificate** → **Local Machine** → **Place all certificates in the
+   following store** → **Browse** → **Trusted People** → OK → Finish. (Needs administrator rights.)
+
+   Or in an administrator PowerShell: `Import-Certificate -FilePath .\AudiblyFork.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople`
+3. Double-click the `.msix` file and choose **Install**.
+
+Later versions install the same way, without the certificate step.
+
+### Android 8 or newer
+
+1. Download the `.apk` file from the release on the phone.
+2. Open it and allow installing apps from this source when Android asks.
+3. In the app, tap **Folder** and choose the folder with your audiobooks.
+
+If you installed an earlier test build of the Android app, uninstall it first: the release is signed with a
+different key, and Android does not install it over the old one.
 
 ## What's new in this fork
 
@@ -74,6 +102,20 @@
 
 Changes in this fork compared with the original Audibly 2.2.10 (released 8 July 2026), newest first. The changes of
 the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
+
+### 20–21 November 2026
+
+- **Windows: tags.** Own tags per book (genres from "Look up online…" are added), editing many books at once,
+  filtering the library by tag and listening time per tag in the statistics. The library shows how many books it has.
+- **Windows: importing a whole library.** Importing a folder makes one book of every subfolder with audio files, in
+  natural file order ("2" before "10"). Arranging the files by hand is a separate option.
+- **Windows and Android: change a book's cover.** On Windows the image next to the book's files (cover.jpg,
+  folder.jpg …) is offered first, or any image file; on Android any image.
+- **Windows: clearer voice at higher speeds.** Time stretching now uses Sonic, the speech method of Android's
+  ExoPlayer; word endings are much clearer than with SoundTouch. Settings → Player → Speed processing switches back.
+- **Windows: losing the audio output** (for example unplugging headphones) pauses the book at its position instead of
+  closing it.
+- First signed releases as **Audibly Fork** (see [Install](#install)).
 
 ### 19 November 2026
 
