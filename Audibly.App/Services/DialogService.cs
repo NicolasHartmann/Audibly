@@ -372,9 +372,111 @@ public static class DialogService
     /// </summary>
     private static async Task ReplaceCoverAsync(AudiobookViewModel book, string coverUrl)
     {
+        byte[] bytes;
         try
         {
-            var bytes = await LookUpOnlineDialog.Http.GetByteArrayAsync(coverUrl);
+            bytes = await LookUpOnlineDialog.Http.GetByteArrayAsync(coverUrl);
+        }
+        catch (Exception e)
+        {
+            ViewModel.LoggingService.LogError(e);
+            ViewModel.EnqueueNotification(new Notification
+            {
+                Message = "The cover could not be downloaded. The book keeps its old cover.",
+                Severity = InfoBarSeverity.Error
+            });
+            return;
+        }
+
+        await ReplaceCoverAsync(book, bytes);
+    }
+
+    /// <summary>
+    ///     Lets the user choose a new cover: the image next to the book's files when there is one,
+    ///     otherwise (or on request) any image file.
+    /// </summary>
+    internal static async Task ChangeCoverAsync(AudiobookViewModel book)
+    {
+        var xamlRoot = GetXamlRoot();
+        if (xamlRoot == null) return;
+
+        await _dispatcherQueue.EnqueueAsync(async () =>
+        {
+            string? path = null;
+            var bookFolder = System.IO.Path.GetDirectoryName(book.CurrentSourceFile.FilePath);
+            if (Audibly.Core.Import.FolderCover.Find(bookFolder) is { } folderCover)
+            {
+                var ask = new ContentDialog
+                {
+                    Title = "Change cover",
+                    Content = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = $"Use \"{System.IO.Path.GetFileName(folderCover)}\" from the book's folder?",
+                                TextWrapping = TextWrapping.Wrap
+                            },
+                            new Image
+                            {
+                                Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(folderCover)),
+                                MaxHeight = 240,
+                                HorizontalAlignment = HorizontalAlignment.Left
+                            }
+                        }
+                    },
+                    PrimaryButtonText = "Use this image",
+                    SecondaryButtonText = "Choose another file…",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = xamlRoot,
+                    RequestedTheme = ThemeHelper.ActualTheme
+                };
+                var answer = await ask.ShowOneAtATimeAsync();
+                if (answer == ContentDialogResult.None) return;
+                if (answer == ContentDialogResult.Primary) path = folderCover;
+            }
+
+            if (path == null)
+            {
+                var picker = new Windows.Storage.Pickers.FileOpenPicker
+                {
+                    ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail,
+                    SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary
+                };
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.Window));
+                foreach (var extension in Audibly.Core.Import.FolderCover.ImageExtensions) picker.FileTypeFilter.Add(extension);
+                var file = await picker.PickSingleFileAsync();
+                if (file == null) return;
+                path = file.Path;
+            }
+
+            byte[] bytes;
+            try
+            {
+                bytes = await System.IO.File.ReadAllBytesAsync(path);
+            }
+            catch (Exception e)
+            {
+                ViewModel.LoggingService.LogError(e);
+                ViewModel.EnqueueNotification(new Notification
+                {
+                    Message = "The image could not be read. The book keeps its old cover.",
+                    Severity = InfoBarSeverity.Error
+                });
+                return;
+            }
+
+            await ReplaceCoverAsync(book, bytes);
+        });
+    }
+
+    private static async Task ReplaceCoverAsync(AudiobookViewModel book, byte[] bytes)
+    {
+        try
+        {
             var folder = $"cover-{book.Id:N}-{DateTime.UtcNow:yyyyMMddHHmmss}";
             var (cover, thumbnail) = await ViewModel.AppDataService.WriteCoverImageAsync(folder, bytes);
             if (string.IsNullOrEmpty(cover)) throw new InvalidOperationException("The cover could not be written.");
@@ -393,7 +495,7 @@ public static class DialogService
             ViewModel.LoggingService.LogError(e);
             ViewModel.EnqueueNotification(new Notification
             {
-                Message = "The cover could not be downloaded. The book keeps its old cover.",
+                Message = "The cover could not be saved. The book keeps its old cover.",
                 Severity = InfoBarSeverity.Error
             });
         }

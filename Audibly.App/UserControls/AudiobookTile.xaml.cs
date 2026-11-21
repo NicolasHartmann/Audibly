@@ -190,6 +190,16 @@ public sealed partial class AudiobookTile : UserControl
         await DialogService.ShowLookUpOnlineDialogAsync(audiobook);
     }
 
+    private async void ChangeCover_OnClick(object sender, RoutedEventArgs e)
+    {
+        var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
+        if (audiobook == null) return;
+
+        MenuFlyout.Hide();
+
+        await DialogService.ChangeCoverAsync(audiobook);
+    }
+
     private async void MarkAsCompleted_OnClick(object sender, RoutedEventArgs e)
     {
         var audiobook = ViewModel.Audiobooks.FirstOrDefault(a => a.Id == Id);
