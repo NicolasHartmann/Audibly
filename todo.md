@@ -28,7 +28,7 @@
     - [x] own self-signed certificate created (CN=NicolasHartmann, valid until 2036; kept outside the repo)
     - [x] signed MSIX built with tools/build-release.ps1; install steps in the README
     - [ ] upload as a GitHub release
-    - [ ] crash reports still go to the original author's Sentry: own DSN or switch off
+    - [x] crash reports: off (the Sentry DSN is empty in the repo, so fork builds send nothing; user chose to keep it off)
   - [ ] GitHub release: Android APK signed with an own release key (keep the key safe; switching from the debug key needs one reinstall)
     - [x] release key created and signed APK built
     - [ ] upload as a GitHub release
