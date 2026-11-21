@@ -1,6 +1,6 @@
 # FORK: PLANNED
 
-- [ ] Change a book's cover afterwards
+- [x] Change a book's cover afterwards
   - [x] pick an image file (or take `cover.jpg` / `folder.jpg` from the book's folder) (Windows: "Change cover…")
   - [x] search the cover online by title and author and choose one (Windows: "Look up online…")
   - [x] Windows and Android (Android: "Change cover" in the book's menu picks an image; no folder cover and no online search there yet)
