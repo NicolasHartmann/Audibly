@@ -227,6 +227,7 @@ public partial class LibraryPage : ContentPage
         }
     }
 
+    private const string ChangeCover = "Change cover";
     private const string RemoveOnly = "Remove from library";
     private const string RemoveAndDelete = "Remove and delete files from phone";
 
@@ -239,7 +240,13 @@ public partial class LibraryPage : ContentPage
         if ((sender as BindableObject)?.BindingContext is not BookItem item || _busy) return;
         try
         {
-            var choice = await DisplayActionSheetAsync(item.Title, "Cancel", null, RemoveOnly, RemoveAndDelete);
+            var choice = await DisplayActionSheetAsync(item.Title, "Cancel", null, ChangeCover, RemoveOnly, RemoveAndDelete);
+            if (choice == ChangeCover)
+            {
+                await ChangeCoverAsync(item);
+                return;
+            }
+
             if (choice is not (RemoveOnly or RemoveAndDelete)) return;
             var deleteFiles = choice == RemoveAndDelete;
 
@@ -285,6 +292,36 @@ public partial class LibraryPage : ContentPage
         catch (Exception exception)
         {
             ShowStatus("The audiobook could not be removed: " + exception.Message);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    /// <summary>Makes an image the user picks the book's cover.</summary>
+    private async Task ChangeCoverAsync(BookItem item)
+    {
+        var file = await FilePicker.Default.PickAsync(new PickOptions
+        {
+            PickerTitle = "Choose a cover",
+            FileTypes = FilePickerFileType.Images
+        });
+        if (file == null) return;
+
+        try
+        {
+            _busy = true;
+            await using var stream = await file.OpenReadAsync();
+            using var bytes = new MemoryStream();
+            await stream.CopyToAsync(bytes);
+            await _data.SetCoverAsync(item.Book.Id, bytes.ToArray(), item.Book.CoverImagePath);
+            ShowStatus($"The cover of \"{item.Title}\" was changed.");
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            ShowStatus("The cover could not be changed: " + exception.Message);
         }
         finally
         {

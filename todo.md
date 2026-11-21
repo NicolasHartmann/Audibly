@@ -3,7 +3,7 @@
 - [ ] Change a book's cover afterwards
   - [x] pick an image file (or take `cover.jpg` / `folder.jpg` from the book's folder) (Windows: "Change cover…")
   - [x] search the cover online by title and author and choose one (Windows: "Look up online…")
-  - [ ] Windows and Android
+  - [x] Windows and Android (Android: "Change cover" in the book's menu picks an image; no folder cover and no online search there yet)
 - [x] Windows: fill in a book's metadata from the internet (description, genres, series and part, narrator, release date)
   - [x] the genres become the starting point for tagging (next item)
   - [x] also change the book's title (never ticked by default)

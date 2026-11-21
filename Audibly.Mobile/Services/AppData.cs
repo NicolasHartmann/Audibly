@@ -70,6 +70,28 @@ public sealed class AppData
     });
 
     /// <summary>Removes a book with its files list and chapters from the library database.</summary>
+    /// <summary>
+    ///     Saves a new cover under a new name, so no cached copy of the old image is shown, and
+    ///     removes the old file.
+    /// </summary>
+    public Task SetCoverAsync(Guid id, byte[] image, string? oldCover) => Task.Run(async () =>
+    {
+        var folder = Path.Combine(FileSystem.AppDataDirectory, "covers");
+        Directory.CreateDirectory(folder);
+        var path = Path.Combine(folder, $"{id:N}-{DateTime.UtcNow:yyyyMMddHHmmss}.img");
+        await File.WriteAllBytesAsync(path, image);
+        await Repository.Audiobooks.SetCoverAsync(id, path, path);
+        if (!string.IsNullOrEmpty(oldCover) && oldCover != path)
+            try
+            {
+                File.Delete(oldCover);
+            }
+            catch (IOException)
+            {
+                // a leftover cover image only takes a little space
+            }
+    });
+
     public Task DeleteBookAsync(Guid id) => Task.Run(() => Repository.Audiobooks.DeleteAsync(id));
 
     /// <summary>One book with its files and chapters, for playing it.</summary>
