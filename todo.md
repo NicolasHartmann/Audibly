@@ -21,17 +21,24 @@
   - [x] compared by listening (2026-11-21): Sonic is clearly better, especially at the ends of words
 - [x] Windows: swap the buttons in the "Continue where you left off?" dialog
   - [x] the big blue (primary) button should be "Continue there", the plain one "Stay here"
+- [ ] Windows: import several audiobook folders at once
+  - [ ] pick several folders in one go; each becomes one book (or, for a library folder, each subfolder with audio files)
+  - [ ] a one-time import, not a watched library folder
+- [ ] Windows: a second progress display in the player
+  - [ ] when the progress of the whole book is shown, the progress of the chapter can be shown as well, and the other way round
+  - [ ] the second display has the same three modes: elapsed/total, time remaining, percent
+- [ ] Windows: PayPal link in Settings points to the fork author instead of rstewa (Audibly.App/Views/SettingsPage.xaml.cs, `paypal.me/rstewa35`)
 
 - [ ] Make the fork usable for others
   - [x] choose an own app name: "Audibly Fork" for now (package NicolasHartmann.AudiblyFork)
-  - [ ] GitHub release: Windows MSIX with its own identity (installs next to the Store app), signed with an own certificate, plus install instructions for the one-time certificate step
+  - [x] GitHub release: Windows MSIX with its own identity (installs next to the Store app), signed with an own certificate, plus install instructions for the one-time certificate step
     - [x] own self-signed certificate created (CN=NicolasHartmann, valid until 2036; kept outside the repo)
     - [x] signed MSIX built with tools/build-release.ps1; install steps in the README
-    - [ ] upload as a GitHub release
+    - [x] upload as a GitHub release
     - [x] crash reports: off (the Sentry DSN is empty in the repo, so fork builds send nothing; user chose to keep it off)
-  - [ ] GitHub release: Android APK signed with an own release key (keep the key safe; switching from the debug key needs one reinstall)
+  - [x] GitHub release: Android APK signed with an own release key (keep the key safe; switching from the debug key needs one reinstall)
     - [x] release key created and signed APK built
-    - [ ] upload as a GitHub release
+    - [x] upload as a GitHub release
   - [ ] later: own Microsoft Store listing (individual developer accounts are free; the Store signs the package)
   - [ ] keep the pull requests to rstewa/Audibly going
 

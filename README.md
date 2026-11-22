@@ -48,6 +48,9 @@ The package is signed with the fork's own certificate, which Windows does not kn
    Or in an administrator PowerShell: `Import-Certificate -FilePath .\AudiblyFork.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople`
 3. Double-click the `.msix` file and choose **Install**.
 
+If Windows says that `Microsoft.WindowsAppRuntime.1.7` is missing, install `Microsoft.WindowsAppRuntime.1.7-x64.msix`
+from the release first, then the app.
+
 Later versions install the same way, without the certificate step.
 
 ### Android 8 or newer
