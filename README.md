@@ -113,6 +113,10 @@ the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
   folder.jpg …) is offered first, or any image file; on Android any image.
 - **Windows: clearer voice at higher speeds.** Time stretching now uses Sonic, the speech method of Android's
   ExoPlayer; word endings are much clearer than with SoundTouch. Settings → Player → Speed processing switches back.
+- **Windows: back to earlier places.** The player remembers the last 5 places of each book (pauses and jumps of
+  more than a minute); a button in the player goes back to one of them.
+- **Windows: remove several books at once.** In selection mode the marked books can be removed from the library;
+  their files stay on disk.
 - **Windows: losing the audio output** (for example unplugging headphones) pauses the book at its position instead of
   closing it.
 - First signed releases as **Audibly Fork** (see [Install](#install)).
