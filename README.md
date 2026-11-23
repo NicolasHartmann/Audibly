@@ -114,6 +114,9 @@ the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
 - **Windows: book and chapter progress at the same time.** Under the progress bar a small line shows the other one
   (the book under a chapter bar, the chapter under a book bar); clicking it switches between total, time remaining
   and percent. It is hidden for books without chapters.
+- **Windows: chapters in Read Along.** A chapter list from the ebook's table of contents (or one entry per ebook file
+  when it has none); choosing a chapter moves the text and the audiobook there. A line shows how far you have read in
+  the book and in the chapter.
 
 ### 20–21 November 2026
 

@@ -37,6 +37,9 @@ public sealed partial class ReadAlongPanel : UserControl
     private string? _lastDiagnosticPath;
     private string? _lastErrorContext;
     private ScrollViewer? _scroll;
+    private System.Collections.Generic.IReadOnlyList<ReadingChapter> _chapters = [];
+    private bool _settingChapter;
+    private int _lastTop = -1;
     private static string EngineFolder => Path.Combine(AppContext.BaseDirectory, "read-along");
     private AudiobookViewModel? Book => App.PlayerViewModel.NowPlaying;
     public ReadAlongPanel()
@@ -53,7 +56,11 @@ public sealed partial class ReadAlongPanel : UserControl
     {
         App.PlayerViewModel.PropertyChanged += PlayerChanged;
         _scroll = FindChild<ScrollViewer>(Passages);
-        if (_scroll is not null) _scroll.DirectManipulationStarted += Scroll_ManipulationStarted;
+        if (_scroll is not null)
+        {
+            _scroll.DirectManipulationStarted += Scroll_ManipulationStarted;
+            _scroll.ViewChanged += Scroll_ViewChanged;
+        }
         CompositionTarget.Rendering += OnFrame;
         _timer.Start(); await LoadBookAsync();
     }
@@ -63,7 +70,11 @@ public sealed partial class ReadAlongPanel : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         App.PlayerViewModel.PropertyChanged -= PlayerChanged;
-        if (_scroll is not null) _scroll.DirectManipulationStarted -= Scroll_ManipulationStarted;
+        if (_scroll is not null)
+        {
+            _scroll.DirectManipulationStarted -= Scroll_ManipulationStarted;
+            _scroll.ViewChanged -= Scroll_ViewChanged;
+        }
         CompositionTarget.Rendering -= OnFrame;
         _timer.Stop(); _operation?.Cancel();
     }
@@ -140,7 +151,7 @@ public sealed partial class ReadAlongPanel : UserControl
         var operation = _operation = new CancellationTokenSource(); var token = operation.Token;
         _book = Book?.Id; _map = null; _association = null; _lastPassage = null; _lastCue = null;
         ClearFailure();
-        Passages.ItemsSource = null; SetBusy(false); _follow = true;
+        Passages.ItemsSource = null; ShowChapters([]); SetBusy(false); _follow = true;
         if (Book is not { } book) { StatusText.Text = "Open an audiobook first."; return; }
         try
         {
@@ -159,12 +170,14 @@ public sealed partial class ReadAlongPanel : UserControl
                     var saved = await _store.LoadMapAsync(book.Id, association, sources, token);
                     return saved is null ? null : await ReadingLayout.CreateAsync(saved, token);
                 }, token);
+            var chapters = map is null ? [] : await ReadingChapters.CreateAsync(map, token);
             token.ThrowIfCancellationRequested();
             if (_operation != operation) return;
             _association = association; _map = map;
             App.PlayerViewModel.ReadAlongDocument = map;
             UpdateSetup();
             Passages.ItemsSource = map?.Passages;
+            ShowChapters(chapters);
             StatusText.Text = map is not null ? "Ready · published EPUB text · click an aligned word to seek"
                 : association.Error?.Contains("only supports EPUB 3", StringComparison.Ordinal) == true
                     ? "Your ebook uses EPUB 2. This version can convert a working copy automatically. Choose Prepare Read Along to retry."
@@ -233,10 +246,12 @@ public sealed partial class ReadAlongPanel : UserControl
                 var saved = await _store.LoadMapAsync(book.Id, updated, sources, token);
                 return saved is null ? null : await ReadingLayout.CreateAsync(saved, token);
             }, token);
+            var chapters = map is null ? [] : await ReadingChapters.CreateAsync(map, token);
             token.ThrowIfCancellationRequested();
             await _store.SaveAsync(book.Id, updated, token);
             if (_operation != operation || Book?.Id != book.Id) return;
             _association = updated; _map = map; Passages.ItemsSource = map?.Passages;
+            ShowChapters(chapters);
             App.PlayerViewModel.ReadAlongDocument = map;
             _follow = true; _lastPassage = null; _lastCue = null;
             StatusText.Text = "Ready · reliable word timing · gaps remain unhighlighted";
@@ -256,6 +271,51 @@ public sealed partial class ReadAlongPanel : UserControl
         finally { if (_operation == operation) SetBusy(false); }
     }
     private void Cancel_Click(object sender, RoutedEventArgs e) => _operation?.Cancel();
+    private void ShowChapters(System.Collections.Generic.IReadOnlyList<ReadingChapter> chapters)
+    {
+        _chapters = chapters; _lastTop = -1;
+        _settingChapter = true;
+        // nested table of contents entries are indented with em spaces
+        ChapterChoice.ItemsSource = chapters.Select(c => new string(' ', c.Depth) + c.Title).ToList();
+        ChapterChoice.SelectedIndex = -1;
+        _settingChapter = false;
+        ChapterChoice.Visibility = chapters.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ReadingPanel.Visibility = _map is null ? Visibility.Collapsed : Visibility.Visible;
+        ReadingProgressText.Text = "";
+        UpdateReadingProgress();
+    }
+    private async void ChapterChoice_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var index = ChapterChoice.SelectedIndex;
+        if (_settingChapter || _map is not { } map || index < 0 || index >= _chapters.Count) return;
+        StopFollowing();
+        var first = Math.Clamp(_chapters[index].FirstPassage, 0, map.Passages.Count - 1);
+        Passages.ScrollIntoView(map.Passages[first], ScrollIntoViewAlignment.Leading);
+        if (ReadingChapters.FirstCueIndex(map.Passages, _chapters, index) is not { } narrated)
+        {
+            ModeLabel.Text = "No narration found for this chapter · the audiobook stays where it is";
+            return;
+        }
+        var cue = map.Passages[narrated].Cues[0];
+        try { await App.PlayerViewModel.SeekReadAlongAsync(cue.SourceIndex, cue.StartSeconds); }
+        catch (Exception ex) { await Services.DialogService.ShowErrorDialogAsync("Unable to seek", ex.Message); }
+    }
+    private void Scroll_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e) => UpdateReadingProgress();
+    private void UpdateReadingProgress()
+    {
+        if (_map is not { Passages.Count: > 0 } map) return;
+        var top = Math.Max(0, (Passages.ItemsPanelRoot as ItemsStackPanel)?.FirstVisibleIndex ?? 0);
+        if (top == _lastTop) return;
+        _lastTop = top;
+        var position = ReadingChapters.Locate(map.Passages, _chapters, top);
+        var book = $"Book {Math.Floor(position.BookFraction * 100):0} %";
+        ReadingProgressText.Text = _chapters.Count == 0 ? book
+            : $"{book} · Chapter {position.Chapter + 1}/{_chapters.Count} · {Math.Floor(position.ChapterFraction * 100):0} %";
+        if (_chapters.Count == 0 || ChapterChoice.SelectedIndex == position.Chapter) return;
+        _settingChapter = true;
+        ChapterChoice.SelectedIndex = position.Chapter;
+        _settingChapter = false;
+    }
     private void Follow_Click(object sender, RoutedEventArgs e)
     {
         _follow = true; _lastPassage = null;

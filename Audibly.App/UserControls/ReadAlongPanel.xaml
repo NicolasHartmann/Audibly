@@ -6,7 +6,7 @@
     <Border Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" CornerRadius="8" Padding="12">
         <Grid RowSpacing="8">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button x:Name="GenerateButton" Content="Choose EPUB and prepare" Style="{StaticResource AccentButtonStyle}" Click="Generate_Click"/>
@@ -41,7 +41,14 @@
                 <Button x:Name="CopyErrorButton" Content="Copy error details" Click="CopyError_Click" Visibility="Collapsed"/>
                 <TextBlock x:Name="ModeLabel" Text="Word highlighting when reliably aligned" TextWrapping="Wrap"/>
             </StackPanel>
-            <ListView Grid.Row="4" x:Name="Passages" SelectionMode="None" IsItemClickEnabled="False"
+            <!-- Choosing a chapter moves the text and the audiobook there; the line shows where the reader is. -->
+            <StackPanel Grid.Row="4" x:Name="ReadingPanel" Orientation="Horizontal" Spacing="12" Visibility="Collapsed">
+                <ComboBox x:Name="ChapterChoice" PlaceholderText="Chapter" MinWidth="240" MaxWidth="420"
+                    AutomationProperties.Name="Chapter" SelectionChanged="ChapterChoice_SelectionChanged"/>
+                <TextBlock x:Name="ReadingProgressText" VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+            <ListView Grid.Row="5" x:Name="Passages" SelectionMode="None" IsItemClickEnabled="False"
                 Padding="0,8" BorderThickness="0" Background="Transparent"
                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollMode="Disabled"
                 ScrollViewer.VerticalScrollMode="Enabled" ScrollViewer.VerticalScrollBarVisibility="Auto"

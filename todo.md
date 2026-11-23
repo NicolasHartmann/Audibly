@@ -29,9 +29,10 @@
   - [x] when the progress of the whole book is shown, the progress of the chapter can be shown as well, and the other way round
   - [x] the second display has the same three modes: elapsed/total, time remaining, percent
   - [ ] test in the app (both scopes, click cycles, restart keeps the mode, book without chapters hides it)
-- [ ] Windows: ebook reader (read-along): chapter selection and progress
-  - [ ] pick a chapter in the reader and jump there
-  - [ ] show progress of the whole book and of the current chapter
+- [x] Windows: ebook reader (read-along): chapter selection and progress
+  - [x] pick a chapter in the reader and jump there (text and audiobook)
+  - [x] show progress of the whole book and of the current chapter
+  - [ ] test in the app with a prepared read-along book
 - [x] Windows: PayPal link in Settings points to the fork author instead of rstewa (Audibly.App/Views/SettingsPage.xaml.cs, `paypal.me/rstewa35`)
 
 - [ ] Make the fork usable for others
