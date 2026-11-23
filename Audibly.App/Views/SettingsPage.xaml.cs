@@ -212,7 +212,7 @@ public sealed partial class SettingsPage : Page
 
     private async void donateCard_Click(object sender, RoutedEventArgs e)
     {
-        await Launcher.LaunchUriAsync(new Uri("https://paypal.me/rstewa35"));
+        await Launcher.LaunchUriAsync(new Uri("https://paypal.me/hartmannn"));
     }
 
     private async void libationCard_Click(object sender, RoutedEventArgs e)

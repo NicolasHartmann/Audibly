@@ -30,7 +30,7 @@
 - [ ] Windows: ebook reader (read-along): chapter selection and progress
   - [ ] pick a chapter in the reader and jump there
   - [ ] show progress of the whole book and of the current chapter
-- [ ] Windows: PayPal link in Settings points to the fork author instead of rstewa (Audibly.App/Views/SettingsPage.xaml.cs, `paypal.me/rstewa35`)
+- [x] Windows: PayPal link in Settings points to the fork author instead of rstewa (Audibly.App/Views/SettingsPage.xaml.cs, `paypal.me/rstewa35`)
 
 - [ ] Make the fork usable for others
   - [x] choose an own app name: "Audibly Fork" for now (package NicolasHartmann.AudiblyFork)
