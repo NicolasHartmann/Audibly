@@ -25,9 +25,10 @@
   - [x] pick several folders in one go; each becomes one book (or, for a library folder, each subfolder with audio files)
   - [x] a one-time import, not a watched library folder
   - [ ] test in the app (dialog, two folders, folder + its subfolder)
-- [ ] Windows: a second progress display in the player
-  - [ ] when the progress of the whole book is shown, the progress of the chapter can be shown as well, and the other way round
-  - [ ] the second display has the same three modes: elapsed/total, time remaining, percent
+- [x] Windows: a second progress display in the player
+  - [x] when the progress of the whole book is shown, the progress of the chapter can be shown as well, and the other way round
+  - [x] the second display has the same three modes: elapsed/total, time remaining, percent
+  - [ ] test in the app (both scopes, click cycles, restart keeps the mode, book without chapters hides it)
 - [ ] Windows: ebook reader (read-along): chapter selection and progress
   - [ ] pick a chapter in the reader and jump there
   - [ ] show progress of the whole book and of the current chapter

@@ -89,6 +89,39 @@ public class PlayerProgressTests
     }
 
     [Fact]
+    public void OtherScopeSwaps()
+    {
+        Assert.Equal(PlayerProgressScope.Book, PlayerProgress.Other(PlayerProgressScope.Chapter));
+        Assert.Equal(PlayerProgressScope.Chapter, PlayerProgress.Other(PlayerProgressScope.Book));
+    }
+
+    [Fact]
+    public void SecondLineElapsedAndTotal() =>
+        Assert.Equal("Book  4:00:00 · 10:00:00",
+            PlayerProgress.SecondLine(PlayerProgressScope.Book, PlayerTimeDisplay.ElapsedAndTotal, 10 * HourMs,
+                4 * HourMs, 2));
+
+    [Fact]
+    public void SecondLineRemainingUsesSpeed() =>
+        Assert.Equal("Book  4:00:00 · 3:00:00 left",
+            PlayerProgress.SecondLine(PlayerProgressScope.Book, PlayerTimeDisplay.Remaining, 10 * HourMs,
+                4 * HourMs, 2));
+
+    [Fact]
+    public void SecondLinePercent() =>
+        Assert.Equal("Chapter  50 %",
+            PlayerProgress.SecondLine(PlayerProgressScope.Chapter, PlayerTimeDisplay.Percent, HourMs, HourMs / 2, 1));
+
+    [Theory]
+    [InlineData(10 * HourMs, HourMs, true)]
+    [InlineData(10 * HourMs, 10 * HourMs, false)] // one file, no chapters: chapter = whole book
+    [InlineData(10 * HourMs, 10 * HourMs - 500, false)] // rounding differences do not count
+    [InlineData(0, 0, false)]
+    [InlineData(double.NaN, HourMs, false)]
+    public void SecondLineOnlyWhenChapterIsShorterThanBook(double bookMs, double chapterMs, bool expected) =>
+        Assert.Equal(expected, PlayerProgress.ShowSecondLine(bookMs, chapterMs));
+
+    [Fact]
     public void ParseReadsStoredNumbersAndFallsBack()
     {
         Assert.Equal(PlayerProgressScope.Book, PlayerProgress.Parse(1, PlayerProgressScope.Chapter));

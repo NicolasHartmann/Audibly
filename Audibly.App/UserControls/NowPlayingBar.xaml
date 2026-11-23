@@ -24,6 +24,10 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
         <TextBlock
             FontSize="20"
@@ -66,6 +70,31 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="{x:Bind PlayerViewModel.ProgressEndText, Mode=OneWay}"
                 x:Name="RemainingTimeTextBlock" />
+        </Button>
+
+        <!--  The scope the bar does not show (book under a chapter bar and the other way round).  -->
+        <!--  Tapping it switches between total, time remaining and percent, independent of the bar.  -->
+        <Button
+            AutomationProperties.AutomationId="SecondProgressButton"
+            AutomationProperties.Name="Switch second progress display"
+            Background="Transparent"
+            BorderThickness="0"
+            Click="SecondProgress_OnClick"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Grid.Row="1"
+            HorizontalAlignment="Center"
+            MinHeight="0"
+            MinWidth="0"
+            Padding="0"
+            ToolTipService.ToolTip="Click to switch between total, time remaining and percent"
+            Visibility="{x:Bind PlayerViewModel.ShowSecondProgress, Mode=OneWay}">
+            <TextBlock
+                AutomationProperties.AutomationId="SecondProgressText"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind PlayerViewModel.SecondProgressText, Mode=OneWay}" />
         </Button>
 
     </Grid>

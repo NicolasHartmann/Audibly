@@ -56,6 +56,34 @@ public static class PlayerProgress
         _ => PlayerTimeDisplay.ElapsedAndTotal
     };
 
+    public static PlayerProgressScope Other(PlayerProgressScope scope) =>
+        scope == PlayerProgressScope.Book ? PlayerProgressScope.Chapter : PlayerProgressScope.Book;
+
+    /// <summary>
+    ///     The small line under the progress bar for the scope the bar does not show, e.g.
+    ///     "Book  4:00:00 · 10:00:00", "Book  4:00:00 · 3:00:00 left" or "Chapter  50 %".
+    /// </summary>
+    public static string SecondLine(PlayerProgressScope scope, PlayerTimeDisplay display, double durationMs,
+        double positionMs, double speed)
+    {
+        var label = scope == PlayerProgressScope.Book ? "Book" : "Chapter";
+        return display switch
+        {
+            PlayerTimeDisplay.Percent => $"{label}  {End(display, durationMs, positionMs, speed)}",
+            PlayerTimeDisplay.Remaining =>
+                $"{label}  {Elapsed(positionMs)} · {PlaybackTimeRemaining.Format(durationMs, positionMs, speed)} left",
+            _ => $"{label}  {Elapsed(positionMs)} · {End(display, durationMs, positionMs, speed)}"
+        };
+    }
+
+    /// <summary>
+    ///     The second line only helps when the chapter is shorter than the book; a book of one file without
+    ///     chapters would show the same twice. Differences under a second are rounding.
+    /// </summary>
+    public static bool ShowSecondLine(double bookDurationMs, double chapterDurationMs) =>
+        double.IsFinite(bookDurationMs) && double.IsFinite(chapterDurationMs) && bookDurationMs > 0 &&
+        chapterDurationMs < bookDurationMs - 1000;
+
     /// <summary>Position in the whole book for a position in one of its files.</summary>
     public static double BookPositionMs(IEnumerable<double> sourceDurationsSeconds, int currentSourceIndex,
         double currentPositionMs) =>

@@ -247,33 +247,78 @@ public class PlayerViewModel : BindableBase, IDisposable
 
     public void CycleTimeDisplay() => TimeDisplay = PlayerProgress.Next(TimeDisplay);
 
-    private bool ProgressCoversBook => ProgressScope == PlayerProgressScope.Book && NowPlaying is
-        { SourcePaths.Count: > 0, Duration: > 0 };
+    private PlayerTimeDisplay _secondTimeDisplay = UserSettings.PlayerSecondTimeDisplay;
 
     /// <summary>
-    ///     Length of what the progress bar covers, in audio milliseconds.
+    ///     What the small second line under the progress bar shows: total, time remaining or percent.
     /// </summary>
-    public double ProgressMaximumMs => ProgressCoversBook ? NowPlaying!.Duration * 1000.0 : ChapterDurationMs;
+    public PlayerTimeDisplay SecondTimeDisplay
+    {
+        get => _secondTimeDisplay;
+        set
+        {
+            if (_secondTimeDisplay == value) return;
+            _secondTimeDisplay = value;
+            UserSettings.PlayerSecondTimeDisplay = value;
+            OnPropertyChanged();
+            NotifyProgressChanged();
+        }
+    }
 
-    /// <summary>
-    ///     Position in what the progress bar covers, in audio milliseconds.
-    /// </summary>
-    public double ProgressValueMs
+    public void CycleSecondTimeDisplay() => SecondTimeDisplay = PlayerProgress.Next(SecondTimeDisplay);
+
+    private bool HasBookProgress => NowPlaying is { SourcePaths.Count: > 0, Duration: > 0 };
+
+    private bool ProgressCoversBook => ProgressScope == PlayerProgressScope.Book && HasBookProgress;
+
+    private double BookDurationMs => NowPlaying!.Duration * 1000.0;
+
+    private double BookPositionMs
     {
         get
         {
-            if (!ProgressCoversBook) return ChapterPositionMs;
             var book = NowPlaying!;
-            return Math.Min(ProgressMaximumMs, PlayerProgress.BookPositionMs(
+            return Math.Min(BookDurationMs, PlayerProgress.BookPositionMs(
                 book.SourcePaths.Select(file => (double)file.Duration), book.CurrentSourceFileIndex,
                 book.CurrentTimeMs));
         }
     }
 
+    /// <summary>
+    ///     Length of what the progress bar covers, in audio milliseconds.
+    /// </summary>
+    public double ProgressMaximumMs => ProgressCoversBook ? BookDurationMs : ChapterDurationMs;
+
+    /// <summary>
+    ///     Position in what the progress bar covers, in audio milliseconds.
+    /// </summary>
+    public double ProgressValueMs => ProgressCoversBook ? BookPositionMs : ChapterPositionMs;
+
     public string ProgressElapsedText => PlayerProgress.Elapsed(ProgressValueMs);
 
     public string ProgressEndText =>
         PlayerProgress.End(TimeDisplay, ProgressMaximumMs, ProgressValueMs, PlaybackSpeed);
+
+    /// <summary>
+    ///     Whether the second line is worth showing: only when the chapter is shorter than the book.
+    /// </summary>
+    public bool ShowSecondProgress => HasBookProgress && PlayerProgress.ShowSecondLine(BookDurationMs, ChapterDurationMs);
+
+    /// <summary>
+    ///     The scope the bar does not cover: the book under a chapter bar, the chapter under a book bar.
+    /// </summary>
+    public string SecondProgressText
+    {
+        get
+        {
+            if (!ShowSecondProgress) return string.Empty;
+            var scope = PlayerProgress.Other(ProgressScope);
+            return scope == PlayerProgressScope.Book
+                ? PlayerProgress.SecondLine(scope, SecondTimeDisplay, BookDurationMs, BookPositionMs, PlaybackSpeed)
+                : PlayerProgress.SecondLine(scope, SecondTimeDisplay, ChapterDurationMs, ChapterPositionMs,
+                    PlaybackSpeed);
+        }
+    }
 
     private void NotifyProgressChanged()
     {
@@ -282,6 +327,8 @@ public class PlayerViewModel : BindableBase, IDisposable
         OnPropertyChanged(nameof(ProgressValueMs));
         OnPropertyChanged(nameof(ProgressElapsedText));
         OnPropertyChanged(nameof(ProgressEndText));
+        OnPropertyChanged(nameof(ShowSecondProgress));
+        OnPropertyChanged(nameof(SecondProgressText));
     }
 
     #endregion

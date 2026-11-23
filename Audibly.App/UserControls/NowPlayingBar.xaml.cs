@@ -37,6 +37,11 @@ public sealed partial class NowPlayingBar : UserControl
         PlayerViewModel.CycleTimeDisplay();
     }
 
+    private void SecondProgress_OnClick(object sender, RoutedEventArgs e)
+    {
+        PlayerViewModel.CycleSecondTimeDisplay();
+    }
+
     private void Slider_OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         _isPointerInteracting = true;

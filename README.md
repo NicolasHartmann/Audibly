@@ -111,6 +111,9 @@ the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
 - **Windows: import several folders at once.** The folder dialog allows picking several folders; a picked folder
   with audio files in it becomes one book, its subfolders with audio files become books of their own. A book found
   twice (a folder and one of its subfolders both picked) is imported once.
+- **Windows: book and chapter progress at the same time.** Under the progress bar a small line shows the other one
+  (the book under a chapter bar, the chapter under a book bar); clicking it switches between total, time remaining
+  and percent. It is hidden for books without chapters.
 
 ### 20–21 November 2026
 

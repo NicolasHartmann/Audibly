@@ -240,6 +240,15 @@ public static class UserSettings
     }
 
     /// <summary>
+    ///     What the small second progress line (book or chapter, whichever the bar does not show) displays.
+    /// </summary>
+    public static PlayerTimeDisplay PlayerSecondTimeDisplay
+    {
+        get => ReadEnum("PlayerSecondTimeDisplay", PlayerTimeDisplay.Remaining);
+        set => ApplicationData.Current.LocalSettings.Values["PlayerSecondTimeDisplay"] = (int)value;
+    }
+
+    /// <summary>
     ///     The folder a cloud service keeps in sync between the listener's devices; null when sync is off.
     /// </summary>
     public static string? SyncFolderPath
