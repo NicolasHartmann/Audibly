@@ -229,6 +229,20 @@ public sealed class AudiobookImporterTests : IDisposable
     }
 
     [Fact]
+    public void ScanDirectoriesKeepsLooseM4bBooksApart()
+    {
+        // a folder of single-file books, as many libraries are kept
+        var first = CreateFile("Library/First.m4b");
+        var second = CreateFile("Library/Second.M4B");
+
+        var books = AudiobookImporter.ScanDirectories([Path.Combine(_folder, "Library")], CancellationToken.None);
+
+        Assert.Equal(2, books.Count);
+        Assert.Contains(books, book => book.SequenceEqual([first]));
+        Assert.Contains(books, book => book.SequenceEqual([second]));
+    }
+
+    [Fact]
     public void ScanDirectoriesSkipsBooksFoundTwice()
     {
         var bookA = CreateFile("library/BookA/1.mp3");

@@ -122,7 +122,8 @@ public static class AudiobookImporter
     }
 
     /// <summary>
-    ///     Scans several picked folders. A picked folder that holds audio files itself is one book;
+    ///     Scans several picked folders. A picked folder that holds audio files itself is one book
+    ///     (unless one of them is an .m4b: then each file is a book, as in a library folder);
     ///     its subfolders with audio files are books as in <see cref="ScanDirectory" />. A book whose
     ///     files were already found through another picked folder is left out.
     /// </summary>
@@ -135,9 +136,12 @@ public static class AudiobookImporter
         {
             var root = Path.GetFullPath(path);
             var found = ScanDirectory(root, cancellationToken);
-            // loose files of the picked folder come first, one file per book: join them
+            // loose files of the picked folder come first, one file per book: join them as the parts of
+            // one book, unless one is an .m4b, which is a whole book of its own
             var loose = found.Where(book => SameFolder(Path.GetDirectoryName(book[0])!, root)).ToList();
-            var picked = loose.Count > 1 ? [loose.SelectMany(book => book).ToList(), ..found.Except(loose)] : found;
+            var parts = loose.Count > 1 && !loose.Any(book =>
+                string.Equals(Path.GetExtension(book[0]), ".m4b", StringComparison.OrdinalIgnoreCase));
+            var picked = parts ? [loose.SelectMany(book => book).ToList(), ..found.Except(loose)] : found;
             foreach (var book in picked)
             {
                 if (book.Any(taken.Contains)) continue;
