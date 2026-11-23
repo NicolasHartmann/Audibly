@@ -280,6 +280,70 @@ if (args.Length > 0)
         catch (OperationCanceledException) { Check(!Directory.EnumerateFiles(cache, "*.job.json").Any(), "cancelled job cleans up request"); }
     }
 }
+// --- chapters from the EPUB table of contents ---
+string ChapterEpub(string? nav, string? ncx)
+{
+    var path = Path.Combine(Path.GetTempPath(), "audibly-chapters-" + Guid.NewGuid().ToString("N") + ".epub");
+    using var zip = System.IO.Compression.ZipFile.Open(path, System.IO.Compression.ZipArchiveMode.Create);
+    void Put(string name, string text)
+    {
+        using var writer = new StreamWriter(zip.CreateEntry(name).Open());
+        writer.Write(text);
+    }
+    Put("META-INF/container.xml", """<?xml version="1.0"?><container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>""");
+    var navItem = nav is null ? "" : """<item id="nav" href="nav/nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>""";
+    var ncxItem = ncx is null ? "" : """<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>""";
+    var spineToc = ncx is null ? "" : " toc=\"ncx\"";
+    Put("OEBPS/content.opf", $"""<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>{navItem}{ncxItem}<item id="c1" href="text/Chapter%201.xhtml" media-type="application/xhtml+xml"/><item id="c2" href="text/ch2.xhtml" media-type="application/xhtml+xml"/></manifest><spine{spineToc}><itemref idref="c1"/><itemref idref="c2"/></spine></package>""");
+    Put("OEBPS/text/Chapter 1.xhtml", """<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter One</h1><p>Alpha text one.</p><p>Beta text two.</p></body></html>""");
+    Put("OEBPS/text/ch2.xhtml", """<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter Two</h1><p>Gamma three.</p><p id="sec">Delta four.</p><p>Epsilon five.</p></body></html>""");
+    if (nav is not null) Put("OEBPS/nav/nav.xhtml", nav);
+    if (ncx is not null) Put("OEBPS/toc.ncx", ncx);
+    return path;
+}
+AlignmentMap ChapterMap(string epub)
+{
+    Passage P(string href, string text) => new() { Href = href, Text = text };
+    var passages = new List<Passage>
+    {
+        P("text/Chapter 1.xhtml", "Chapter One"), P("text/Chapter 1.xhtml", "Alpha text one."), P("text/Chapter 1.xhtml", "Beta text two."),
+        P("text/ch2.xhtml", "Chapter Two"), P("text/ch2.xhtml", "Gamma three."), P("text/ch2.xhtml", "Delta four."), P("text/ch2.xhtml", "Epsilon five.")
+    };
+    passages[4].Cues.Add(new Cue { Id = "g", SourceIndex = 1, StartSeconds = 42 });
+    return new AlignmentMap { Epub = new Fingerprint(epub, 0, "x"), Passages = passages };
+}
+const string Nav = """<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body><nav epub:type="landmarks"><ol><li><a href="../text/ch2.xhtml">Landmark</a></li></ol></nav><nav epub:type="toc"><ol><li><a href="../text/Chapter%201.xhtml">Chapter One</a></li><li><a href="../text/ch2.xhtml"> Chapter""" + "\n" + """ Two </a><ol><li><a href="../text/ch2.xhtml#sec">Part 2.1</a></li></ol></li><li><a href="../text/ch2.xhtml#nowhere">Again</a></li><li><a href="../text/missing.xhtml">Gone</a></li></ol></nav></body></html>""";
+const string Ncx = """<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><navMap><navPoint id="a"><navLabel><text>Chapter One</text></navLabel><content src="text/Chapter%201.xhtml"/></navPoint><navPoint id="b"><navLabel><text>Chapter Two</text></navLabel><content src="text/ch2.xhtml"/><navPoint id="c"><navLabel><text>Part 2.1</text></navLabel><content src="text/ch2.xhtml#sec"/></navPoint></navPoint></navMap></ncx>""";
+string Describe(IReadOnlyList<ReadingChapter> list) => string.Join("|", list.Select(c => $"{c.Title}/{c.Depth}/{c.FirstPassage}"));
+var tocBook = ChapterMap(ChapterEpub(Nav, null));
+var tocChapters = await ReadingChapters.CreateAsync(tocBook);
+Check(Describe(tocChapters) == "Chapter One/0/0|Chapter Two/0/3|Part 2.1/1/5",
+    "toc titles in order, nested depth, encoded hrefs relative to the nav file: " + Describe(tocChapters));
+Check(tocChapters[2].FirstPassage == 5, "fragment starts mid-file at the passage holding it");
+Check(tocChapters.All(c => c.Title != "Gone" && c.Title != "Again" && c.Title != "Landmark"),
+    "unmatched entries, duplicates and landmarks dropped");
+var ncxChapters = await ReadingChapters.CreateAsync(ChapterMap(ChapterEpub(null, Ncx)));
+Check(Describe(ncxChapters) == "Chapter One/0/0|Chapter Two/0/3|Part 2.1/1/5", "epub2 ncx: " + Describe(ncxChapters));
+var fileChapters = await ReadingChapters.CreateAsync(ChapterMap(ChapterEpub(null, null)));
+Check(Describe(fileChapters) == "Chapter One/0/0|Chapter Two/0/3", "file fallback without a toc: " + Describe(fileChapters));
+var brokenChapters = await ReadingChapters.CreateAsync(ChapterMap(Path.Combine(Path.GetTempPath(), "missing-" + Guid.NewGuid() + ".epub")));
+Check(Describe(brokenChapters) == "Chapter One/0/0|Chapter Two/0/3", "missing EPUB file falls back to file chapters");
+
+var sized = new List<Passage> { new() { Text = new string('a', 100) }, new() { Text = new string('b', 100) },
+    new() { Text = new string('c', 200) }, new() { Text = new string('d', 100) } };
+var sizedChapters = new List<ReadingChapter> { new("A", 0, 0), new("B", 0, 2) };
+var at2 = ReadingChapters.Locate(sized, sizedChapters, 2);
+Check(at2.Chapter == 1 && Math.Abs(at2.BookFraction - 0.4) < 1e-9 && at2.ChapterFraction == 0, "locate at a chapter start");
+var at3 = ReadingChapters.Locate(sized, sizedChapters, 3);
+Check(at3.Chapter == 1 && Math.Abs(at3.ChapterFraction - 2.0 / 3) < 1e-9, "locate inside a chapter");
+var noChapters = ReadingChapters.Locate(sized, [], 2);
+Check(noChapters.Chapter == 0 && Math.Abs(noChapters.ChapterFraction - 0.4) < 1e-9, "locate without chapters uses the book");
+var outside = ReadingChapters.Locate(sized, sizedChapters, 99);
+Check(outside.Chapter == 1 && outside.BookFraction <= 1 && outside.ChapterFraction <= 1, "locate clamps past the end");
+Check(ReadingChapters.FirstCueIndex(tocBook.Passages, tocChapters, 1) == 4, "first cue of a chapter");
+Check(ReadingChapters.FirstCueIndex(tocBook.Passages, tocChapters, 0) is null, "chapter without narration has no cue");
+Check(ReadingChapters.FirstCueIndex(tocBook.Passages, tocChapters, 2) is null, "a cue before the chapter start does not count");
+
 Console.WriteLine($"{checks} checks passed");
 
 sealed class ImmediateProgress(Action<string> report) : IProgress<string>
