@@ -1253,19 +1253,9 @@ public class MainViewModel : BindableBase
 
     public async void ImportAudiobooksFromDirectoryAsync()
     {
-        var openPicker = new FolderPicker();
-        var window = App.Window;
-        var hWnd = WindowNative.GetWindowHandle(window);
-        InitializeWithWindow.Initialize(openPicker, hWnd);
-        openPicker.SuggestedStartLocation = PickerLocationId.Desktop;
-        openPicker.ViewMode = PickerViewMode.Thumbnail;
-        openPicker.FileTypeFilter.Add("*");
-
-        var folder = await openPicker.PickSingleFolderAsync();
-        if (folder != null)
-            StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
-        else
-            return;
+        // several folders at once; each one is imported like a single picked folder
+        var folders = FolderDialog.PickFolders(WindowNative.GetWindowHandle(App.Window));
+        if (folders.Count == 0) return;
 
         // todo: idk if i want the loading progress bar to be shown or not
         await _dispatcherQueue.EnqueueAsync(() => IsLoading = true);
@@ -1273,7 +1263,8 @@ public class MainViewModel : BindableBase
         _cancellationTokenSource = new CancellationTokenSource();
         var token = _cancellationTokenSource.Token;
 
-        UpdateProgressDialogProperties(progressDialogPrefix: "Scanning folder…");
+        UpdateProgressDialogProperties(
+            progressDialogPrefix: folders.Count > 1 ? "Scanning folders…" : "Scanning folder…");
 
         int imported = 0, skipped = 0, failed = 0;
         var completed = false;
@@ -1307,7 +1298,7 @@ public class MainViewModel : BindableBase
                 });
             }
 
-            await FileImporter.ImportDirectoryAsync(folder.Path, token, ProgressCallback);
+            await FileImporter.ImportDirectoriesAsync(folders, token, ProgressCallback);
             completed = true;
         }
         catch (OperationCanceledException)
@@ -1342,7 +1333,9 @@ public class MainViewModel : BindableBase
             EnqueueNotification(new Notification
             {
                 Message = processed == 0
-                    ? "No supported audio files found in this folder."
+                    ? folders.Count > 1
+                        ? "No supported audio files found in these folders."
+                        : "No supported audio files found in this folder."
                     : $"{imported} imported, {skipped} already in the library, {failed} failed.",
                 Severity = failed > 0 ? InfoBarSeverity.Warning
                     : imported > 0 ? InfoBarSeverity.Success : InfoBarSeverity.Informational

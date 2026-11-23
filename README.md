@@ -106,6 +106,12 @@ different key, and Android does not install it over the old one.
 Changes in this fork compared with the original Audibly 2.2.10 (released 8 July 2026), newest first. The changes of
 the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
 
+### 23 November 2026
+
+- **Windows: import several folders at once.** The folder dialog allows picking several folders; a picked folder
+  with audio files in it becomes one book, its subfolders with audio files become books of their own. A book found
+  twice (a folder and one of its subfolders both picked) is imported once.
+
 ### 20–21 November 2026
 
 - **Windows: tags.** Own tags per book (genres from "Look up online…" are added), editing many books at once,

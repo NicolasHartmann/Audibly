@@ -3,6 +3,7 @@
 // Updated: 10/03/2024
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -23,6 +24,10 @@ public interface IImportFiles
     public event ImportCompletedHandler ImportCompleted;
 
     Task ImportDirectoryAsync(string path, CancellationToken cancellationToken,
+        Func<int, int, string, BookImportStatus, Task> progressCallback);
+
+    /// <summary>Imports several picked folders at once (see AudiobookImporter.ScanDirectories).</summary>
+    Task ImportDirectoriesAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken,
         Func<int, int, string, BookImportStatus, Task> progressCallback);
 
     Task ImportFileAsync(string path, CancellationToken cancellationToken,

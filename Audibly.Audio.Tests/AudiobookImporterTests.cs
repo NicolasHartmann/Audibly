@@ -202,6 +202,50 @@ public sealed class AudiobookImporterTests : IDisposable
             AudiobookImporter.OrderByNaturalFileName(paths, Path.GetFileName));
     }
 
+    [Fact]
+    public void ScanDirectoriesMergesSeveralFolders()
+    {
+        var first = CreateFile("A/Book One/1.mp3");
+        var second = CreateFile("B/Book Two/1.mp3");
+
+        var books = AudiobookImporter.ScanDirectories(
+            [Path.Combine(_folder, "A"), Path.Combine(_folder, "B")], CancellationToken.None);
+
+        Assert.Equal(2, books.Count);
+        Assert.Equal([first], books[0]);
+        Assert.Equal([second], books[1]);
+    }
+
+    [Fact]
+    public void ScanDirectoriesMakesOneBookOfAPickedBookFolder()
+    {
+        var partTen = CreateFile("Book/Part 10.mp3");
+        var partTwo = CreateFile("Book/Part 2.mp3");
+
+        var books = AudiobookImporter.ScanDirectories([Path.Combine(_folder, "Book")], CancellationToken.None);
+
+        Assert.Single(books);
+        Assert.Equal([partTwo, partTen], books[0]);
+    }
+
+    [Fact]
+    public void ScanDirectoriesSkipsBooksFoundTwice()
+    {
+        var bookA = CreateFile("library/BookA/1.mp3");
+        var bookB = CreateFile("library/BookB/1.mp3");
+
+        var books = AudiobookImporter.ScanDirectories(
+            [Path.Combine(_folder, "library"), Path.Combine(_folder, "LIBRARY", "BookA")], CancellationToken.None);
+
+        Assert.Equal(2, books.Count);
+        Assert.Contains(books, book => book.SequenceEqual([bookA]));
+        Assert.Contains(books, book => book.SequenceEqual([bookB]));
+    }
+
+    [Fact]
+    public void ScanDirectoriesWithNoPathsIsEmpty() =>
+        Assert.Empty(AudiobookImporter.ScanDirectories([], CancellationToken.None));
+
     private string CreateFile(string relativePath)
     {
         var path = Path.GetFullPath(relativePath, _folder);

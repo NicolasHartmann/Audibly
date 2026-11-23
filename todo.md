@@ -21,9 +21,10 @@
   - [x] compared by listening (2026-11-21): Sonic is clearly better, especially at the ends of words
 - [x] Windows: swap the buttons in the "Continue where you left off?" dialog
   - [x] the big blue (primary) button should be "Continue there", the plain one "Stay here"
-- [ ] Windows: import several audiobook folders at once
-  - [ ] pick several folders in one go; each becomes one book (or, for a library folder, each subfolder with audio files)
-  - [ ] a one-time import, not a watched library folder
+- [x] Windows: import several audiobook folders at once
+  - [x] pick several folders in one go; each becomes one book (or, for a library folder, each subfolder with audio files)
+  - [x] a one-time import, not a watched library folder
+  - [ ] test in the app (dialog, two folders, folder + its subfolder)
 - [ ] Windows: a second progress display in the player
   - [ ] when the progress of the whole book is shown, the progress of the chapter can be shown as well, and the other way round
   - [ ] the second display has the same three modes: elapsed/total, time remaining, percent

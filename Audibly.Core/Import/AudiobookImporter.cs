@@ -121,6 +121,34 @@ public static class AudiobookImporter
         }), root);
     }
 
+    /// <summary>
+    ///     Scans several picked folders. A picked folder that holds audio files itself is one book;
+    ///     its subfolders with audio files are books as in <see cref="ScanDirectory" />. A book whose
+    ///     files were already found through another picked folder is left out.
+    /// </summary>
+    public static IReadOnlyList<IReadOnlyList<string>> ScanDirectories(IEnumerable<string> paths,
+        CancellationToken cancellationToken)
+    {
+        var books = new List<IReadOnlyList<string>>();
+        var taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in paths)
+        {
+            var root = Path.GetFullPath(path);
+            var found = ScanDirectory(root, cancellationToken);
+            // loose files of the picked folder come first, one file per book: join them
+            var loose = found.Where(book => SameFolder(Path.GetDirectoryName(book[0])!, root)).ToList();
+            var picked = loose.Count > 1 ? [loose.SelectMany(book => book).ToList(), ..found.Except(loose)] : found;
+            foreach (var book in picked)
+            {
+                if (book.Any(taken.Contains)) continue;
+                taken.UnionWith(book);
+                books.Add(book);
+            }
+        }
+
+        return books;
+    }
+
     /// <summary>Orders files by name, comparing numeric parts by value.</summary>
     public static IOrderedEnumerable<T> OrderByNaturalFileName<T>(IEnumerable<T> files, Func<T, string?> getFileName) =>
         files.OrderBy(getFileName, NaturalOrder.Instance);

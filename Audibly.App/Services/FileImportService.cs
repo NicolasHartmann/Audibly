@@ -42,6 +42,20 @@ public class FileImportService : IImportFiles
         Func<int, int, string, BookImportStatus, Task> progressCallback)
     {
         var books = await Task.Run(() => AudiobookImporter.ScanDirectory(path, cancellationToken), cancellationToken);
+        await ImportBooksAsync(books, cancellationToken, progressCallback);
+    }
+
+    public async Task ImportDirectoriesAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken,
+        Func<int, int, string, BookImportStatus, Task> progressCallback)
+    {
+        var books = await Task.Run(() => AudiobookImporter.ScanDirectories(paths, cancellationToken),
+            cancellationToken);
+        await ImportBooksAsync(books, cancellationToken, progressCallback);
+    }
+
+    private async Task ImportBooksAsync(IReadOnlyList<IReadOnlyList<string>> books,
+        CancellationToken cancellationToken, Func<int, int, string, BookImportStatus, Task> progressCallback)
+    {
         for (var index = 0; index < books.Count; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
