@@ -184,20 +184,20 @@ public static class ReadingChapters
         }
 
         if (target < 0) return first;
+        // the passage holding the anchor, or the first one after it: anchors often sit on the
+        // whitespace before a heading, which belongs to no passage
         var bodyText = body.Value;
-        var result = first;
         var position = 0;
         for (var i = first; i < passages.Count && files[i] == file; i++)
         {
             if (passages[i].Text.Length == 0) continue;
             var at = bodyText.IndexOf(passages[i].Text, position, StringComparison.Ordinal);
             if (at < 0) continue;
-            if (at > target) break;
-            result = i;
             position = at + passages[i].Text.Length;
+            if (position > target) return i;
         }
 
-        return result;
+        return first;
     }
 
     private static XDocument? Load(ZipArchive zip, string path)

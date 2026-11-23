@@ -281,7 +281,7 @@ if (args.Length > 0)
     }
 }
 // --- chapters from the EPUB table of contents ---
-string ChapterEpub(string? nav, string? ncx)
+string ChapterEpub(string? nav, string? ncx, string? ch2Body = null)
 {
     var path = Path.Combine(Path.GetTempPath(), "audibly-chapters-" + Guid.NewGuid().ToString("N") + ".epub");
     using var zip = System.IO.Compression.ZipFile.Open(path, System.IO.Compression.ZipArchiveMode.Create);
@@ -296,7 +296,8 @@ string ChapterEpub(string? nav, string? ncx)
     var spineToc = ncx is null ? "" : " toc=\"ncx\"";
     Put("OEBPS/content.opf", $"""<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>{navItem}{ncxItem}<item id="c1" href="text/Chapter%201.xhtml" media-type="application/xhtml+xml"/><item id="c2" href="text/ch2.xhtml" media-type="application/xhtml+xml"/></manifest><spine{spineToc}><itemref idref="c1"/><itemref idref="c2"/></spine></package>""");
     Put("OEBPS/text/Chapter 1.xhtml", """<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter One</h1><p>Alpha text one.</p><p>Beta text two.</p></body></html>""");
-    Put("OEBPS/text/ch2.xhtml", """<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter Two</h1><p>Gamma three.</p><p id="sec">Delta four.</p><p>Epsilon five.</p></body></html>""");
+    Put("OEBPS/text/ch2.xhtml", """<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><body>""" +
+        (ch2Body ?? """<h1>Chapter Two</h1><p>Gamma three.</p><p id="sec">Delta four.</p><p>Epsilon five.</p>""") + "</body></html>");
     if (nav is not null) Put("OEBPS/nav/nav.xhtml", nav);
     if (ncx is not null) Put("OEBPS/toc.ncx", ncx);
     return path;
@@ -343,6 +344,16 @@ Check(outside.Chapter == 1 && outside.BookFraction <= 1 && outside.ChapterFracti
 Check(ReadingChapters.FirstCueIndex(tocBook.Passages, tocChapters, 1) == 4, "first cue of a chapter");
 Check(ReadingChapters.FirstCueIndex(tocBook.Passages, tocChapters, 0) is null, "chapter without narration has no cue");
 Check(ReadingChapters.FirstCueIndex(tocBook.Passages, tocChapters, 2) is null, "a cue before the chapter start does not count");
+foreach (var (body, name) in new[]
+{
+    ("<h1>Chapter Two</h1><p>Gamma three.</p>\n<section id=\"sec\">\n  <h2>Delta four.</h2>\n  <p>Epsilon five.</p></section>", "anchor on a section with whitespace before its heading"),
+    ("<h1>Chapter Two</h1><p>Gamma three.</p> <a id=\"sec\"/><h2>Delta four.</h2><p>Epsilon five.</p>", "empty anchor just before a heading"),
+    ("<h1>Chapter Two</h1><p>Gamma three.</p><p id=\"sec\">\n  Delta four.</p><p>Epsilon five.</p>", "anchor on a pretty-printed paragraph")
+})
+{
+    var wrapped = await ReadingChapters.CreateAsync(ChapterMap(ChapterEpub(Nav, null, body)));
+    Check(Describe(wrapped).EndsWith("Part 2.1/1/5", StringComparison.Ordinal), name + ": " + Describe(wrapped));
+}
 
 Console.WriteLine($"{checks} checks passed");
 
