@@ -43,8 +43,16 @@
             </StackPanel>
             <!-- Choosing a chapter moves the text and the audiobook there; the line shows where the reader is. -->
             <StackPanel Grid.Row="4" x:Name="ReadingPanel" Orientation="Horizontal" Spacing="12" Visibility="Collapsed">
-                <ComboBox x:Name="ChapterChoice" PlaceholderText="Chapter" MinWidth="240" MaxWidth="420"
-                    AutomationProperties.Name="Chapter" SelectionChanged="ChapterChoice_SelectionChanged"/>
+                <Button x:Name="ChapterButton" MinWidth="240" MaxWidth="420" HorizontalContentAlignment="Left"
+                    AutomationProperties.Name="Chapter" ToolTipService.ToolTip="Go to a chapter (text and audiobook)">
+                    <Button.Flyout>
+                        <Flyout x:Name="ChapterFlyout" Placement="BottomEdgeAlignedLeft" Opened="ChapterFlyout_Opened">
+                            <ListView x:Name="ChapterList" IsItemClickEnabled="True" SelectionMode="Single"
+                                ItemClick="ChapterList_ItemClick" MinWidth="280" MaxHeight="480"/>
+                        </Flyout>
+                    </Button.Flyout>
+                    <TextBlock x:Name="ChapterButtonText" Text="Chapter" TextTrimming="CharacterEllipsis"/>
+                </Button>
                 <TextBlock x:Name="ReadingProgressText" VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </StackPanel>

@@ -38,7 +38,6 @@ public sealed partial class ReadAlongPanel : UserControl
     private string? _lastErrorContext;
     private ScrollViewer? _scroll;
     private System.Collections.Generic.IReadOnlyList<ReadingChapter> _chapters = [];
-    private bool _settingChapter;
     private int _lastTop = -1;
     private static string EngineFolder => Path.Combine(AppContext.BaseDirectory, "read-along");
     private AudiobookViewModel? Book => App.PlayerViewModel.NowPlaying;
@@ -271,23 +270,27 @@ public sealed partial class ReadAlongPanel : UserControl
         finally { if (_operation == operation) SetBusy(false); }
     }
     private void Cancel_Click(object sender, RoutedEventArgs e) => _operation?.Cancel();
+    private sealed record ChapterItem(int Index, string Label) { public override string ToString() => Label; }
     private void ShowChapters(System.Collections.Generic.IReadOnlyList<ReadingChapter> chapters)
     {
         _chapters = chapters; _lastTop = -1;
-        _settingChapter = true;
         // nested table of contents entries are indented with em spaces
-        ChapterChoice.ItemsSource = chapters.Select(c => new string(' ', c.Depth) + c.Title).ToList();
-        ChapterChoice.SelectedIndex = -1;
-        _settingChapter = false;
-        ChapterChoice.Visibility = chapters.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ChapterList.ItemsSource = chapters.Select((c, i) => new ChapterItem(i, new string(' ', c.Depth) + c.Title)).ToList();
+        ChapterButtonText.Text = "Chapter";
+        ChapterButton.Visibility = chapters.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         ReadingPanel.Visibility = _map is null ? Visibility.Collapsed : Visibility.Visible;
         ReadingProgressText.Text = "";
         UpdateReadingProgress();
     }
-    private async void ChapterChoice_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ChapterFlyout_Opened(object? sender, object e)
     {
-        var index = ChapterChoice.SelectedIndex;
-        if (_settingChapter || _map is not { } map || index < 0 || index >= _chapters.Count) return;
+        if (ChapterList.SelectedItem is { } current) ChapterList.ScrollIntoView(current, ScrollIntoViewAlignment.Leading);
+    }
+    // ItemClick, not SelectionChanged: choosing the chapter that is already shown must jump there too
+    private async void ChapterList_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        ChapterFlyout.Hide();
+        if (e.ClickedItem is not ChapterItem { Index: var index } || _map is not { } map || index >= _chapters.Count) return;
         StopFollowing();
         var first = Math.Clamp(_chapters[index].FirstPassage, 0, map.Passages.Count - 1);
         Passages.ScrollIntoView(map.Passages[first], ScrollIntoViewAlignment.Leading);
@@ -311,10 +314,9 @@ public sealed partial class ReadAlongPanel : UserControl
         var book = $"Book {Math.Floor(position.BookFraction * 100):0} %";
         ReadingProgressText.Text = _chapters.Count == 0 ? book
             : $"{book} · Chapter {position.Chapter + 1}/{_chapters.Count} · {Math.Floor(position.ChapterFraction * 100):0} %";
-        if (_chapters.Count == 0 || ChapterChoice.SelectedIndex == position.Chapter) return;
-        _settingChapter = true;
-        ChapterChoice.SelectedIndex = position.Chapter;
-        _settingChapter = false;
+        if (_chapters.Count == 0) return;
+        ChapterList.SelectedIndex = position.Chapter;
+        ChapterButtonText.Text = _chapters[position.Chapter].Title;
     }
     private void Follow_Click(object sender, RoutedEventArgs e)
     {
