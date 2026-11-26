@@ -44,4 +44,10 @@ public interface ILibraryImporter
 
     /// <summary>Lets the next scan add removed books again whose files are still in the folder.</summary>
     void ClearIgnored();
+
+    /// <summary>
+    ///     The cover image next to a book's files (cover.jpg, folder.jpg, …), or null when the book has
+    ///     no folder of its own or none of its images is clearly the cover.
+    /// </summary>
+    Task<byte[]?> ReadFolderCoverAsync(string firstLocation);
 }

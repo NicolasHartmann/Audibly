@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Audibly.Core.Metadata;
 using Audibly.Mobile.Services;
 
 namespace Audibly.Mobile.Views;
@@ -299,23 +300,31 @@ public partial class LibraryPage : ContentPage
         }
     }
 
-    /// <summary>Makes an image the user picks the book's cover.</summary>
+    private const string CoverFromPhone = "Choose an image";
+    private const string CoverFromFolder = "Image from the book's folder";
+    private const string CoverOnline = "Search online";
+
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+    private static readonly AudibleMetadataClient Metadata = new(Http);
+
+    /// <summary>Makes an image the book's cover: one the user picks, the one in its folder, or one found online.</summary>
     private async Task ChangeCoverAsync(BookItem item)
     {
-        var file = await FilePicker.Default.PickAsync(new PickOptions
-        {
-            PickerTitle = "Choose a cover",
-            FileTypes = FilePickerFileType.Images
-        });
-        if (file == null) return;
-
+        var choice = await DisplayActionSheetAsync("Change cover", "Cancel", null,
+            CoverFromPhone, CoverFromFolder, CoverOnline);
         try
         {
             _busy = true;
-            await using var stream = await file.OpenReadAsync();
-            using var bytes = new MemoryStream();
-            await stream.CopyToAsync(bytes);
-            await _data.SetCoverAsync(item.Book.Id, bytes.ToArray(), item.Book.CoverImagePath);
+            var image = choice switch
+            {
+                CoverFromPhone => await PickCoverAsync(),
+                CoverFromFolder => await FolderCoverAsync(item),
+                CoverOnline => await OnlineCoverAsync(item),
+                _ => null
+            };
+            if (image == null) return;
+
+            await _data.SetCoverAsync(item.Book.Id, image, item.Book.CoverImagePath);
             ShowStatus($"The cover of \"{item.Title}\" was changed.");
             await LoadAsync();
         }
@@ -327,6 +336,68 @@ public partial class LibraryPage : ContentPage
         {
             _busy = false;
         }
+    }
+
+    private static async Task<byte[]?> PickCoverAsync()
+    {
+        var file = await FilePicker.Default.PickAsync(new PickOptions
+        {
+            PickerTitle = "Choose a cover",
+            FileTypes = FilePickerFileType.Images
+        });
+        if (file == null) return null;
+
+        await using var stream = await file.OpenReadAsync();
+        using var bytes = new MemoryStream();
+        await stream.CopyToAsync(bytes);
+        return bytes.ToArray();
+    }
+
+    private async Task<byte[]?> FolderCoverAsync(BookItem item)
+    {
+        var image = item.Book.FirstFile is { } first ? await _importer.ReadFolderCoverAsync(first) : null;
+        if (image == null)
+            ShowStatus($"No cover image (like cover.jpg or folder.jpg) was found in the folder of \"{item.Title}\".");
+        return image;
+    }
+
+    /// <summary>Searches Audible by title and author and downloads the cover of the edition the user picks.</summary>
+    private async Task<byte[]?> OnlineCoverAsync(BookItem item)
+    {
+        var keywords = await DisplayPromptAsync("Search online", "Title and author", "Search", "Cancel",
+            initialValue: $"{item.Book.Title} {item.Book.Author}".Trim());
+        if (string.IsNullOrWhiteSpace(keywords)) return null;
+
+        ShowStatus("Searching Audible…");
+        IReadOnlyList<AudibleHit> hits;
+        try
+        {
+            hits = (await Metadata.SearchAsync(keywords, CancellationToken.None))
+                .Where(hit => !string.IsNullOrWhiteSpace(hit.ImageUrl)).ToList();
+        }
+        catch (MetadataLookupException e)
+        {
+            ShowStatus(e.Message);
+            return null;
+        }
+
+        if (hits.Count == 0)
+        {
+            ShowStatus("No covers found. Try other words.");
+            return null;
+        }
+
+        StatusLabel.IsVisible = false;
+        // numbered, so two editions with the same text stay apart
+        var labels = hits.Select((hit, index) => $"{index + 1}. " + string.Join(" · ", new[]
+        {
+            hit.Title, hit.Author, hit.Narrators, hit.ReleaseDate?.Year.ToString(), hit.Region.ToUpperInvariant()
+        }.Where(part => !string.IsNullOrWhiteSpace(part)))).ToArray();
+        var picked = Array.IndexOf(labels, await DisplayActionSheetAsync("Choose the edition", "Cancel", null, labels));
+        if (picked < 0) return null;
+
+        ShowStatus("Downloading the cover…");
+        return await Http.GetByteArrayAsync(hits[picked].ImageUrl);
     }
 
     private void ShowStatus(string text)

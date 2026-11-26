@@ -183,6 +183,31 @@ public sealed class AndroidLibraryImporter(AppData data) : ILibraryImporter
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .ToHashSet();
 
+    public Task<byte[]?> ReadFolderCoverAsync(string firstLocation) => Task.Run(() =>
+    {
+        try
+        {
+            // only a book in its own folder: an image in the chosen folder itself belongs to no single book
+            var folder = ParentOf(firstLocation);
+            if (folder == null) return null;
+            var images = folder.ListFiles().Where(file => file.IsFile && file.Name != null).ToList();
+            var name = FolderCover.Pick(images.Select(file => file.Name!));
+            var image = images.FirstOrDefault(file => file.Name == name);
+            if (image == null) return null;
+
+            using var stream = _context.ContentResolver!.OpenInputStream(image.Uri)
+                               ?? throw new IOException("The image could not be opened.");
+            using var bytes = new MemoryStream();
+            stream.CopyTo(bytes);
+            return bytes.ToArray();
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine("[Cover] " + e);
+            return (byte[]?)null;
+        }
+    });
+
     private DocumentFile? ParentOf(string location)
     {
         // walked down from the chosen folder: only a folder found that way can be listed and deleted
