@@ -13,6 +13,10 @@
 - [ ] Mini-player sleep timer: show the countdown while active, update each second, and hide it after cancellation or expiry. Check the end-of-chapter timer and hour-long durations; controls must not shift or overlap.
 - [ ] Mini-player progress bar: chapter time left on the left, book time left on the right, adjusted for speed. Check seeking while paused, chapter/file transitions, a restored book, and light/dark themes; clicking through either label must still seek.
 - [ ] End-of-chapter sleep timer in both players: countdown reflects current speed and adjusts when speed changes; pausing freezes it. Verify it stops at the selected chapter boundary, including the last chapter in a file, without auto-playing the next file. Cancelling or choosing a fixed-duration timer must replace the chapter timer.
+- [ ] Android: status bar icons (clock, battery) readable in light and dark mode on every page.
+- [ ] Android "Change cover": image from the phone, image from the book's folder (cover.jpg / folder.jpg; a book directly in the chosen folder has none), and "Search online" (pick the edition, cover appears in library, player and media notification).
+- [ ] Windows library: a tall or wide cover keeps the tile square; title, author and progress stay visible.
+- [ ] Windows player second progress line at 2x: seconds tick like a clock; elapsed + left = total.
 - [ ] Android: "End of chapter" in the sleep timer sheet pauses at the chapter end (also when the chapter ends with its file) and keeps working with the screen off; the timer button shows the minutes left at the current speed. Jumping past the chapter end drops the timer.
 
 - [ ] Filter

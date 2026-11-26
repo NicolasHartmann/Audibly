@@ -3,7 +3,7 @@
 - [x] Change a book's cover afterwards
   - [x] pick an image file (or take `cover.jpg` / `folder.jpg` from the book's folder) (Windows: "Change cover…")
   - [x] search the cover online by title and author and choose one (Windows: "Look up online…")
-  - [x] Windows and Android (Android: "Change cover" in the book's menu picks an image; no folder cover and no online search there yet)
+  - [x] Windows and Android (Android: "Change cover" in the book's menu: pick an image, the image in the book's folder, or search online)
 - [x] Windows: fill in a book's metadata from the internet (description, genres, series and part, narrator, release date)
   - [x] the genres become the starting point for tagging (next item)
   - [x] also change the book's title (never ticked by default)
@@ -24,15 +24,15 @@
 - [x] Windows: import several audiobook folders at once
   - [x] pick several folders in one go; each becomes one book (or, for a library folder, each subfolder with audio files)
   - [x] a one-time import, not a watched library folder
-  - [ ] test in the app (dialog, two folders, folder + its subfolder)
+  - [x] test in the app (works; a tall cover stretched the library tile, now the cover area is square)
 - [x] Windows: a second progress display in the player
   - [x] when the progress of the whole book is shown, the progress of the chapter can be shown as well, and the other way round
   - [x] the second display has the same three modes: elapsed/total, time remaining, percent
-  - [ ] test in the app (both scopes, click cycles, restart keeps the mode, book without chapters hides it)
+  - [x] test in the app (the second line ran at audio speed; now it shows listening time at the current speed)
 - [x] Windows: ebook reader (read-along): chapter selection and progress
   - [x] pick a chapter in the reader and jump there (text and audiobook)
   - [x] show progress of the whole book and of the current chapter
-  - [ ] test in the app with a prepared read-along book
+  - [x] test in the app with a prepared read-along book
 - [x] Windows: PayPal link in Settings points to the fork author instead of rstewa (Audibly.App/Views/SettingsPage.xaml.cs, `paypal.me/rstewa35`)
 
 - [ ] Make the fork usable for others
@@ -50,9 +50,11 @@
 
 # BUGS
 
-- [ ] BUG: when headphones disconnect, the app crashes
+- [x] BUG: when headphones disconnect, the app crashes
   - [x] Windows: a file that played and then fails is reopened paused at its position instead of closing the book; media failures and crashes on background threads are now logged with details
-  - [ ] test by unplugging headphones; if it still crashes, send Audibly.log (LocalState)
+  - [x] test by unplugging headphones: no crash anymore
+
+- [x] Android: the status bar icons were white on the white page (edge to edge from Android 15); now dark on light, light on dark
 
 # IN PROGRESS
 
