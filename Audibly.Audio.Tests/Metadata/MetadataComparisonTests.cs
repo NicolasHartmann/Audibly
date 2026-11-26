@@ -101,6 +101,16 @@ public sealed class MetadataComparisonTests
     }
 
     [Fact]
+    public void Apply_keeps_the_asin_when_nothing_is_chosen()
+    {
+        var current = Nothing with { Asin = "OLD" };
+        var found = Found(narrator: "N") with { Asin = "NEW" };
+
+        Assert.Equal("OLD", MetadataComparison.Apply(current, found, new HashSet<MetadataField>()).Asin);
+        Assert.Equal("NEW", MetadataComparison.Apply(current, found, new HashSet<MetadataField> { MetadataField.Narrator }).Asin);
+    }
+
+    [Fact]
     public void Apply_renames_only_when_title_chosen()
     {
         var current = Nothing with { Title = "Kapitel 1" };

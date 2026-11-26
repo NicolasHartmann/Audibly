@@ -79,7 +79,8 @@ public static class MetadataComparison
             Pick(MetadataField.SeriesPart, current.SeriesPart, found.SeriesPart),
             takeTags ? string.Join("\n", found.Genres) : current.Genres,
             chosen.Contains(MetadataField.ReleaseDate) && found.ReleaseDate != null ? found.ReleaseDate : current.ReleaseDate,
-            string.IsNullOrWhiteSpace(found.Asin) ? current.Asin : found.Asin,
+            // the book is only tied to the found edition when something of it was taken over
+            string.IsNullOrWhiteSpace(found.Asin) || chosen.Count == 0 ? current.Asin : found.Asin,
             Pick(MetadataField.Title, current.Title, found.Title),
             takeTags ? TagList.Format(TagList.Add(TagList.Parse(current.Tags), found.Genres, [])) : current.Tags);
     }

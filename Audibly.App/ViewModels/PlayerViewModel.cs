@@ -899,7 +899,6 @@ public class PlayerViewModel : BindableBase, IDisposable
     {
         args.Handled = true;
         var speed = args.PlaybackRate;
-        Debug.WriteLine($"[PlayerVM] RateReceived: {speed} (current {PlaybackSpeed})");
         _dispatcherQueue.TryEnqueue(() => { if (!_disposed) UpdatePlaybackSpeed(speed); });
     }
 

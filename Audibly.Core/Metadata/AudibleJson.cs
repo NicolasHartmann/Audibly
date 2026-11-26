@@ -26,7 +26,7 @@ public static partial class AudibleJson
             var asin = String(product, "asin");
             // entries without a running time are not audiobooks
             if (asin == null || !product.TryGetProperty("runtime_length_min", out var runtime) ||
-                runtime.ValueKind != JsonValueKind.Number)
+                runtime.ValueKind != JsonValueKind.Number || !runtime.TryGetDouble(out var minutes))
                 continue;
 
             var series = First(product, "series");
@@ -42,7 +42,8 @@ public static partial class AudibleJson
                 Names(product, "narrators") ?? string.Empty,
                 series is { } s ? String(s, "title") : null,
                 series is { } p ? String(p, "sequence") : null,
-                runtime.GetInt32(),
+                // a fractional or huge number must not fail the whole region's answer
+                (int)Math.Clamp(Math.Round(minutes), 0, int.MaxValue),
                 Date(String(product, "release_date")),
                 String(product, "language"),
                 imageUrl));
@@ -90,6 +91,7 @@ public static partial class AudibleJson
         var text = BreakTag().Replace(html, "\n");
         text = ParagraphEnd().Replace(text, "\n\n");
         text = BlockEnd().Replace(text, "\n\n");
+        text = HeadingEnd().Replace(text, "\n\n");
         text = AnyTag().Replace(text, string.Empty);
         text = WebUtility.HtmlDecode(text).Replace("\r", string.Empty);
         text = SpacesAroundBreak().Replace(text, "\n");
@@ -136,8 +138,13 @@ public static partial class AudibleJson
     [GeneratedRegex(@"</p\s*>", RegexOptions.IgnoreCase)]
     private static partial Regex ParagraphEnd();
 
-    [GeneratedRegex(@"</(b|i|strong|em|div|li|ul|h\d)\s*>(?=\s*<|$)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"</(div|li|ul|ol|h\d)\s*>(?=\s*<|$)", RegexOptions.IgnoreCase)]
     private static partial Regex BlockEnd();
+
+    // bold or italic text is a heading of its own only when a block follows it, not inside a
+    // sentence ("a <b>bold</b> <i>word</i>")
+    [GeneratedRegex(@"</(b|i|strong|em)\s*>(?=\s*(<(p|div|ul|ol|h\d)[\s>]|$))", RegexOptions.IgnoreCase)]
+    private static partial Regex HeadingEnd();
 
     [GeneratedRegex(@"<[^>]+>")]
     private static partial Regex AnyTag();

@@ -24,6 +24,15 @@ public sealed class AudibleJsonTests
     }
 
     [Fact]
+    public void ParseSearch_rounds_a_fractional_runtime()
+    {
+        var hits = AudibleJson.ParseSearch(
+            "{\"products\":[{\"asin\":\"A1\",\"title\":\"X\",\"runtime_length_min\":576.6}]}", "de");
+
+        Assert.Equal(577, Assert.Single(hits).RuntimeMinutes);
+    }
+
+    [Fact]
     public void ParseSearch_skips_products_without_runtime()
     {
         var hits = AudibleJson.ParseSearch("{\"products\":[{\"asin\":\"3838795679\",\"title\":\"X\"}]}", "de");
@@ -88,6 +97,22 @@ public sealed class AudibleJsonTests
         var text = AudibleJson.HtmlToText("<p>A &amp; B</p><p>C<br>D</p><b>E</b>");
 
         Assert.Equal("A & B\n\nC\nD\n\nE", text);
+    }
+
+    [Fact]
+    public void HtmlToText_bold_inside_a_sentence_stays_inline()
+    {
+        var text = AudibleJson.HtmlToText("<p>A <b>bold</b> <i>word</i> here.</p>");
+
+        Assert.Equal("A bold word here.", text);
+    }
+
+    [Fact]
+    public void HtmlToText_bold_heading_before_a_paragraph_is_its_own_line()
+    {
+        var text = AudibleJson.HtmlToText("<b>Heading</b><p>Text</p>");
+
+        Assert.Equal("Heading\n\nText", text);
     }
 
     [Fact]

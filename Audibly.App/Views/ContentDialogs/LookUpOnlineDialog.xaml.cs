@@ -31,6 +31,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
     private readonly CancellationTokenSource _closing = new();
     private BookDetails? _details;
     private int _search;
+    private bool _loadingDetails;
 
     public LookUpOnlineDialog(AudiobookViewModel book)
     {
@@ -92,9 +93,11 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
         }
 
         args.Cancel = true;
-        if (HitList.SelectedItem is not HitItem selected) return;
+        // a second Next while the details load would load them twice
+        if (_loadingDetails || HitList.SelectedItem is not HitItem selected) return;
 
         var deferral = args.GetDeferral();
+        _loadingDetails = true;
         IsPrimaryButtonEnabled = false;
         SetBusy(true, "Loading details…");
         try
@@ -113,6 +116,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
         }
         finally
         {
+            _loadingDetails = false;
             deferral.Complete();
         }
     }
@@ -159,7 +163,7 @@ public sealed partial class LookUpOnlineDialog : ContentDialog
     }
 
     private void Hits_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
-        IsPrimaryButtonEnabled = HitList.SelectedItem != null;
+        IsPrimaryButtonEnabled = !_loadingDetails && HitList.SelectedItem != null;
 }
 
 /// <summary>One search hit as the list shows it.</summary>
