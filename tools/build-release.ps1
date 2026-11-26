@@ -58,7 +58,12 @@ function Build-Android {
         "-p:AndroidSigningKeyPass=$password" "-p:AndroidSigningStorePass=$password" "-p:ApplicationTitle=Audibly Fork" `
         -o $apkDir
     if ($LASTEXITCODE -ne 0) { throw 'Android build failed' }
-    Get-ChildItem $apkDir -Filter *-Signed.apk | Select-Object FullName, Length
+    # only the -Signed.apk installs; the plain .apk next to it is unsigned and Android calls it invalid
+    $version = ([xml](Get-Content (Join-Path $repo 'Audibly.Mobile\Audibly.Mobile.csproj'))).Project.PropertyGroup.ApplicationDisplayVersion |
+        Where-Object { $_ } | Select-Object -First 1
+    $release = Join-Path $OutDir "AudiblyFork-$version-android.apk"
+    Copy-Item (Get-ChildItem $apkDir -Filter *-Signed.apk | Select-Object -First 1).FullName $release -Force
+    Get-Item $release | Select-Object FullName, Length
 }
 
 if ($Target -in 'All', 'Android') { Build-Android }
