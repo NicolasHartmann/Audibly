@@ -127,11 +127,11 @@ public partial class PlayerPage : ContentPage
         PlayPauseIcon.Data = _playback.WantsToPlay ? PlayerIcons.Pause : PlayerIcons.Play;
         SemanticProperties.SetDescription(PlayPauseButton, _playback.WantsToPlay ? "Pause" : "Play");
 
-        var timer = _playback.SleepTimerEnd;
+        var timer = _playback.SleepTimerRemaining;
         TimerIcon.IsVisible = timer == null;
         TimerText.IsVisible = timer != null;
-        if (timer is { } end)
-            TimerText.Text = Math.Max(1, (int)Math.Ceiling((end - DateTime.Now).TotalMinutes)) + " min";
+        if (timer is { } remaining)
+            TimerText.Text = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes)) + " min";
 
         // the whole book: elapsed audio time, percent, and what is left at the current speed
         var bookDuration = Math.Max(1, _playback.BookDurationMs);
@@ -208,10 +208,13 @@ public partial class PlayerPage : ContentPage
     /// <summary>Opened from the quick link here and from the menu.</summary>
     public async Task ShowTimerAsync()
     {
+        const string chapterEnd = "End of chapter";
         var options = TimerMinutes.Select(minutes => minutes + " minutes").ToArray();
+        string[] shown = _playback.CurrentChapter != null ? [chapterEnd, .. options] : options;
         var choice = await DisplayActionSheetAsync("Sleep timer", "Cancel",
-            _playback.SleepTimerEnd != null ? "Turn off" : null, options);
+            _playback.IsSleepTimerOn ? "Turn off" : null, shown);
         if (choice == "Turn off") _playback.SetSleepTimer(null);
+        if (choice == chapterEnd) _playback.SetSleepTimerToChapterEnd();
         var picked = Array.IndexOf(options, choice);
         if (picked >= 0) _playback.SetSleepTimer(TimeSpan.FromMinutes(TimerMinutes[picked]));
     }

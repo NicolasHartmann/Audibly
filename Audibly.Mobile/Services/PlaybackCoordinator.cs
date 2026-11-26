@@ -78,13 +78,75 @@ public sealed class PlaybackCoordinator
         ? chapter.EndTime - chapter.StartTime
         : 0;
 
-    /// <summary>When the sleep timer pauses playback, or null when it is off.</summary>
-    public DateTime? SleepTimerEnd { get; private set; }
+    // when the minutes timer pauses playback; at most one of this and _chapterTimer is set
+    private DateTime? _sleepTimerEnd;
+
+    // pauses at the end of the chapter it was set in, on the audio timeline, so speed changes keep it exact
+    private ChapterSleepTimer? _chapterTimer;
+
+    public bool IsSleepTimerOn => _sleepTimerEnd != null || _chapterTimer != null;
+
+    /// <summary>Time until the sleep timer pauses playback, or null when it is off.</summary>
+    public TimeSpan? SleepTimerRemaining => _chapterTimer is { } chapterTimer && Book is { } book
+        ? chapterTimer.GetRemainingTime(book.CurrentSourceFileIndex, CurrentFileMs, book.PlaybackSpeed)
+        : _sleepTimerEnd - DateTime.Now;
 
     public void SetSleepTimer(TimeSpan? duration)
     {
-        SleepTimerEnd = duration is { } time ? DateTime.Now + time : null;
+        _chapterTimer = null;
+        _sleepTimerEnd = duration is { } time ? DateTime.Now + time : null;
         Changed?.Invoke();
+    }
+
+    /// <summary>Pauses playback when the current chapter ends.</summary>
+    public void SetSleepTimerToChapterEnd()
+    {
+        if (Book is not { } book || CurrentChapter is not { } chapter) return;
+        var fileIndex = Math.Clamp(chapter.ParentSourceFileIndex, 0, book.SourcePaths.Count - 1);
+        // a chapter without a known end runs to the end of its file
+        double endMs = chapter.EndTime > chapter.StartTime
+            ? chapter.EndTime
+            : book.SourcePaths[fileIndex].Duration * 1000.0;
+        _sleepTimerEnd = null;
+        _chapterTimer = new ChapterSleepTimer(FileDurations, fileIndex, endMs);
+        Changed?.Invoke();
+    }
+
+    private void StopForSleepTimer()
+    {
+        _sleepTimerEnd = null;
+        _chapterTimer = null;
+        _player.Pause();
+    }
+
+    private void CheckSleepTimer()
+    {
+        if (_sleepTimerEnd is { } end)
+        {
+            if (DateTime.Now >= end) StopForSleepTimer();
+            return;
+        }
+
+        if (_chapterTimer is not { } timer || SleepTimerRemaining is not { } remaining) return;
+        if (remaining <= TimeSpan.Zero)
+        {
+            StopForSleepTimer();
+            return;
+        }
+
+        // the chapter ends before the next tick: pause right at its end, not up to a tick into the next one
+        if (remaining < TickInterval)
+            Application.Current!.Dispatcher.DispatchDelayed(remaining, () =>
+            {
+                if (!ReferenceEquals(_chapterTimer, timer) || !_player.IsPlaying) return;
+                ReadPosition();
+                // a seek in the meantime leaves the rest to the next tick
+                if (SleepTimerRemaining is { } left && left <= TimeSpan.FromMilliseconds(100))
+                {
+                    StopForSleepTimer();
+                    Changed?.Invoke();
+                }
+            });
     }
 
     /// <summary>The speed a book starts with when it was never listened to; set in the speed panel.</summary>
@@ -124,6 +186,8 @@ public sealed class PlaybackCoordinator
             await _sync.PushAsync(force: true);
         }
 
+        // the chapter the timer waits for belongs to the book that was open
+        if (!ReferenceEquals(Book, book)) _chapterTimer = null;
         Book = book;
         PendingOffer = null;
         book.IsNowPlaying = true;
@@ -153,7 +217,8 @@ public sealed class PlaybackCoordinator
         _player.Stop();
         Book = null;
         PendingOffer = null;
-        SleepTimerEnd = null;
+        _sleepTimerEnd = null;
+        _chapterTimer = null;
         Changed?.Invoke();
     }
 
@@ -292,6 +357,8 @@ public sealed class PlaybackCoordinator
         _stats.OnInterrupted();
         _player.Seek(sourceIndex, positionMs);
         Apply(book, sourceIndex, positionMs);
+        // a jump past the chapter the timer waits for: the listener moved on, the timer would only pause at once
+        if (_chapterTimer?.HasReachedEnd(book.CurrentSourceFileIndex, CurrentFileMs) == true) _chapterTimer = null;
         Changed?.Invoke();
     }
 
@@ -317,11 +384,7 @@ public sealed class PlaybackCoordinator
         // only reaching the end while listening counts as finishing, not a jump to the end
         if (!wasCompleted && book.IsCompleted) _ = _stats.OnCompletedAsync(book.Id);
 
-        if (SleepTimerEnd is { } end && DateTime.Now >= end)
-        {
-            SleepTimerEnd = null;
-            _player.Pause();
-        }
+        CheckSleepTimer();
 
         var now = DateTime.UtcNow;
         if (now - _lastSave >= SaveInterval) _ = SaveAsync();
@@ -386,6 +449,8 @@ public sealed class PlaybackCoordinator
         var wasCompleted = book.IsCompleted;
         book.Progress = 100;
         book.IsCompleted = true;
+        // the book ended, so did its last chapter
+        _chapterTimer = null;
         if (!wasCompleted) await _stats.OnCompletedAsync(book.Id);
 
         await SaveAsync();
