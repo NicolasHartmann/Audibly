@@ -99,7 +99,8 @@
                     BorderBrush="Transparent"
                     BorderThickness="0"
                     CornerRadius="{StaticResource OverlayCornerRadius}">
-                    <Grid>
+                    <!--  square, whatever the cover's shape: a tall cover would push the text out of the tile  -->
+                    <Grid SizeChanged="CoverArea_SizeChanged" x:Name="CoverArea">
                         <Image Source="ms-appx:///Assets/DefaultCoverImage.png" Stretch="UniformToFill" />
                         <ContentPresenter
                             Content="{x:Bind Source, Mode=OneWay}"

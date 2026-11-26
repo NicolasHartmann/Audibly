@@ -64,6 +64,11 @@ public sealed partial class AudiobookTile : UserControl
         ButtonTile.Background = new SolidColorBrush(Colors.Transparent); // Revert background to original
     }
 
+    private void CoverArea_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (e.NewSize.Width > 0 && Math.Abs(CoverArea.Height - e.NewSize.Width) > 0.5) CoverArea.Height = e.NewSize.Width;
+    }
+
     private void MenuFlyout_Closed(object sender, object e)
     {
         BlackOverlayGrid.Visibility = Visibility.Collapsed;
