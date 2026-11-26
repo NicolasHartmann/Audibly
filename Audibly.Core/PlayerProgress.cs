@@ -21,7 +21,8 @@ public enum PlayerTimeDisplay
 }
 
 /// <summary>
-///     Texts and positions for the player's progress bar. Elapsed and total time are audio time;
+///     Texts and positions for the player's progress bar. Elapsed and total time are audio time (the
+///     second line excepted, see <see cref="SecondLine" />);
 ///     only the remaining time depends on the playback speed.
 /// </summary>
 public static class PlayerProgress
@@ -62,17 +63,21 @@ public static class PlayerProgress
     /// <summary>
     ///     The small line under the progress bar for the scope the bar does not show, e.g.
     ///     "Book  4:00:00 · 10:00:00", "Book  4:00:00 · 3:00:00 left" or "Chapter  50 %".
+    ///     Its times are listening time at the current speed, so its seconds tick like a clock and
+    ///     elapsed plus left add up to the total.
     /// </summary>
     public static string SecondLine(PlayerProgressScope scope, PlayerTimeDisplay display, double durationMs,
         double positionMs, double speed)
     {
         var label = scope == PlayerProgressScope.Book ? "Book" : "Chapter";
+        if (!double.IsFinite(speed) || speed <= 0) speed = 1;
+        var elapsed = Elapsed(positionMs / speed);
         return display switch
         {
             PlayerTimeDisplay.Percent => $"{label}  {End(display, durationMs, positionMs, speed)}",
             PlayerTimeDisplay.Remaining =>
-                $"{label}  {Elapsed(positionMs)} · {PlaybackTimeRemaining.Format(durationMs, positionMs, speed)} left",
-            _ => $"{label}  {Elapsed(positionMs)} · {End(display, durationMs, positionMs, speed)}"
+                $"{label}  {elapsed} · {PlaybackTimeRemaining.Format(durationMs, positionMs, speed)} left",
+            _ => $"{label}  {elapsed} · {Elapsed(durationMs / speed)}"
         };
     }
 

@@ -96,14 +96,14 @@ public class PlayerProgressTests
     }
 
     [Fact]
-    public void SecondLineElapsedAndTotal() =>
-        Assert.Equal("Book  4:00:00 · 10:00:00",
+    public void SecondLineElapsedAndTotalUsesSpeed() =>
+        Assert.Equal("Book  2:00:00 · 5:00:00",
             PlayerProgress.SecondLine(PlayerProgressScope.Book, PlayerTimeDisplay.ElapsedAndTotal, 10 * HourMs,
                 4 * HourMs, 2));
 
     [Fact]
     public void SecondLineRemainingUsesSpeed() =>
-        Assert.Equal("Book  4:00:00 · 3:00:00 left",
+        Assert.Equal("Book  2:00:00 · 3:00:00 left",
             PlayerProgress.SecondLine(PlayerProgressScope.Book, PlayerTimeDisplay.Remaining, 10 * HourMs,
                 4 * HourMs, 2));
 
