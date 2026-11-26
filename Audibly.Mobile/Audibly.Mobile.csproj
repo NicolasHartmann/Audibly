@@ -16,8 +16,8 @@
 
 		<ApplicationTitle>Audibly</ApplicationTitle>
 		<ApplicationId>app.audibly.mobile</ApplicationId>
-		<ApplicationDisplayVersion>0.5</ApplicationDisplayVersion>
-		<ApplicationVersion>5</ApplicationVersion>
+		<ApplicationDisplayVersion>0.6</ApplicationDisplayVersion>
+		<ApplicationVersion>6</ApplicationVersion>
 
 		<!-- Android 8: the oldest version with notification channels, which the playback service needs -->
 		<SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>

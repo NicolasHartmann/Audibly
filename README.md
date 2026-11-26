@@ -86,10 +86,12 @@ different key, and Android does not install it over the old one.
 ### Android
 
 - A player in the style of classic audiobook apps: progress of the whole book and of the chapter, time remaining
-  at the current speed, large play button, short and long jumps, chapter list, sleep timer.
+  at the current speed, large play button, short and long jumps, chapter list, sleep timer (also until the end of
+  the chapter).
 - Plays in the background with the usual media notification, lock screen and headset controls.
 - Imports audiobooks from a folder on the phone; a subfolder with several files is one book.
 - Remove books from the library, optionally deleting their files from the phone.
+- Change a book's cover: an image from the phone, the one in the book's folder, or one found online.
 - Opens straight into the player with the book you listened to last.
 
 ### Both
@@ -105,6 +107,22 @@ different key, and Android does not install it over the old one.
 
 Changes in this fork compared with the original Audibly 2.2.10 (released 8 July 2026), newest first. The changes of
 the original project up to 2.2.10 are in [CHANGELOG.md](CHANGELOG.md).
+
+### 26 November 2026 — Windows 2.2.11, Android 0.6
+
+- **Android: sleep timer until the end of the chapter.** "End of chapter" in the sleep timer pauses exactly where
+  the chapter ends, also with the screen off and at any speed; the timer shows the minutes left.
+- **Android: change a cover from the book's folder or online.** "Change cover" in a book's menu takes an image from
+  the phone, the cover image next to the book's files (cover.jpg, folder.jpg, …), or one found on Audible. The app
+  only goes online for this search.
+- **Android: readable status bar.** Clock and battery icons were white on the white page on Android 15 and newer.
+- **Windows: square covers in the library.** A tall cover no longer stretches its tile and hides title and progress.
+- **Windows: the second progress line counts listening time.** At 2× its seconds no longer run twice as fast;
+  elapsed plus remaining add up to the total at the current speed.
+- **Windows: "Look up online…" fixes.** Bold words inside a sentence no longer break the description into
+  paragraphs, a book with a fractional running time no longer hides the results of one shop, Next cannot load
+  twice, and the Audible ID is only saved when something is taken over.
+- **Windows: the donate link** in Settings points to the fork author.
 
 ### 23 November 2026
 

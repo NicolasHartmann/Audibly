@@ -118,19 +118,21 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Text" xml:space="preserve">
-    <value>## What's New in Version 2.2.10
+    <value>## What's New in Audibly Fork 2.2.11
 
-### New Features
+### New
 
-- **Watched Folders**: You can now add folders that Audibly will automatically scan for new audiobooks (.m4b, .mp3) every time the app starts.  NOTE: This feature does not currently support audiobooks split across multiple files (e.g. audiobooks with separate files for chapters.
+- **Import several folders at once**: pick several folders in the import dialog; each folder with audio files becomes a book.
+- **Book and chapter progress together**: a small line under the progress bar shows the other one. Click it to switch between total, time remaining and percent.
+- **Chapters in Read Along**: choose a chapter from the ebook's table of contents; text and audiobook jump there. A line shows how far you have read.
 
-### Bug Fixes
+### Fixes
 
-- Your playback speed now saves correctly for audiobooks made up of multiple files
-- The app now shows "Audibly" with its icon properly in the taskbar and window switcher
-- Fixed an issue where the player would sometimes skip ahead multiple chapters when a file ended
-- Fixed an issue where the progress bar would snap back to the current position while you were trying to seek during playback
-- Fixed an issue where notification banners appeared invisible
-- Fixed the informational infobar message so that it's no longer transparent</value>
+- A tall cover no longer stretches its tile in the library.
+- The second progress line counts listening time, so its seconds no longer run faster at higher speeds.
+- "Look up online…": bold words keep their place in the description, results of both shops show up, and the Audible ID is only saved when something is taken over.
+- The donate link in Settings points to the fork author.
+
+All changes: github.com/NicolasHartmann/Audibly#changelog</value>
   </data>
 </root>
