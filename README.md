@@ -62,6 +62,10 @@ Later versions install the same way, without the certificate step.
 If you installed an earlier test build of the Android app, uninstall it first: the release is signed with a
 different key, and Android does not install it over the old one.
 
+If playback drops out for a few seconds with the screen off, the phone's battery saver is pausing the app. This is
+common on Xiaomi, Huawei and Samsung phones. Long-press the app icon → *App info* → *Battery* and choose
+*No restrictions* (named *Unrestricted* on some phones); on Xiaomi, also turn on *Autostart* there.
+
 ## What's new in this fork
 
 ### Windows
